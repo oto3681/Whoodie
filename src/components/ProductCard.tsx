@@ -49,11 +49,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           )}
         </div>
 
-        {discountPercent > 0 && (
-          <span className="absolute top-2.5 right-2.5 bg-orange-500 text-white text-[11px] font-black px-2 py-0.5 rounded-md shadow-xs">
-            -{discountPercent}%
+        {/* Top Right Price & Discount Badge */}
+        <div className="absolute top-2.5 right-2.5 flex flex-col items-end gap-1 z-10">
+          <span className="bg-slate-900/90 text-white text-[11px] font-black px-2.5 py-1 rounded-md shadow-md border border-slate-700/50">
+            {product.isQuoteOnly || product.price === 0 
+              ? 'WhatsApp Quote' 
+              : `KSh ${product.price.toLocaleString()}`}
           </span>
-        )}
+          {discountPercent > 0 && (
+            <span className="bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-xs">
+              -{discountPercent}% OFF
+            </span>
+          )}
+        </div>
 
         {/* Custom Artwork Overlay Badge */}
         <div className="absolute bottom-2 left-2 right-2 bg-slate-900/85 backdrop-blur-xs text-orange-400 text-[10px] font-bold px-2 py-1 rounded-lg flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">

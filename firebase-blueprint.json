@@ -1,0 +1,95 @@
+{
+  "entities": {
+    "products": {
+      "title": "Products",
+      "description": "Store products and custom printable catalog items",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "price": { "type": "number" },
+        "originalPrice": { "type": "number" },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "image": { "type": "string" },
+        "description": { "type": "string" },
+        "features": { "type": "array", "items": { "type": "string" } },
+        "customizationOptions": { "type": "object" },
+        "isQuoteOnly": { "type": "boolean" }
+      },
+      "required": ["id", "name", "category", "price", "image"]
+    },
+    "orders": {
+      "title": "Orders",
+      "description": "Customer purchase orders and tracking history",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "items": { "type": "array" },
+        "totalAmount": { "type": "number" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "customerEmail": { "type": "string" },
+        "deliveryAddress": { "type": "string" },
+        "deliveryType": { "type": "string" },
+        "paymentMethod": { "type": "string" },
+        "orderStatus": { "type": "string" },
+        "paymentStatus": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "estimatedDelivery": { "type": "string" },
+        "trackingHistory": { "type": "array" }
+      },
+      "required": ["id", "items", "totalAmount", "customerName", "customerPhone"]
+    },
+    "reviews": {
+      "title": "Reviews",
+      "description": "Customer testimonials and feedback",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerName": { "type": "string" },
+        "productName": { "type": "string" },
+        "category": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "date": { "type": "string" },
+        "likes": { "type": "number" }
+      },
+      "required": ["id", "customerName", "comment", "rating"]
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Global application configuration and contact settings",
+      "type": "object",
+      "properties": {
+        "siteTitle": { "type": "string" },
+        "companyEmail": { "type": "string" },
+        "whatsappNumber": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "collections": {
+      "products": {
+        "schema": "products",
+        "description": "Catalog of printable products"
+      },
+      "orders": {
+        "schema": "orders",
+        "description": "Order records"
+      },
+      "reviews": {
+        "schema": "reviews",
+        "description": "Customer reviews"
+      },
+      "settings": {
+        "schema": "settings",
+        "description": "App settings"
+      }
+    },
+    "rules": "rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if true;\n    }\n  }\n}"
+  }
+}

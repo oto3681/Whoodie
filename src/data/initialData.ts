@@ -83,7 +83,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   // 4. Polo neck T-shirt printing @850
   {
     id: 'prod-poloneck-tshirt',
-    name: 'Corporate Executive Polo Shirts with Embroidered Logo',
+    name: 'Corporate Executive Polo Shirts @ KSh 850',
     category: 'Printed T-Shirts',
     price: 850,
     originalPrice: 1200,
@@ -241,7 +241,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   // 10. Normal Mug branding @350
   {
     id: 'prod-normal-mug',
-    name: 'Normal Mug Branding (11oz White Ceramic)',
+    name: 'Normal Mug Branding @ KSh 350',
     category: 'Branding & Signage',
     price: 350,
     originalPrice: 500,
@@ -267,7 +267,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   // 11. Magic Mug branding @650
   {
     id: 'prod-magic-mug',
-    name: 'Magic Mug Branding (Color Changing)',
+    name: 'Magic Mug Branding @ KSh 650',
     category: 'Branding & Signage',
     price: 650,
     originalPrice: 900,
@@ -317,7 +317,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   // 13. Light weight reflectors @350
   {
     id: 'prod-lightweight-reflectors',
-    name: 'Light Weight Reflectors & Safety Vests',
+    name: 'Light Weight Reflectors @ KSh 350',
     category: 'Reflectors & Safety',
     price: 350,
     originalPrice: 500,
@@ -471,7 +471,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   // 19. Hoodies @2500
   {
     id: 'prod-hoodies',
-    name: 'Custom Heavyweight Hoodies',
+    name: 'Custom Heavyweight Hoodies @ KSh 2,500',
     category: 'Hoodies & Sweatshirts',
     price: 2500,
     originalPrice: 3200,

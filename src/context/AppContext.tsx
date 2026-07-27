@@ -16,6 +16,17 @@ import {
   MOCK_ORDERS, 
   DEFAULT_WORDPRESS_SETTINGS 
 } from '../data/initialData';
+import {
+  subscribeProducts,
+  saveProductToFirestore,
+  deleteProductFromFirestore,
+  subscribeOrders,
+  saveOrderToFirestore,
+  subscribeReviews,
+  saveReviewToFirestore,
+  subscribeWpSettings,
+  saveWpSettingsToFirestore,
+} from '../services/firestoreService';
 
 interface ToastMessage {
   id: string;
@@ -40,6 +51,7 @@ interface AppContextType {
   activeTrackingId: string | null;
   toasts: ToastMessage[];
   activeView: 'shop' | 'dashboard' | 'admin' | 'tracking' | 'reviews';
+  isDbConnected: boolean;
 
   // Actions
   setSelectedCategory: (cat: ProductCategory) => void;
@@ -82,7 +94,6 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Load initial from localStorage if available
   const [products, setProducts] = useState<Product[]>(() => {
     const saved = localStorage.getItem('pixelprint_products');
     return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
@@ -120,6 +131,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [activeTrackingId, setActiveTrackingId] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<AppContextType['activeView']>('shop');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [isDbConnected, setIsDbConnected] = useState<boolean>(false);
+
+  // Firestore Real-time Subscriptions
+  useEffect(() => {
+    const unsubProducts = subscribeProducts((fetched) => {
+      setProducts(fetched);
+      setIsDbConnected(true);
+    });
+
+    const unsubOrders = subscribeOrders((fetched) => {
+      setOrders(fetched);
+    });
+
+    const unsubReviews = subscribeReviews((fetched) => {
+      setReviews(fetched);
+    });
+
+    const unsubWp = subscribeWpSettings((fetched) => {
+      setWpSettings(fetched);
+    });
+
+    return () => {
+      unsubProducts();
+      unsubOrders();
+      unsubReviews();
+      unsubWp();
+    };
+  }, []);
 
   // Categories list
   const categories: ProductCategory[] = [
@@ -135,7 +174,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     'Eulogies & Memorials'
   ];
 
-  // Save to localStorage on changes
+  // Save to localStorage as backup
   useEffect(() => {
     localStorage.setItem('pixelprint_products', JSON.stringify(products));
   }, [products]);
@@ -312,51 +351,50 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       trackingHistory
     };
 
-    setOrders((prev) => [newOrder, ...prev]);
+    saveOrderToFirestore(newOrder);
     clearCart();
     setActiveTrackingId(id);
     return newOrder;
   };
 
   const updateOrderStatus = (orderId: string, status: OrderStatus) => {
-    setOrders((prev) =>
-      prev.map((ord) => {
-        if (ord.id !== orderId) return ord;
+    const targetOrder = orders.find((o) => o.id === orderId);
+    if (targetOrder) {
+      const updatedHistory = targetOrder.trackingHistory.map((step) => {
+        if (step.status === status) {
+          return {
+            ...step,
+            completed: true,
+            timestamp: new Date().toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }),
+          };
+        }
+        return step;
+      });
 
-        const updatedHistory = ord.trackingHistory.map((step) => {
-          if (step.status === status) {
-            return {
-              ...step,
-              completed: true,
-              timestamp: new Date().toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }),
-            };
-          }
-          return step;
-        });
+      const updatedOrder: Order = {
+        ...targetOrder,
+        orderStatus: status,
+        trackingHistory: updatedHistory,
+      };
 
-        return {
-          ...ord,
-          orderStatus: status,
-          trackingHistory: updatedHistory,
-        };
-      })
-    );
-    showToast('Order Updated 🚚', `Order ${orderId} status set to "${status}".`);
+      saveOrderToFirestore(updatedOrder);
+      showToast('Order Updated 🚚', `Order ${orderId} status set to "${status}".`);
+    }
   };
 
   // Product Admin
   const addProduct = (product: Product) => {
-    setProducts((prev) => [product, ...prev]);
+    saveProductToFirestore(product);
     showToast('Product Created ✨', `${product.name} added to live catalog.`);
   };
 
   const updateProduct = (updated: Product) => {
-    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    saveProductToFirestore(updated);
     showToast('Product Saved 💾', `${updated.name} details updated.`);
   };
 
   const deleteProduct = (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    deleteProductFromFirestore(id);
     showToast('Product Deleted', 'Item removed from catalog.', 'warning');
   };
 
@@ -368,19 +406,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       date: 'Just now',
       likes: 0
     };
-    setReviews((prev) => [newRev, ...prev]);
+    saveReviewToFirestore(newRev);
     showToast('Review Submitted ⭐', 'Thank you for building trust with new clients!');
   };
 
   const likeReview = (reviewId: string) => {
-    setReviews((prev) =>
-      prev.map((r) => (r.id === reviewId ? { ...r, likes: r.likes + 1 } : r))
-    );
+    const target = reviews.find((r) => r.id === reviewId);
+    if (target) {
+      const updated = { ...target, likes: target.likes + 1 };
+      saveReviewToFirestore(updated);
+    }
   };
 
   // WP Settings
   const updateWpSettings = (newSettings: Partial<WordPressSettings>) => {
-    setWpSettings((prev) => ({ ...prev, ...newSettings }));
+    const updated = { ...wpSettings, ...newSettings };
+    saveWpSettingsToFirestore(updated);
     showToast('WordPress Settings Saved ⚡', 'Live site branding & config synchronized.');
   };
 
@@ -401,6 +442,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         activeTrackingId,
         toasts,
         activeView,
+        isDbConnected,
         setSelectedCategory,
         setSearchQuery,
         addToCart,

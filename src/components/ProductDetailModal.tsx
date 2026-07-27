@@ -25,21 +25,25 @@ export const ProductDetailModal: React.FC = () => {
     wpSettings 
   } = useApp();
 
-  if (!selectedProductForDetail) return null;
-
   const product = selectedProductForDetail;
 
-  const [quantity, setQuantity] = useState<number>(
-    product.customizationOptions?.minQuantity || 1
-  );
-  const [selectedSize, setSelectedSize] = useState<string>(
-    product.customizationOptions?.sizes?.[0] || ''
-  );
-  const [selectedFinish, setSelectedFinish] = useState<string>(
-    product.customizationOptions?.finishes?.[0] || ''
-  );
+  const [quantity, setQuantity] = useState<number>(1);
+  const [selectedSize, setSelectedSize] = useState<string>('');
+  const [selectedFinish, setSelectedFinish] = useState<string>('');
   const [designInstructions, setDesignInstructions] = useState<string>('');
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
+
+  React.useEffect(() => {
+    if (product) {
+      setQuantity(product.customizationOptions?.minQuantity || 1);
+      setSelectedSize(product.customizationOptions?.sizes?.[0] || '');
+      setSelectedFinish(product.customizationOptions?.finishes?.[0] || '');
+      setDesignInstructions('');
+      setUploadedFileName('');
+    }
+  }, [product]);
+
+  if (!selectedProductForDetail || !product) return null;
 
   // Dynamic Base Price detection (e.g. Roll-up banner Large Base @ 8500 vs Light Base @ 6500)
   let currentBasePrice = product.price;
