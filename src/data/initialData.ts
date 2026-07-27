@@ -38,7 +38,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     priceDisplay: 'Ask for Quote via WhatsApp',
     rating: 4.8,
     reviewCount: 145,
-    image: '/src/assets/images/teardrop_banner_1785135656612.jpg',
+    image: '/assets/images/teardrop_banner_1785135656612.jpg',
     description: 'Outdoor windproof teardrop promotional flag banners with double-sided sublimated printing, flexible carbon fibre poles, and spike/cross bases.',
     features: [
       'Ask for quote through WhatsApp inquiry',
@@ -63,7 +63,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     originalPrice: 750,
     rating: 4.9,
     reviewCount: 228,
-    image: '/src/assets/images/crewneck_tshirt_printed_1785136447498.jpg',
+    image: '/assets/images/crewneck_tshirt_printed_1785136447498.jpg',
     description: '100% premium combed cotton round neck t-shirts printed with vibrant screen printing, DTG full-color print, or heat transfer logo.',
     features: [
       '100% Combed Cotton 180GSM',
@@ -89,7 +89,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     originalPrice: 1200,
     rating: 4.8,
     reviewCount: 164,
-    image: '/src/assets/images/polo_tshirt_printed_1785135850854.jpg',
+    image: '/assets/images/polo_tshirt_printed_1785135850854.jpg',
     description: 'Heavy duty pique cotton corporate polo shirts tailored for company staff uniforms, exhibitions, and promotional events.',
     features: [
       'Heavyweight Pique Cotton Fabric',

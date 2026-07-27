@@ -32,6 +32,9 @@ export const UserDashboard: React.FC = () => {
             src={currentUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
             alt={currentUser.name}
             referrerPolicy="no-referrer"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+            }}
             className="w-16 h-16 rounded-2xl object-cover border-2 border-amber-400 shadow-md"
           />
           <div>
@@ -122,9 +125,12 @@ export const UserDashboard: React.FC = () => {
                   {ord.items.map((item, idx) => (
                     <div key={idx} className="flex gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200/80">
                       <img
-                        src={item.product.image}
+                        src={item.product.image || 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80'}
                         alt={item.product.name}
                         referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
+                        }}
                         className="w-14 h-14 object-cover rounded-lg border border-slate-200 shrink-0"
                       />
                       <div className="space-y-0.5 text-xs">

@@ -45,6 +45,12 @@ export const ProductDetailModal: React.FC = () => {
 
   if (!selectedProductForDetail || !product) return null;
 
+  const isTShirt = product.category === 'Printed T-Shirts' || 
+    product.name.toLowerCase().includes('t-shirt') || 
+    product.name.toLowerCase().includes('tshirt') || 
+    product.name.toLowerCase().includes('polo') ||
+    product.name.toLowerCase().includes('shirt');
+
   // Dynamic Base Price detection (e.g. Roll-up banner Large Base @ 8500 vs Light Base @ 6500)
   let currentBasePrice = product.price;
   if (selectedFinish.includes('8,500') || selectedFinish.includes('8500')) {
@@ -114,9 +120,12 @@ export const ProductDetailModal: React.FC = () => {
           <div className="space-y-4">
             <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 aspect-4/3">
               <img
-                src={product.image}
+                src={product.image || 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80'}
                 alt={product.name}
                 referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
+                }}
                 className="w-full h-full object-cover"
               />
               {product.isFlashDeal && (
@@ -299,10 +308,15 @@ export const ProductDetailModal: React.FC = () => {
                 <span className="text-xs font-bold flex items-center gap-1 text-orange-400">
                   <Calculator className="w-4 h-4" /> Calculated Quote Total:
                 </span>
-                <span className="text-xl font-extrabold text-orange-400">
+                <span className="text-xl font-extrabold text-orange-400 flex items-center gap-2">
                   {product.isQuoteOnly || currentBasePrice === 0 
                     ? 'Quote on Inquiry' 
                     : `KSh ${totalPrice.toLocaleString()}`}
+                  {isTShirt && (
+                    <span className="text-[10px] font-black bg-orange-500 text-white border border-orange-400/50 px-2 py-0.5 rounded uppercase tracking-wider">
+                      Bulk Production
+                    </span>
+                  )}
                 </span>
               </div>
 
@@ -310,7 +324,7 @@ export const ProductDetailModal: React.FC = () => {
                 <span>
                   {product.isQuoteOnly || currentBasePrice === 0 
                     ? 'Custom Quote via WhatsApp Inquiry' 
-                    : `Unit Rate: KSh ${Math.round(unitPrice).toLocaleString()} / item`}
+                    : `Unit Rate: KSh ${Math.round(unitPrice).toLocaleString()} / item ${isTShirt ? '(Bulk Production)' : ''}`}
                 </span>
                 <span>Includes Design Verification</span>
               </div>

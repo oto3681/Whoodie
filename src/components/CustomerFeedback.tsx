@@ -168,6 +168,9 @@ export const CustomerFeedback: React.FC = () => {
                     src={rev.photoUrl} 
                     alt="Finished Print Product" 
                     referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
+                    }}
                     className="w-full h-full object-cover"
                   />
                 </div>

@@ -17,6 +17,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) 
     : 0;
 
+  const isTShirt = product.category === 'Printed T-Shirts' || 
+    product.name.toLowerCase().includes('t-shirt') || 
+    product.name.toLowerCase().includes('tshirt') || 
+    product.name.toLowerCase().includes('polo') ||
+    product.name.toLowerCase().includes('shirt');
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col group relative">
       
@@ -29,9 +35,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         className="relative bg-slate-100 aspect-4/3 overflow-hidden cursor-pointer"
       >
         <img
-          src={product.image}
+          src={product.image || 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80'}
           alt={product.name}
           referrerPolicy="no-referrer"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
+          }}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
 
@@ -51,10 +60,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Top Right Price & Discount Badge */}
         <div className="absolute top-2.5 right-2.5 flex flex-col items-end gap-1 z-10">
-          <span className="bg-slate-900/90 text-white text-[11px] font-black px-2.5 py-1 rounded-md shadow-md border border-slate-700/50">
+          <span className="bg-slate-900/90 text-white text-[11px] font-black px-2.5 py-1 rounded-md shadow-md border border-slate-700/50 flex items-center gap-1.5">
             {product.isQuoteOnly || product.price === 0 
               ? 'WhatsApp Quote' 
               : `KSh ${product.price.toLocaleString()}`}
+            {isTShirt && !(product.isQuoteOnly || product.price === 0) && (
+              <span className="bg-orange-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                Bulk Production
+              </span>
+            )}
           </span>
           {discountPercent > 0 && (
             <span className="bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-xs">
@@ -101,7 +115,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
 
           {/* Price Display */}
-          <div className="flex items-baseline gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             {product.isQuoteOnly || product.price === 0 ? (
               <span className="text-xs font-black text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
                 {product.priceDisplay || 'Ask for Quote via WhatsApp'}
@@ -111,6 +125,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 <span className="text-base sm:text-lg font-black text-slate-900">
                   KSh {product.price.toLocaleString()}
                 </span>
+                {isTShirt && (
+                  <span className="text-[10px] font-black text-orange-700 bg-orange-100 border border-orange-200 px-2 py-0.5 rounded-md uppercase tracking-wide inline-flex items-center">
+                    Bulk Production
+                  </span>
+                )}
                 {product.originalPrice && (
                   <span className="text-xs text-slate-400 line-through font-medium">
                     KSh {product.originalPrice.toLocaleString()}

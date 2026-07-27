@@ -412,7 +412,15 @@ export const AdminDashboard: React.FC = () => {
                   {products.map((p) => (
                     <tr key={p.id} className="hover:bg-slate-50">
                       <td className="p-3 font-bold text-slate-900 flex items-center gap-2">
-                        <img src={p.image} alt={p.name} className="w-8 h-8 rounded object-cover" />
+                        <img 
+                          src={p.image || 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80'} 
+                          alt={p.name} 
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
+                          }}
+                          className="w-8 h-8 rounded object-cover shrink-0" 
+                        />
                         <span className="truncate max-w-xs">{p.name}</span>
                       </td>
                       <td className="p-3 font-semibold text-blue-600">{p.category}</td>

@@ -32,7 +32,16 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void) => {
     } else {
       const items: Product[] = [];
       snapshot.forEach((docSnap) => {
-        items.push(docSnap.data() as Product);
+        const data = docSnap.data() as Product;
+        let img = data.image || '';
+        if (img.startsWith('/src/assets/')) {
+          img = img.replace('/src/assets/', '/assets/');
+          const updated = { ...data, image: img };
+          saveProductToFirestore(updated);
+          items.push(updated);
+        } else {
+          items.push(data);
+        }
       });
       onUpdate(items);
     }
