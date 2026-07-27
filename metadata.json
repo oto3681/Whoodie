@@ -1,0 +1,6 @@
+{
+  "name": "Woodynat Designers Limited",
+  "description": "Commercial graphics, printing, apparel & signage platform with high-conversion e-commerce layout, custom order artwork uploads, real-time tracking, M-Pesa checkout, and WordPress CMS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
