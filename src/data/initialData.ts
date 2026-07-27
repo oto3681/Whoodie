@@ -733,7 +733,7 @@ export const DEFAULT_WORDPRESS_SETTINGS: WordPressSettings = {
   tagline: 'Creativity at its best with high print precision that speaks',
   whatsappNumber: '0797939199',
   supportPhone: '0797939199',
-  companyEmail: 'info@woodynatdesigners.co.ke',
+  companyEmail: 'woodynatdesigners12@gmail.com',
   paybillNumber: '247247',
   paybillAccount: '0797939199',
   companyAddress: 'Ronald Ngala street, Gatkim complex building, 4th floor, Wing B, Room 4B1',

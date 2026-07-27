@@ -158,7 +158,7 @@ export const Footer: React.FC = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-orange-400 shrink-0" />
-                <span>{wpSettings.companyEmail}</span>
+                <a href={`mailto:${wpSettings.companyEmail}`} className="hover:text-orange-400 transition-colors">{wpSettings.companyEmail}</a>
               </div>
               <a
                 href={`https://wa.me/${cleanPhone}`}
