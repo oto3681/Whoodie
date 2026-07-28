@@ -51,6 +51,10 @@ export const ProductDetailModal: React.FC = () => {
     product.name.toLowerCase().includes('polo') ||
     product.name.toLowerCase().includes('shirt');
 
+  const isRollUpBanner = product.id === 'prod-rollup-banner' || 
+    product.name.toLowerCase().includes('roll-up') || 
+    product.name.toLowerCase().includes('rollup');
+
   // Dynamic Base Price detection (e.g. Roll-up banner Large Base @ 8500 vs Light Base @ 6500)
   let currentBasePrice = product.price;
   if (selectedFinish.includes('8,500') || selectedFinish.includes('8500')) {
@@ -173,6 +177,29 @@ export const ProductDetailModal: React.FC = () => {
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">{product.description}</p>
             </div>
+
+            {/* Roll-Up Banner Pricing Options Breakdown */}
+            {isRollUpBanner && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex flex-col gap-2 text-xs">
+                <div className="font-extrabold text-amber-900 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                    Base Hardware Options:
+                  </span>
+                  <span className="text-[11px] font-semibold text-amber-700">Select option below</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-slate-800">
+                  <div className={`p-2.5 rounded-lg border transition-all flex flex-col ${selectedFinish.includes('6,500') || selectedFinish.includes('6500') ? 'bg-orange-500 text-white border-orange-500 shadow-xs' : 'bg-white border-amber-200'}`}>
+                    <span className={`text-[11px] font-bold ${selectedFinish.includes('6,500') || selectedFinish.includes('6500') ? 'text-orange-100' : 'text-slate-500'}`}>Light Weight</span>
+                    <span className={`text-base font-black ${selectedFinish.includes('6,500') || selectedFinish.includes('6500') ? 'text-white' : 'text-orange-600'}`}>KSh 6,500</span>
+                  </div>
+                  <div className={`p-2.5 rounded-lg border transition-all flex flex-col ${selectedFinish.includes('8,500') || selectedFinish.includes('8500') ? 'bg-orange-500 text-white border-orange-500 shadow-xs' : 'bg-white border-amber-200'}`}>
+                    <span className={`text-[11px] font-bold ${selectedFinish.includes('8,500') || selectedFinish.includes('8500') ? 'text-orange-100' : 'text-slate-500'}`}>Heavy Weight</span>
+                    <span className={`text-base font-black ${selectedFinish.includes('8,500') || selectedFinish.includes('8500') ? 'text-white' : 'text-orange-600'}`}>KSh 8,500</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Customization Options */}
             <div className="space-y-3 pt-3 border-t border-slate-200">

@@ -11,7 +11,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     originalPrice: 9000,
     rating: 4.9,
     reviewCount: 310,
-    image: 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/rollup_banner_8500_1785222380932.jpg',
     description: 'High resolution retractable roll-up display banner printed on anti-curl media. Choose between light aluminum base (KSh 6,500) or large heavy-duty base (KSh 8,500). Includes padded carrying case.',
     features: [
       'Light Base Version @ KSh 6,500',

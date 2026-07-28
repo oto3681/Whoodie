@@ -39,6 +39,10 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void) => {
           const updated = { ...data, image: img };
           saveProductToFirestore(updated);
           items.push(updated);
+        } else if (data.id === 'prod-rollup-banner' && !img.includes('rollup_banner_8500')) {
+          const updated = { ...data, image: '/assets/images/rollup_banner_8500_1785222380932.jpg' };
+          saveProductToFirestore(updated);
+          items.push(updated);
         } else {
           items.push(data);
         }

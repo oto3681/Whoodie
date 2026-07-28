@@ -23,6 +23,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     product.name.toLowerCase().includes('polo') ||
     product.name.toLowerCase().includes('shirt');
 
+  const isRollUpBanner = product.id === 'prod-rollup-banner' || 
+    product.name.toLowerCase().includes('roll-up') || 
+    product.name.toLowerCase().includes('rollup');
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col group relative">
       
@@ -138,6 +142,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               </>
             )}
           </div>
+
+          {/* Roll-Up Banner Price Breakdown */}
+          {isRollUpBanner && (
+            <div className="w-full mb-2.5 p-2 bg-amber-50/90 border border-amber-200/80 rounded-xl flex flex-col gap-1 text-[11px] shadow-2xs">
+              <div className="flex items-center justify-between font-bold text-slate-800">
+                <span className="text-slate-600 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  Light weight:
+                </span>
+                <span className="text-orange-600 font-extrabold">KSh 6,500</span>
+              </div>
+              <div className="flex items-center justify-between font-bold text-slate-800">
+                <span className="text-slate-600 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-600"></span>
+                  Heavy weight:
+                </span>
+                <span className="text-orange-600 font-extrabold">KSh 8,500</span>
+              </div>
+            </div>
+          )}
 
           {/* Stock Meter */}
           <div className="mb-3">
