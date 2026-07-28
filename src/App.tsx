@@ -102,7 +102,6 @@ const ShopContent: React.FC = () => {
                 { name: 'Banners & Displays', icon: Flag },
                 { name: 'Branding & Signage', icon: Sparkles },
                 { name: 'Product Stickers & Labels', icon: Layers },
-                { name: 'Documentaries & Video', icon: Video },
                 { name: 'Brochures & Flyers', icon: FileText },
                 { name: 'Eulogies & Memorials', icon: Clock }
               ].map((item) => (

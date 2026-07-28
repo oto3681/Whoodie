@@ -55,6 +55,9 @@ export const ProductDetailModal: React.FC = () => {
     product.name.toLowerCase().includes('roll-up') || 
     product.name.toLowerCase().includes('rollup');
 
+  const isReflector = product.id === 'prod-lightweight-reflectors' || 
+    product.name.toLowerCase().includes('reflector');
+
   // Dynamic Base Price detection (e.g. Roll-up banner Large Base @ 8500 vs Light Base @ 6500)
   let currentBasePrice = product.price;
   if (selectedFinish.includes('8,500') || selectedFinish.includes('8500')) {
@@ -196,6 +199,35 @@ export const ProductDetailModal: React.FC = () => {
                   <div className={`p-2.5 rounded-lg border transition-all flex flex-col ${selectedFinish.includes('8,500') || selectedFinish.includes('8500') ? 'bg-orange-500 text-white border-orange-500 shadow-xs' : 'bg-white border-amber-200'}`}>
                     <span className={`text-[11px] font-bold ${selectedFinish.includes('8,500') || selectedFinish.includes('8500') ? 'text-orange-100' : 'text-slate-500'}`}>Heavy Weight</span>
                     <span className={`text-base font-black ${selectedFinish.includes('8,500') || selectedFinish.includes('8500') ? 'text-white' : 'text-orange-600'}`}>KSh 8,500</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Reflector Pricing Options Breakdown */}
+            {isReflector && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-col gap-2 text-xs">
+                <div className="font-extrabold text-emerald-900 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Reflector Material & Weight:
+                  </span>
+                  <span className="text-[11px] font-semibold text-emerald-700">Select option below</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-slate-800">
+                  <div 
+                    onClick={() => setSelectedFinish('Light Weight (@ KSh 350)')}
+                    className={`p-2.5 rounded-lg border transition-all flex flex-col cursor-pointer ${selectedFinish.includes('Light Weight') || selectedFinish.includes('350') ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' : 'bg-white border-emerald-200 hover:border-emerald-400'}`}
+                  >
+                    <span className={`text-[11px] font-bold ${selectedFinish.includes('Light Weight') || selectedFinish.includes('350') ? 'text-emerald-100' : 'text-slate-500'}`}>Light Weight</span>
+                    <span className={`text-base font-black ${selectedFinish.includes('Light Weight') || selectedFinish.includes('350') ? 'text-white' : 'text-emerald-700'}`}>KSh 350</span>
+                  </div>
+                  <div 
+                    onClick={() => setSelectedFinish('Heavy Weight (Ask for Quote)')}
+                    className={`p-2.5 rounded-lg border transition-all flex flex-col cursor-pointer ${selectedFinish.includes('Heavy Weight') ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' : 'bg-white border-emerald-200 hover:border-emerald-400'}`}
+                  >
+                    <span className={`text-[11px] font-bold ${selectedFinish.includes('Heavy Weight') ? 'text-emerald-100' : 'text-slate-500'}`}>Heavy Weight</span>
+                    <span className={`text-xs font-black ${selectedFinish.includes('Heavy Weight') ? 'text-white' : 'text-emerald-700'}`}>Ask for a quote</span>
                   </div>
                 </div>
               </div>

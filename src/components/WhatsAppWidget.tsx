@@ -15,8 +15,7 @@ export const WhatsAppWidget: React.FC = () => {
     'Custom T-Shirt / Hoodie Quote',
     'Express 24h Funeral Program / Eulogy',
     'Banners & Vehicle Branding',
-    'Bulk Sticker / Label Printing',
-    'Documentary Filming Package'
+    'Bulk Sticker / Label Printing'
   ];
 
   const handleSend = () => {

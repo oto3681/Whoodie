@@ -169,7 +169,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     'Banners & Displays',
     'Branding & Signage',
     'Product Stickers & Labels',
-    'Documentaries & Video',
     'Brochures & Flyers',
     'Eulogies & Memorials'
   ];

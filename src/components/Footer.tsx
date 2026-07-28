@@ -127,7 +127,6 @@ export const Footer: React.FC = () => {
               <li><button onClick={() => setActiveView('shop')} className="hover:text-orange-400 transition-colors">Rollup & Vinyl Banners</button></li>
               <li><button onClick={() => setActiveView('shop')} className="hover:text-orange-400 transition-colors">Vehicle & Office Signage</button></li>
               <li><button onClick={() => setActiveView('shop')} className="hover:text-orange-400 transition-colors">Die-Cut Waterproof Stickers</button></li>
-              <li><button onClick={() => setActiveView('shop')} className="hover:text-orange-400 transition-colors">Documentaries & Filming</button></li>
               <li><button onClick={() => setActiveView('shop')} className="hover:text-orange-400 transition-colors">24h Express Eulogies</button></li>
             </ul>
           </div>

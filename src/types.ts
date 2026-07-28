@@ -6,7 +6,6 @@ export type ProductCategory =
   | 'Banners & Displays'
   | 'Branding & Signage'
   | 'Product Stickers & Labels'
-  | 'Documentaries & Video'
   | 'Brochures & Flyers'
   | 'Eulogies & Memorials';
 

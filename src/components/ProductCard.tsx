@@ -27,6 +27,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     product.name.toLowerCase().includes('roll-up') || 
     product.name.toLowerCase().includes('rollup');
 
+  const isReflector = product.id === 'prod-lightweight-reflectors' || 
+    product.name.toLowerCase().includes('reflector');
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col group relative">
       
@@ -159,6 +162,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   Heavy weight:
                 </span>
                 <span className="text-orange-600 font-extrabold">KSh 8,500</span>
+              </div>
+            </div>
+          )}
+
+          {/* Reflector Price Breakdown */}
+          {isReflector && (
+            <div className="w-full mb-2.5 p-2 bg-emerald-50/90 border border-emerald-200/80 rounded-xl flex flex-col gap-1 text-[11px] shadow-2xs">
+              <div className="flex items-center justify-between font-bold text-slate-800">
+                <span className="text-slate-600 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  Light weight:
+                </span>
+                <span className="text-emerald-700 font-extrabold">KSh 350</span>
+              </div>
+              <div className="flex items-center justify-between font-bold text-slate-800">
+                <span className="text-slate-600 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                  Heavy weight:
+                </span>
+                <span className="text-emerald-700 font-extrabold">Ask for a quote</span>
               </div>
             </div>
           )}

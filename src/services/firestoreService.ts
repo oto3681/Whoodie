@@ -33,6 +33,10 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void) => {
       const items: Product[] = [];
       snapshot.forEach((docSnap) => {
         const data = docSnap.data() as Product;
+        if (data.id === 'prod-documentary-01' || data.category === ('Documentaries & Video' as any)) {
+          deleteProductFromFirestore(data.id);
+          return;
+        }
         let img = data.image || '';
         if (img.startsWith('/src/assets/')) {
           img = img.replace('/src/assets/', '/assets/');
@@ -41,6 +45,22 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void) => {
           items.push(updated);
         } else if (data.id === 'prod-rollup-banner' && !img.includes('rollup_banner_8500')) {
           const updated = { ...data, image: '/assets/images/rollup_banner_8500_1785222380932.jpg' };
+          saveProductToFirestore(updated);
+          items.push(updated);
+        } else if (data.id === 'prod-poloneck-tshirt' && !img.includes('executive_polo_white')) {
+          const updated = { ...data, image: '/assets/images/executive_polo_white_1785246660138.jpg' };
+          saveProductToFirestore(updated);
+          items.push(updated);
+        } else if (data.id === 'prod-roundneck-tshirt' && !img.includes('roundneck_tshirt_white')) {
+          const updated = { ...data, image: '/assets/images/roundneck_tshirt_white_1785246799771.jpg' };
+          saveProductToFirestore(updated);
+          items.push(updated);
+        } else if (data.id === 'prod-teardrop-banner' && !img.includes('teardrop_banner_white')) {
+          const updated = { ...data, image: '/assets/images/teardrop_banner_white_1785246922568.jpg' };
+          saveProductToFirestore(updated);
+          items.push(updated);
+        } else if (data.id === 'prod-lightweight-reflectors' && !img.includes('lightweight_reflectors_vest')) {
+          const updated = { ...data, image: '/assets/images/lightweight_reflectors_vest_1785247161011.jpg' };
           saveProductToFirestore(updated);
           items.push(updated);
         } else {

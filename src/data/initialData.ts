@@ -38,7 +38,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     priceDisplay: 'Ask for Quote via WhatsApp',
     rating: 4.8,
     reviewCount: 145,
-    image: '/assets/images/teardrop_banner_1785135656612.jpg',
+    image: '/assets/images/teardrop_banner_white_1785246922568.jpg',
     description: 'Outdoor windproof teardrop promotional flag banners with double-sided sublimated printing, flexible carbon fibre poles, and spike/cross bases.',
     features: [
       'Ask for quote through WhatsApp inquiry',
@@ -63,7 +63,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     originalPrice: 750,
     rating: 4.9,
     reviewCount: 228,
-    image: '/assets/images/crewneck_tshirt_printed_1785136447498.jpg',
+    image: '/assets/images/roundneck_tshirt_white_1785246799771.jpg',
     description: '100% premium combed cotton round neck t-shirts printed with vibrant screen printing, DTG full-color print, or heat transfer logo.',
     features: [
       '100% Combed Cotton 180GSM',
@@ -89,7 +89,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     originalPrice: 1200,
     rating: 4.8,
     reviewCount: 164,
-    image: '/assets/images/polo_tshirt_printed_1785135850854.jpg',
+    image: '/assets/images/executive_polo_white_1785246660138.jpg',
     description: 'Heavy duty pique cotton corporate polo shirts tailored for company staff uniforms, exhibitions, and promotional events.',
     features: [
       'Heavyweight Pique Cotton Fabric',
@@ -323,7 +323,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     originalPrice: 500,
     rating: 4.8,
     reviewCount: 310,
-    image: 'https://images.unsplash.com/photo-1508873696983-2df515122519?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/lightweight_reflectors_vest_1785247161011.jpg',
     description: 'Lightweight high-visibility safety reflector jacket featuring 2-inch high reflectivity tape strips and custom screen printed company logo.',
     features: [
       'KSh 350 per piece',
@@ -336,7 +336,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     expressDeliveryAvailable: true,
     customizationOptions: {
       sizes: ['M', 'L', 'XL', '2XL', '3XL'],
-      finishes: ['Black Logo Print', 'Full Color Screen Print'],
+      finishes: ['Light Weight (@ KSh 350)', 'Heavy Weight (Ask for Quote)'],
       minQuantity: 1,
     }
   },
@@ -543,25 +543,6 @@ export const INITIAL_PRODUCTS: Product[] = [
       sizes: ['30-Inch Golf Umbrella', '21-Inch Folding Umbrella', 'Outdoor Parasol'],
       finishes: ['Print 2 Panels', 'Print 4 Panels', 'Full Canopy Custom Color'],
       minQuantity: 10,
-    }
-  },
-
-  // 22. Corporate Documentary & Video Production Package
-  {
-    id: 'prod-documentary-01',
-    name: 'Corporate Documentary & Event Video Production Package',
-    category: 'Documentaries & Video',
-    price: 65000,
-    originalPrice: 85000,
-    rating: 5.0,
-    reviewCount: 38,
-    image: 'https://images.unsplash.com/photo-1579165466741-7f35e4755660?w=800&auto=format&fit=crop&q=80',
-    description: 'Full-service video production: professional 4K camera filming, drone aerial footage, studio audio recording, color grading, and voiceover.',
-    features: ['4K Cinema Camera Filming', 'Drone Aerial Footage', 'Professional Voiceover & Audio', 'Motion Graphics & Titles'],
-    stockCount: 15,
-    customizationOptions: {
-      finishes: ['3-Minute Promo Documentary', '10-Minute Full Corporate Story', 'Event Aftermovie + Highlights'],
-      minQuantity: 1,
     }
   }
 ];
