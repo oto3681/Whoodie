@@ -188,6 +188,34 @@ export const INITIAL_PRODUCTS: Product[] = [
     }
   },
 
+  // 7b. Vinyl Cutting (Ask for quote through the whatsapp inquiry number)
+  {
+    id: 'prod-vinyl-cutting',
+    name: 'Precision Vinyl Cutting & Decal Plotting',
+    category: 'Product Stickers & Labels',
+    price: 0,
+    isQuoteOnly: true,
+    priceDisplay: 'Ask for Quote via WhatsApp',
+    rating: 4.9,
+    reviewCount: 195,
+    image: '/assets/images/vinyl_cutting_plotter_1785478250327.jpg',
+    description: 'Computer-controlled high precision vinyl cutting plotter services for custom decals, vehicle graphics, wall art, window frostings, and heat transfer apparel vinyl.',
+    features: [
+      'Ask for quote through WhatsApp inquiry',
+      'Computerized High-Precision Plotter Cutting',
+      'Vehicle Decals & Window Graphics',
+      'Heat Transfer Vinyl (HTV) & Wall Stickers'
+    ],
+    stockCount: 500,
+    isFlashDeal: true,
+    expressDeliveryAvailable: true,
+    customizationOptions: {
+      sizes: ['Small (Up to 30cm)', 'Medium (Up to 60cm)', 'Large (Up to 120cm)', 'Custom Roll Length'],
+      finishes: ['Plotter Cut Matte Vinyl', 'Gloss Cut-Out Vinyl', 'Reflective Safety Vinyl', 'Heat Transfer Apparel Vinyl'],
+      minQuantity: 1,
+    }
+  },
+
   // 8. Wedding cards (Ask for quote through the whatsapp inquiry number)
   {
     id: 'prod-wedding-cards',
@@ -210,6 +238,34 @@ export const INITIAL_PRODUCTS: Product[] = [
     customizationOptions: {
       finishes: ['Gold Foil + Textured Card', 'Laser Cut Sleeve', 'Wax Seal Stamp Envelope'],
       minQuantity: 30,
+    }
+  },
+
+  // 8b. Executive Business Cards (Ask for quote through the whatsapp inquiry number)
+  {
+    id: 'prod-business-cards',
+    name: 'Executive Business Cards & Premium Stationeries',
+    category: 'Brochures & Flyers',
+    price: 0,
+    isQuoteOnly: true,
+    priceDisplay: 'Ask for Quote via WhatsApp',
+    rating: 5.0,
+    reviewCount: 240,
+    image: '/assets/images/executive_business_cards_1785478450280.jpg',
+    description: 'High-impact premium executive business cards printed on thick cardstock with options for gold/silver metallic foil stamping, velvet matte lamination, spot UV, and 3D raised print finish.',
+    features: [
+      'Ask for quote through WhatsApp inquiry',
+      'Heavy 350gsm - 600gsm Luxury Cardstock',
+      'Velvet Soft-Touch & Spot UV Finishes',
+      'Metallic Foil Stamping & Embossing'
+    ],
+    stockCount: 1000,
+    isFlashDeal: true,
+    expressDeliveryAvailable: true,
+    customizationOptions: {
+      sizes: ['Standard (3.5" x 2.0")', 'European (85mm x 55mm)', 'Square (2.5" x 2.5")', 'Custom Die-Cut'],
+      finishes: ['350gsm Velvet Matte Lamination', 'Gloss Lamination + Gold Foil', 'Spot UV + Embossed 3D Finish', '600gsm Cotton Luxe Cardstock'],
+      minQuantity: 100,
     }
   },
 

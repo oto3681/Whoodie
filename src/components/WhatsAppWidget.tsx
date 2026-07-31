@@ -12,7 +12,9 @@ export const WhatsAppWidget: React.FC = () => {
   const cleanPhone = rawPhone.startsWith('0') ? '254' + rawPhone.slice(1) : rawPhone;
 
   const quickTopics = [
+    'Executive Business Cards Quote',
     'Custom T-Shirt / Hoodie Quote',
+    'Precision Vinyl Cutting & Decals',
     'Express 24h Funeral Program / Eulogy',
     'Banners & Vehicle Branding',
     'Bulk Sticker / Label Printing'

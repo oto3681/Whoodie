@@ -63,10 +63,28 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void) => {
           const updated = { ...data, image: '/assets/images/lightweight_reflectors_vest_1785247161011.jpg' };
           saveProductToFirestore(updated);
           items.push(updated);
+        } else if (data.id === 'prod-vinyl-cutting' && !img.includes('vinyl_cutting_plotter')) {
+          const updated = { ...data, image: '/assets/images/vinyl_cutting_plotter_1785478250327.jpg' };
+          saveProductToFirestore(updated);
+          items.push(updated);
+        } else if (data.id === 'prod-business-cards' && !img.includes('executive_business_cards')) {
+          const updated = { ...data, image: '/assets/images/executive_business_cards_1785478450280.jpg' };
+          saveProductToFirestore(updated);
+          items.push(updated);
         } else {
           items.push(data);
         }
       });
+
+      // Ensure any newly introduced products in INITIAL_PRODUCTS are synced to Firestore
+      const existingIds = new Set(items.map(item => item.id));
+      for (const initProd of INITIAL_PRODUCTS) {
+        if (!existingIds.has(initProd.id)) {
+          saveProductToFirestore(initProd);
+          items.push(initProd);
+        }
+      }
+
       onUpdate(items);
     }
   }, (error) => {
