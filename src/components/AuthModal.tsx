@@ -3,26 +3,30 @@ import { useApp } from '../context/AppContext';
 import { X, User, ShieldCheck, ArrowRight, KeyRound, UserPlus, LogIn, CheckCircle2 } from 'lucide-react';
 
 export const AuthModal: React.FC = () => {
-  const { activeModal, setActiveModal, loginAsUser, loginAsAdmin, showToast } = useApp();
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const { currentUser, activeModal, setActiveModal, loginAsUser, loginAsAdmin, showToast } = useApp();
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
   const [roleMode, setRoleMode] = useState<'user' | 'admin'>('user');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
 
-  if (activeModal !== 'login') return null;
+  if (activeModal !== 'login' && currentUser) return null;
+  if (!currentUser && activeModal !== 'login') {
+    // If not logged in and modal is not active, return null because App.tsx main body renders the Registration Gateway
+    return null;
+  }
 
   const handleCustomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (authMode === 'register') {
       showToast('Registration successful! Welcome to Woodynat Designers.', 'success');
-      loginAsUser();
+      loginAsUser({ name: fullName, email, phone });
     } else {
       if (roleMode === 'admin') {
         loginAsAdmin();
       } else {
-        loginAsUser();
+        loginAsUser({ email });
       }
     }
   };
@@ -45,13 +49,15 @@ export const AuthModal: React.FC = () => {
                 : 'Customer Account Sign In'}
             </h3>
           </div>
-          <button
-            onClick={() => setActiveModal(null)}
-            className="absolute right-4 top-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-            aria-label="Close Modal"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {currentUser && (
+            <button
+              onClick={() => setActiveModal(null)}
+              className="absolute right-4 top-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              aria-label="Close Modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         <div className="p-6 space-y-5">
@@ -222,7 +228,7 @@ export const AuthModal: React.FC = () => {
           </form>
 
           {/* Bottom Switcher Link - Centered */}
-          <div className="text-center pt-2 border-t border-slate-100">
+          <div className="text-center pt-2 border-t border-slate-100 space-y-2">
             {authMode === 'login' ? (
               <p className="text-xs text-slate-600 font-medium">
                 Don't have an account yet?{' '}
@@ -246,6 +252,14 @@ export const AuthModal: React.FC = () => {
                 </button>
               </p>
             )}
+
+            <button
+              type="button"
+              onClick={() => setActiveModal(null)}
+              className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1 cursor-pointer pt-1"
+            >
+              <span>← Back to Shop / Browse Catalog</span>
+            </button>
           </div>
 
         </div>

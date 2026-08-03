@@ -15,6 +15,7 @@ import { SocialFeeds } from './components/SocialFeeds';
 import { AuthModal } from './components/AuthModal';
 import { UserDashboard } from './components/UserDashboard';
 import { AdminDashboard } from './components/AdminDashboard';
+import { RegistrationGate } from './components/RegistrationGate';
 import { 
   Zap, 
   Clock, 
@@ -42,7 +43,8 @@ const ShopContent: React.FC = () => {
     wpSettings, 
     setActiveModal, 
     activeView, 
-    currentUser 
+    currentUser,
+    isGuestBrowsing
   } = useApp();
 
   // Filter products by selectedCategory & searchQuery
@@ -69,6 +71,10 @@ const ShopContent: React.FC = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  if (!currentUser && !isGuestBrowsing) {
+    return <RegistrationGate />;
+  }
 
   if (activeView === 'dashboard' && currentUser) {
     return <UserDashboard />;

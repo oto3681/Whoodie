@@ -52,8 +52,10 @@ interface AppContextType {
   toasts: ToastMessage[];
   activeView: 'shop' | 'dashboard' | 'admin' | 'tracking' | 'reviews';
   isDbConnected: boolean;
+  isGuestBrowsing: boolean;
 
   // Actions
+  setIsGuestBrowsing: (val: boolean) => void;
   setSelectedCategory: (cat: ProductCategory) => void;
   setSearchQuery: (query: string) => void;
   addToCart: (product: Product, quantity: number, customization?: CustomArtwork) => void;
@@ -62,7 +64,7 @@ interface AppContextType {
   clearCart: () => void;
   
   // Auth
-  loginAsUser: () => void;
+  loginAsUser: (userData?: { name?: string; email?: string; phone?: string }) => void;
   loginAsAdmin: () => void;
   logout: () => void;
   
@@ -132,6 +134,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [activeView, setActiveView] = useState<AppContextType['activeView']>('shop');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isDbConnected, setIsDbConnected] = useState<boolean>(false);
+  const [isGuestBrowsing, setIsGuestBrowsing] = useState<boolean>(false);
 
   // Firestore Real-time Subscriptions
   useEffect(() => {
@@ -258,18 +261,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   // Auth Handlers
-  const loginAsUser = () => {
+  const loginAsUser = (userData?: { name?: string; email?: string; phone?: string }) => {
     const user: UserProfile = {
-      id: 'user-789',
-      name: 'John Doe',
-      email: 'client@gmail.com',
-      phone: '+254712998877',
+      id: `user-${Date.now().toString().slice(-6)}`,
+      name: userData?.name || 'John Doe',
+      email: userData?.email || 'client@gmail.com',
+      phone: userData?.phone || '+254712998877',
       role: 'user',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
     };
     setCurrentUser(user);
     setActiveModal(null);
-    showToast('Welcome back, John! 👋', 'Logged in as Customer Account.');
+    showToast(`Welcome, ${user.name}! 👋`, 'Logged in to Woodynat Customer Account.');
   };
 
   const loginAsAdmin = () => {
@@ -466,6 +469,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         toasts,
         activeView,
         isDbConnected,
+        isGuestBrowsing,
+        setIsGuestBrowsing,
         setSelectedCategory,
         setSearchQuery,
         addToCart,

@@ -188,8 +188,11 @@ export const Footer: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-right">
             <span className="text-slate-400">© 2026 {wpSettings.siteTitle}. All rights reserved.</span>
+            <span className="text-slate-400 font-medium text-[11px] flex items-center gap-1">
+              • A craft designed and developed by <strong className="text-blue-400 font-bold">DaveTech Solutions</strong>
+            </span>
             <span className="bg-slate-800 text-orange-400 px-2 py-0.5 rounded text-[10px] font-mono flex items-center gap-1 border border-slate-700">
               <Sparkles className="w-3 h-3" /> WordPress WooCommerce Sync
             </span>

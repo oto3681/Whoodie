@@ -11,7 +11,8 @@ import {
   X, 
   CheckCircle,
   Settings,
-  LogOut
+  LogOut,
+  User
 } from 'lucide-react';
 import { ProductCategory } from '../types';
 
@@ -122,7 +123,7 @@ export const Header: React.FC = () => {
             </button>
 
             {/* If user logged in, show quick Account/Admin badge */}
-            {currentUser && (
+            {currentUser ? (
               <div className="hidden md:flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
                 <button
                   onClick={() => setActiveView(currentUser.role === 'admin' ? 'admin' : 'dashboard')}
@@ -152,6 +153,14 @@ export const Header: React.FC = () => {
                   <span>Log Out</span>
                 </button>
               </div>
+            ) : (
+              <button
+                onClick={() => setActiveModal('login')}
+                className="hidden sm:flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs transition-colors cursor-pointer shadow-xs"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Register / Sign In</span>
+              </button>
             )}
 
             {/* Cart Button */}
