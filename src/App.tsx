@@ -97,12 +97,11 @@ const ShopContent: React.FC = () => {
               </span>
               {[
                 { name: 'Printed T-Shirts', icon: Shirt },
-                { name: 'Hoodies & Sweatshirts', icon: Layers },
-                { name: 'Reflectors & Safety', icon: Award },
-                { name: 'Banners & Displays', icon: Flag },
+                { name: 'Hoodies', icon: Layers },
+                { name: 'Reflectors & Aprons', icon: Award },
+                { name: 'Banners & Stickers', icon: Flag },
                 { name: 'Branding & Signage', icon: Sparkles },
-                { name: 'Product Stickers & Labels', icon: Layers },
-                { name: 'Brochures & Flyers', icon: FileText },
+                { name: 'Flyers & Posters', icon: FileText },
                 { name: 'Eulogies & Memorials', icon: Clock }
               ].map((item) => (
                 <button
@@ -110,8 +109,8 @@ const ShopContent: React.FC = () => {
                   onClick={() => setSelectedCategory(item.name as ProductCategory)}
                   className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
                     selectedCategory === item.name
-                      ? 'bg-orange-500 text-white shadow-xs'
-                      : 'text-slate-700 hover:bg-orange-50 hover:text-orange-600'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-700 hover:bg-blue-50 hover:text-blue-600'
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -124,7 +123,7 @@ const ShopContent: React.FC = () => {
             </div>
 
             {/* Central Main Promo Card */}
-            <div className="lg:col-span-3 bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 text-white rounded-3xl p-6 sm:p-10 shadow-lg relative overflow-hidden flex flex-col justify-between min-h-[380px] border border-orange-400">
+            <div className="lg:col-span-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white rounded-3xl p-6 sm:p-10 shadow-lg relative overflow-hidden flex flex-col justify-between min-h-[380px] border border-blue-500">
               
               {/* Decorative Background Artwork */}
               <div className="absolute -right-10 -bottom-10 opacity-15 pointer-events-none">
@@ -133,12 +132,12 @@ const ShopContent: React.FC = () => {
 
               {/* Flash Badge */}
               <div className="flex flex-wrap items-center gap-3 z-10">
-                <span className="bg-white text-orange-600 text-xs font-black px-3 py-1 rounded-lg flex items-center gap-1 shadow-md uppercase tracking-wider">
-                  <Zap className="w-3.5 h-3.5 fill-orange-600" /> MEGA FLASH SALE
+                <span className="bg-white text-blue-600 text-xs font-black px-3 py-1 rounded-lg flex items-center gap-1 shadow-md uppercase tracking-wider">
+                  <Zap className="w-3.5 h-3.5 fill-blue-600" /> MEGA FLASH SALE
                 </span>
 
-                <div className="bg-orange-700/60 backdrop-blur-xs text-white text-xs font-mono font-bold px-3 py-1 rounded-lg border border-orange-300/40 flex items-center gap-1.5 shadow-xs">
-                  <Clock className="w-3.5 h-3.5 text-amber-200" />
+                <div className="bg-blue-800/60 backdrop-blur-xs text-white text-xs font-mono font-bold px-3 py-1 rounded-lg border border-blue-300/40 flex items-center gap-1.5 shadow-xs">
+                  <Clock className="w-3.5 h-3.5 text-blue-200" />
                   <span>Ends In: {String(timeLeft.hours).padStart(2, '0')}h : {String(timeLeft.minutes).padStart(2, '0')}m : {String(timeLeft.seconds).padStart(2, '0')}s</span>
                 </div>
               </div>
@@ -148,7 +147,7 @@ const ShopContent: React.FC = () => {
                 <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-snug drop-shadow-xs">
                   {wpSettings.heroHeadline}
                 </h1>
-                <p className="text-xs sm:text-sm text-amber-50 font-medium leading-relaxed drop-shadow-xs">
+                <p className="text-xs sm:text-sm text-blue-50 font-medium leading-relaxed drop-shadow-xs">
                   {wpSettings.heroSubheadline}
                 </p>
               </div>
@@ -160,12 +159,12 @@ const ShopContent: React.FC = () => {
                   className="bg-slate-900 hover:bg-slate-950 text-white font-black px-6 py-3 rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all cursor-pointer"
                 >
                   <span>Explore Bulk Branding Deals</span>
-                  <ArrowRight className="w-4 h-4 text-orange-400" />
+                  <ArrowRight className="w-4 h-4 text-blue-400" />
                 </button>
 
                 <button
                   onClick={() => setActiveModal('track')}
-                  className="bg-white hover:bg-orange-50 text-slate-900 font-bold px-5 py-3 rounded-xl text-xs flex items-center gap-2 transition-colors cursor-pointer shadow-md"
+                  className="bg-white hover:bg-blue-50 text-slate-900 font-bold px-5 py-3 rounded-xl text-xs flex items-center gap-2 transition-colors cursor-pointer shadow-md"
                 >
                   <Truck className="w-4 h-4 text-emerald-600" />
                   <span>Track Existing Order</span>
@@ -181,7 +180,7 @@ const ShopContent: React.FC = () => {
       {/* 24-HOUR EXPRESS EULOGY & MEMORIALS SPOTLIGHT BANNER */}
       {selectedCategory === 'All' && !searchQuery && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-md border-2 border-orange-500 text-slate-900 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-md border-2 border-blue-600 text-slate-900 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
             <div className="space-y-2 text-center md:text-left z-10">
               <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider inline-block shadow-xs">
                 ⚡ 24-Hour Express Emergency Service
@@ -196,7 +195,7 @@ const ShopContent: React.FC = () => {
 
             <button
               onClick={() => setSelectedCategory('Eulogies & Memorials')}
-              className="bg-orange-500 hover:bg-orange-600 text-white font-black px-6 py-3.5 rounded-2xl text-xs sm:text-sm flex items-center gap-2 shadow-md transition-all shrink-0 cursor-pointer z-10"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-black px-6 py-3.5 rounded-2xl text-xs sm:text-sm flex items-center gap-2 shadow-md transition-all shrink-0 cursor-pointer z-10"
             >
               <span>Order Eulogies Online</span>
               <ArrowRight className="w-4 h-4" />

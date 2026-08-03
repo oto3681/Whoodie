@@ -54,7 +54,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Top Floating Badges */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 z-10">
           {product.isFlashDeal && (
-            <span className="bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1 uppercase tracking-wider">
+            <span className="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1 uppercase tracking-wider">
               <Zap className="w-3 h-3 fill-white" /> FLASH SALE
             </span>
           )}
@@ -71,23 +71,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {product.isQuoteOnly || product.price === 0 
               ? 'WhatsApp Quote' 
               : `KSh ${product.price.toLocaleString()}`}
-            {isTShirt && !(product.isQuoteOnly || product.price === 0) && (
-              <span className="bg-orange-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider">
-                Bulk Production
-              </span>
-            )}
+            <span className="bg-blue-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider">
+              Bulk Production
+            </span>
           </span>
           {discountPercent > 0 && (
-            <span className="bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-xs">
+            <span className="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-xs">
               -{discountPercent}% OFF
             </span>
           )}
         </div>
 
         {/* Custom Artwork Overlay Badge */}
-        <div className="absolute bottom-2 left-2 right-2 bg-slate-900/85 backdrop-blur-xs text-orange-400 text-[10px] font-bold px-2 py-1 rounded-lg flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute bottom-2 left-2 right-2 bg-slate-900/85 backdrop-blur-xs text-blue-300 text-[10px] font-bold px-2 py-1 rounded-lg flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
           <span className="flex items-center gap-1">
-            <FileUp className="w-3 h-3 text-orange-400" /> Upload Artwork / Logo
+            <FileUp className="w-3 h-3 text-blue-300" /> Upload Artwork / Logo
           </span>
           <span className="text-white text-[9px]">View Details →</span>
         </div>
@@ -97,7 +95,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div className="p-4 flex-1 flex flex-col justify-between">
         <div>
           {/* Category Pill */}
-          <span className="text-[10px] uppercase tracking-wider font-extrabold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md inline-block mb-1 border border-orange-100">
+          <span className="text-[10px] uppercase tracking-wider font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md inline-block mb-1 border border-blue-100">
             {product.category}
           </span>
 
@@ -107,7 +105,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               setSelectedProductForDetail(product);
               setActiveModal('product-detail');
             }}
-            className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-2 hover:text-orange-600 cursor-pointer leading-snug mb-1.5"
+            className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-2 hover:text-blue-600 cursor-pointer leading-snug mb-1.5"
           >
             {product.name}
           </h3>
@@ -124,19 +122,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {/* Price Display */}
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             {product.isQuoteOnly || product.price === 0 ? (
-              <span className="text-xs font-black text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
-                {product.priceDisplay || 'Ask for Quote via WhatsApp'}
-              </span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-xs font-black text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
+                  {product.priceDisplay || 'Ask for Quote via WhatsApp'}
+                </span>
+                <span className="text-[10px] font-black text-blue-700 bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-md uppercase tracking-wide inline-flex items-center">
+                  Bulk Production
+                </span>
+              </div>
             ) : (
               <>
                 <span className="text-base sm:text-lg font-black text-slate-900">
                   KSh {product.price.toLocaleString()}
                 </span>
-                {isTShirt && (
-                  <span className="text-[10px] font-black text-orange-700 bg-orange-100 border border-orange-200 px-2 py-0.5 rounded-md uppercase tracking-wide inline-flex items-center">
-                    Bulk Production
-                  </span>
-                )}
+                <span className="text-[10px] font-black text-blue-700 bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-md uppercase tracking-wide inline-flex items-center">
+                  Bulk Production
+                </span>
                 {product.originalPrice && (
                   <span className="text-xs text-slate-400 line-through font-medium">
                     KSh {product.originalPrice.toLocaleString()}
@@ -148,20 +149,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
           {/* Roll-Up Banner Price Breakdown */}
           {isRollUpBanner && (
-            <div className="w-full mb-2.5 p-2 bg-amber-50/90 border border-amber-200/80 rounded-xl flex flex-col gap-1 text-[11px] shadow-2xs">
+            <div className="w-full mb-2.5 p-2 bg-blue-50/90 border border-blue-200/80 rounded-xl flex flex-col gap-1 text-[11px] shadow-2xs">
               <div className="flex items-center justify-between font-bold text-slate-800">
                 <span className="text-slate-600 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
                   Light weight:
                 </span>
-                <span className="text-orange-600 font-extrabold">KSh 6,500</span>
+                <span className="text-blue-600 font-extrabold">KSh 6,500</span>
               </div>
               <div className="flex items-center justify-between font-bold text-slate-800">
                 <span className="text-slate-600 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-600"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-700"></span>
                   Heavy weight:
                 </span>
-                <span className="text-orange-600 font-extrabold">KSh 8,500</span>
+                <span className="text-blue-600 font-extrabold">KSh 8,500</span>
               </div>
             </div>
           )}
@@ -196,7 +197,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
             <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
               <div 
-                className="bg-orange-500 h-full rounded-full" 
+                className="bg-blue-600 h-full rounded-full" 
                 style={{ width: `${Math.min(100, (product.stockCount / 500) * 100)}%` }}
               ></div>
             </div>
@@ -212,7 +213,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   setSelectedProductForDetail(product);
                   setActiveModal('product-detail');
                 }}
-                className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-2 rounded-xl text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-2 rounded-xl text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-xs"
               >
                 <span>Details / Proof</span>
               </button>
@@ -233,7 +234,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   setSelectedProductForDetail(product);
                   setActiveModal('product-detail');
                 }}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-2 px-2 rounded-xl text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-xs"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-2 px-2 rounded-xl text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-xs"
               >
                 <ShoppingCart className="w-3.5 h-3.5" />
                 <span>ADD TO CART</span>

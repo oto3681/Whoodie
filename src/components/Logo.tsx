@@ -91,10 +91,10 @@ export const Logo: React.FC<LogoProps> = ({
           {/* Main Title */}
           <div className="flex items-center tracking-tight leading-none font-black text-sm sm:text-base md:text-lg">
             <span style={{ color: brandBlue }} className="font-extrabold uppercase tracking-wide">
-              WOODY
+              WOODYNAT
             </span>
             <span style={{ color: brandBlue }} className="font-extrabold uppercase tracking-wide ml-1">
-              NAT DESIGNERS LTD
+              DESIGNERS LTD
             </span>
           </div>
 

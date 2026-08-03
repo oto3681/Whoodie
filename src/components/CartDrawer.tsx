@@ -27,7 +27,7 @@ export const CartDrawer: React.FC = () => {
         {/* Header */}
         <div className="bg-slate-900 text-white p-4 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-orange-400" />
+            <ShoppingBag className="w-5 h-5 text-blue-400" />
             <h3 className="font-extrabold text-sm sm:text-base">Your Print Order Cart ({cart.length})</h3>
           </div>
           <button
@@ -69,7 +69,7 @@ export const CartDrawer: React.FC = () => {
               </p>
               <button
                 onClick={() => setActiveModal(null)}
-                className="bg-orange-500 hover:bg-orange-600 text-white font-extrabold px-4 py-2 rounded-xl text-xs transition-colors cursor-pointer shadow-xs"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-4 py-2 rounded-xl text-xs transition-colors cursor-pointer shadow-xs"
               >
                 Start Shopping
               </button>
@@ -166,7 +166,7 @@ export const CartDrawer: React.FC = () => {
                 <span>Estimated Delivery Fee:</span>
                 <span>{subtotal >= freeShippingThreshold ? 'FREE' : 'KSh 300'}</span>
               </div>
-              <div className="flex justify-between text-sm font-black text-orange-400 pt-1 border-t border-slate-800">
+              <div className="flex justify-between text-sm font-black text-blue-400 pt-1 border-t border-slate-800">
                 <span>Total Payable:</span>
                 <span>KSh {(subtotal + (subtotal >= freeShippingThreshold ? 0 : 300)).toLocaleString()}</span>
               </div>
@@ -176,7 +176,7 @@ export const CartDrawer: React.FC = () => {
               onClick={() => {
                 setActiveModal('checkout');
               }}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer uppercase tracking-wider"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer uppercase tracking-wider"
             >
               <span>Proceed to Checkout</span>
               <ArrowRight className="w-4 h-4" />

@@ -42,8 +42,8 @@ export const SocialFeeds: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-orange-400 bg-orange-950/80 px-3 py-1 rounded-full border border-orange-800/80 inline-block mb-2">
-              <Sparkles className="w-3 h-3 inline mr-1 text-orange-400" /> Social Media Showcase
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-400 bg-blue-950/80 px-3 py-1 rounded-full border border-blue-800/80 inline-block mb-2">
+              <Sparkles className="w-3 h-3 inline mr-1 text-blue-400" /> Social Media Showcase
             </span>
             <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
               Watch Our Print Press in Action
@@ -92,7 +92,7 @@ export const SocialFeeds: React.FC = () => {
               href={post.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-slate-800/80 rounded-2xl overflow-hidden border border-slate-700/60 hover:border-orange-500/50 transition-all duration-300 group flex flex-col justify-between"
+              className="bg-slate-800/80 rounded-2xl overflow-hidden border border-slate-700/60 hover:border-blue-500/50 transition-all duration-300 group flex flex-col justify-between"
             >
               <div className="relative aspect-16/9 bg-slate-950 overflow-hidden">
                 <img
@@ -110,14 +110,14 @@ export const SocialFeeds: React.FC = () => {
                 </span>
 
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-12 h-12 bg-orange-500/90 group-hover:bg-orange-500 text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 bg-blue-600/90 group-hover:bg-blue-600 text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
                     <Play className="w-5 h-5 fill-white ml-0.5" />
                   </div>
                 </div>
               </div>
 
               <div className="p-4 space-y-3">
-                <h4 className="text-xs font-bold text-slate-100 line-clamp-2 group-hover:text-orange-400 transition-colors">
+                <h4 className="text-xs font-bold text-slate-100 line-clamp-2 group-hover:text-blue-400 transition-colors">
                   {post.title}
                 </h4>
 
@@ -130,7 +130,7 @@ export const SocialFeeds: React.FC = () => {
                       <MessageCircle className="w-3.5 h-3.5" /> {post.comments}
                     </span>
                   </div>
-                  <span className="text-orange-400 font-bold flex items-center gap-1">
+                  <span className="text-blue-400 font-bold flex items-center gap-1">
                     Watch <Share2 className="w-3 h-3" />
                   </span>
                 </div>

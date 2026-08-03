@@ -107,7 +107,7 @@ export const ProductDetailModal: React.FC = () => {
         {/* Header */}
         <div className="bg-slate-900 text-white p-4 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-2">
-            <span className="bg-orange-500 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md">
+            <span className="bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md">
               {product.category}
             </span>
             <h3 className="text-sm sm:text-base font-extrabold truncate max-w-md">{product.name}</h3>
@@ -136,7 +136,7 @@ export const ProductDetailModal: React.FC = () => {
                 className="w-full h-full object-cover"
               />
               {product.isFlashDeal && (
-                <span className="absolute top-3 left-3 bg-orange-500 text-white text-xs font-black px-3 py-1 rounded-lg shadow-md flex items-center gap-1 uppercase tracking-wider">
+                <span className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-black px-3 py-1 rounded-lg shadow-md flex items-center gap-1 uppercase tracking-wider">
                   <Zap className="w-3.5 h-3.5 fill-white" /> FLASH SALE
                 </span>
               )}
@@ -154,11 +154,11 @@ export const ProductDetailModal: React.FC = () => {
               </ul>
             </div>
 
-            <div className="bg-orange-50 border border-orange-200 p-3 rounded-xl text-xs text-orange-950 space-y-1">
-              <div className="font-bold flex items-center gap-1 text-orange-700">
-                <Truck className="w-4 h-4 text-orange-600" /> Delivery & Proofing Guarantee
+            <div className="bg-blue-50 border border-blue-200 p-3 rounded-xl text-xs text-blue-950 space-y-1">
+              <div className="font-bold flex items-center gap-1 text-blue-700">
+                <Truck className="w-4 h-4 text-blue-600" /> Delivery & Proofing Guarantee
               </div>
-              <p className="text-[11px] leading-relaxed text-orange-800">
+              <p className="text-[11px] leading-relaxed text-blue-800">
                 After placing your order, our Woodynat graphic design team sends you a digital vector proof for approval via WhatsApp before printing begins!
               </p>
             </div>
@@ -183,22 +183,22 @@ export const ProductDetailModal: React.FC = () => {
 
             {/* Roll-Up Banner Pricing Options Breakdown */}
             {isRollUpBanner && (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex flex-col gap-2 text-xs">
-                <div className="font-extrabold text-amber-900 flex items-center justify-between">
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex flex-col gap-2 text-xs">
+                <div className="font-extrabold text-blue-900 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                    <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
                     Base Hardware Options:
                   </span>
-                  <span className="text-[11px] font-semibold text-amber-700">Select option below</span>
+                  <span className="text-[11px] font-semibold text-blue-700">Select option below</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-slate-800">
-                  <div className={`p-2.5 rounded-lg border transition-all flex flex-col ${selectedFinish.includes('6,500') || selectedFinish.includes('6500') ? 'bg-orange-500 text-white border-orange-500 shadow-xs' : 'bg-white border-amber-200'}`}>
-                    <span className={`text-[11px] font-bold ${selectedFinish.includes('6,500') || selectedFinish.includes('6500') ? 'text-orange-100' : 'text-slate-500'}`}>Light Weight</span>
-                    <span className={`text-base font-black ${selectedFinish.includes('6,500') || selectedFinish.includes('6500') ? 'text-white' : 'text-orange-600'}`}>KSh 6,500</span>
+                  <div className={`p-2.5 rounded-lg border transition-all flex flex-col ${selectedFinish.includes('6,500') || selectedFinish.includes('6500') ? 'bg-blue-600 text-white border-blue-600 shadow-xs' : 'bg-white border-blue-200'}`}>
+                    <span className={`text-[11px] font-bold ${selectedFinish.includes('6,500') || selectedFinish.includes('6500') ? 'text-blue-100' : 'text-slate-500'}`}>Light Weight</span>
+                    <span className={`text-base font-black ${selectedFinish.includes('6,500') || selectedFinish.includes('6500') ? 'text-white' : 'text-blue-600'}`}>KSh 6,500</span>
                   </div>
-                  <div className={`p-2.5 rounded-lg border transition-all flex flex-col ${selectedFinish.includes('8,500') || selectedFinish.includes('8500') ? 'bg-orange-500 text-white border-orange-500 shadow-xs' : 'bg-white border-amber-200'}`}>
-                    <span className={`text-[11px] font-bold ${selectedFinish.includes('8,500') || selectedFinish.includes('8500') ? 'text-orange-100' : 'text-slate-500'}`}>Heavy Weight</span>
-                    <span className={`text-base font-black ${selectedFinish.includes('8,500') || selectedFinish.includes('8500') ? 'text-white' : 'text-orange-600'}`}>KSh 8,500</span>
+                  <div className={`p-2.5 rounded-lg border transition-all flex flex-col ${selectedFinish.includes('8,500') || selectedFinish.includes('8500') ? 'bg-blue-600 text-white border-blue-600 shadow-xs' : 'bg-white border-blue-200'}`}>
+                    <span className={`text-[11px] font-bold ${selectedFinish.includes('8,500') || selectedFinish.includes('8500') ? 'text-blue-100' : 'text-slate-500'}`}>Heavy Weight</span>
+                    <span className={`text-base font-black ${selectedFinish.includes('8,500') || selectedFinish.includes('8500') ? 'text-white' : 'text-blue-600'}`}>KSh 8,500</span>
                   </div>
                 </div>
               </div>
@@ -250,7 +250,7 @@ export const ProductDetailModal: React.FC = () => {
                         onClick={() => setSelectedSize(sz)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                           selectedSize === sz
-                            ? 'bg-orange-500 text-white border-orange-500 shadow-xs'
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                             : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
                         }`}
                       >
@@ -275,7 +275,7 @@ export const ProductDetailModal: React.FC = () => {
                         onClick={() => setSelectedFinish(fn)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                           selectedFinish === fn
-                            ? 'bg-orange-500 text-white border-orange-500 shadow-xs'
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                             : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
                         }`}
                       >
@@ -325,7 +325,7 @@ export const ProductDetailModal: React.FC = () => {
               </div>
 
               {/* Upload Artwork File */}
-              <div className="bg-slate-50 border-2 border-dashed border-orange-300 rounded-xl p-3 text-center">
+              <div className="bg-slate-50 border-2 border-dashed border-blue-300 rounded-xl p-3 text-center">
                 <input
                   type="file"
                   id="artwork-upload"
@@ -335,9 +335,9 @@ export const ProductDetailModal: React.FC = () => {
                 />
                 <label 
                   htmlFor="artwork-upload"
-                  className="cursor-pointer flex flex-col items-center justify-center gap-1 text-slate-700 hover:text-orange-600"
+                  className="cursor-pointer flex flex-col items-center justify-center gap-1 text-slate-700 hover:text-blue-600"
                 >
-                  <Upload className="w-5 h-5 text-orange-500" />
+                  <Upload className="w-5 h-5 text-blue-600" />
                   <span className="text-xs font-bold">
                     {uploadedFileName ? `Attached: ${uploadedFileName}` : 'Upload Your Design Logo or PDF Artwork'}
                   </span>
@@ -355,7 +355,7 @@ export const ProductDetailModal: React.FC = () => {
                   placeholder="e.g. Please print company logo on left chest in gold, and staff name 'John' on right sleeve..."
                   value={designInstructions}
                   onChange={(e) => setDesignInstructions(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-orange-500 focus:bg-white focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:bg-white focus:outline-none"
                 />
               </div>
 
@@ -364,26 +364,24 @@ export const ProductDetailModal: React.FC = () => {
             {/* Instant Calculated Price Quote Box */}
             <div className="bg-slate-900 text-white rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span className="text-xs font-bold flex items-center gap-1 text-orange-400">
+                <span className="text-xs font-bold flex items-center gap-1 text-blue-400">
                   <Calculator className="w-4 h-4" /> Calculated Quote Total:
                 </span>
-                <span className="text-xl font-extrabold text-orange-400 flex items-center gap-2">
+                <span className="text-xl font-extrabold text-blue-400 flex items-center gap-2">
                   {product.isQuoteOnly || currentBasePrice === 0 
                     ? 'Quote on Inquiry' 
                     : `KSh ${totalPrice.toLocaleString()}`}
-                  {isTShirt && (
-                    <span className="text-[10px] font-black bg-orange-500 text-white border border-orange-400/50 px-2 py-0.5 rounded uppercase tracking-wider">
-                      Bulk Production
-                    </span>
-                  )}
+                  <span className="text-[10px] font-black bg-blue-600 text-white border border-blue-400/50 px-2 py-0.5 rounded uppercase tracking-wider">
+                    Bulk Production
+                  </span>
                 </span>
               </div>
 
               <div className="flex justify-between text-[11px] text-slate-400">
                 <span>
                   {product.isQuoteOnly || currentBasePrice === 0 
-                    ? 'Custom Quote via WhatsApp Inquiry' 
-                    : `Unit Rate: KSh ${Math.round(unitPrice).toLocaleString()} / item ${isTShirt ? '(Bulk Production)' : ''}`}
+                    ? 'Custom Quote via WhatsApp Inquiry (Bulk Production)' 
+                    : `Unit Rate: KSh ${Math.round(unitPrice).toLocaleString()} / item (Bulk Production)`}
                 </span>
                 <span>Includes Design Verification</span>
               </div>
@@ -391,7 +389,7 @@ export const ProductDetailModal: React.FC = () => {
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <button
                   onClick={handleAddToCart}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-extrabold py-3 px-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 px-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
                 >
                   <ShoppingBag className="w-4 h-4" />
                   <span>

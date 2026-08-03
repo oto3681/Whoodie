@@ -55,7 +55,7 @@ export const CustomerFeedback: React.FC = () => {
       {/* Section Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10 pb-6 border-b border-slate-200">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-orange-600 bg-orange-50 px-3 py-1 rounded-full border border-orange-200 inline-block mb-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200 inline-block mb-2">
             Verified Client Reviews
           </span>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
@@ -68,7 +68,7 @@ export const CustomerFeedback: React.FC = () => {
 
         <button
           onClick={() => setFeedbackModalOpen(true)}
-          className="bg-orange-500 hover:bg-orange-600 text-white font-extrabold px-5 py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer self-start md:self-auto"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-5 py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer self-start md:self-auto"
         >
           <MessageSquarePlus className="w-4 h-4" />
           <span>Write a Review / Share Photos</span>
@@ -120,7 +120,7 @@ export const CustomerFeedback: React.FC = () => {
             onClick={() => setSelectedCategory(cat)}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               selectedCategory === cat
-                ? 'bg-slate-900 text-white shadow-xs'
+                ? 'bg-blue-600 text-white shadow-xs'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -147,12 +147,12 @@ export const CustomerFeedback: React.FC = () => {
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-orange-600 font-bold mt-0.5">{rev.productName}</p>
+                  <p className="text-[11px] text-blue-600 font-bold mt-0.5">{rev.productName}</p>
                 </div>
 
-                <div className="flex text-orange-400">
+                <div className="flex text-amber-400">
                   {[...Array(rev.rating)].map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-orange-400 text-orange-400" />
+                    <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                   ))}
                 </div>
               </div>
@@ -182,7 +182,7 @@ export const CustomerFeedback: React.FC = () => {
 
               <button
                 onClick={() => likeReview(rev.id)}
-                className="flex items-center gap-1 text-slate-600 hover:text-orange-600 font-bold cursor-pointer bg-slate-50 hover:bg-orange-50 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors"
+                className="flex items-center gap-1 text-slate-600 hover:text-blue-600 font-bold cursor-pointer bg-slate-50 hover:bg-blue-50 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors"
               >
                 <ThumbsUp className="w-3.5 h-3.5" />
                 <span>Helpful ({rev.likes})</span>
@@ -213,7 +213,7 @@ export const CustomerFeedback: React.FC = () => {
                   placeholder="e.g. Kiprono M. (Apex Logistics)"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
@@ -252,7 +252,7 @@ export const CustomerFeedback: React.FC = () => {
                   placeholder="e.g. Custom Printed Hoodies or 24h Eulogy Booklets"
                   value={productName}
                   onChange={(e) => setProductName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
@@ -264,7 +264,7 @@ export const CustomerFeedback: React.FC = () => {
                   placeholder="Share details about print sharpness, delivery speed, and customer service..."
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
@@ -275,13 +275,13 @@ export const CustomerFeedback: React.FC = () => {
                   placeholder="https://images.unsplash.com/..."
                   value={photoUrl}
                   onChange={(e) => setPhotoUrl(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-extrabold py-3 rounded-xl text-xs transition-colors cursor-pointer shadow-md"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 rounded-xl text-xs transition-colors cursor-pointer shadow-md"
               >
                 Submit Verified Feedback
               </button>

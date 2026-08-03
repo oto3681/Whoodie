@@ -5,7 +5,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-rollup-banner',
     name: 'Roll-Up Banner Printing (Light & Large Heavy Base)',
-    category: 'Banners & Displays',
+    category: 'Banners & Stickers',
     price: 6500,
     priceDisplay: 'KSh 6,500 (Light) / KSh 8,500 (Large)',
     originalPrice: 9000,
@@ -32,7 +32,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-teardrop-banner',
     name: 'Tear-Drop Banner Branding & Flag Hardware',
-    category: 'Banners & Displays',
+    category: 'Banners & Stickers',
     price: 0,
     isQuoteOnly: true,
     priceDisplay: 'Ask for Quote via WhatsApp',
@@ -137,7 +137,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-flyers',
     name: 'Flyers Printing & Graphic Design',
-    category: 'Brochures & Flyers',
+    category: 'Flyers & Posters',
     price: 0,
     isQuoteOnly: true,
     priceDisplay: 'Ask for Quote via WhatsApp',
@@ -164,7 +164,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-stickers',
     name: 'Custom Product Stickers & Labels',
-    category: 'Product Stickers & Labels',
+    category: 'Banners & Stickers',
     price: 0,
     isQuoteOnly: true,
     priceDisplay: 'Ask for Quote via WhatsApp',
@@ -192,7 +192,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-vinyl-cutting',
     name: 'Precision Vinyl Cutting & Decal Plotting',
-    category: 'Product Stickers & Labels',
+    category: 'Banners & Stickers',
     price: 0,
     isQuoteOnly: true,
     priceDisplay: 'Ask for Quote via WhatsApp',
@@ -220,7 +220,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-wedding-cards',
     name: 'Wedding Invitation Cards & Stationeries',
-    category: 'Brochures & Flyers',
+    category: 'Flyers & Posters',
     price: 0,
     isQuoteOnly: true,
     priceDisplay: 'Ask for Quote via WhatsApp',
@@ -245,7 +245,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-business-cards',
     name: 'Executive Business Cards & Premium Stationeries',
-    category: 'Brochures & Flyers',
+    category: 'Flyers & Posters',
     price: 0,
     isQuoteOnly: true,
     priceDisplay: 'Ask for Quote via WhatsApp',
@@ -374,7 +374,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-lightweight-reflectors',
     name: 'Light Weight Reflectors @ KSh 350',
-    category: 'Reflectors & Safety',
+    category: 'Reflectors & Aprons',
     price: 350,
     originalPrice: 500,
     rating: 4.8,
@@ -401,7 +401,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-calendars',
     name: 'Corporate Desktop & Wall Calendars',
-    category: 'Brochures & Flyers',
+    category: 'Flyers & Posters',
     price: 0,
     isQuoteOnly: true,
     priceDisplay: 'Ask for Quote via WhatsApp',
@@ -502,7 +502,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-brochures',
     name: 'Corporate Brochures & Company Profiles',
-    category: 'Brochures & Flyers',
+    category: 'Flyers & Posters',
     price: 0,
     isQuoteOnly: true,
     priceDisplay: 'Ask for Quote via WhatsApp',
@@ -528,7 +528,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-hoodies',
     name: 'Custom Heavyweight Hoodies @ KSh 2,500',
-    category: 'Hoodies & Sweatshirts',
+    category: 'Hoodies',
     price: 2500,
     originalPrice: 3200,
     rating: 5.0,
@@ -607,7 +607,7 @@ export const INITIAL_REVIEWS: CustomerReview[] = [
   {
     id: 'rev-01',
     customerName: 'Kiprono M. (Apex Logistics)',
-    productCategory: 'Reflectors & Safety',
+    productCategory: 'Reflectors & Aprons',
     productName: 'High-Visibility Executive Safety Vest',
     rating: 5,
     comment: 'Ordered 150 safety vests with our company logo printed on the back. Delivered in 24 hours to our depot in Industrial Area Nairobi! Excellent quality reflective bands.',
@@ -631,7 +631,7 @@ export const INITIAL_REVIEWS: CustomerReview[] = [
   {
     id: 'rev-03',
     customerName: 'David Ochieng (Vibe Events)',
-    productCategory: 'Banners & Displays',
+    productCategory: 'Banners & Stickers',
     productName: 'Retractable Roll-Up Banner (85cm x 200cm)',
     rating: 5,
     comment: 'The roll-up banners were extremely sharp and color accurate! The aluminum stand is strong and easy to transport in the padded case. 10/10 service!',
@@ -643,7 +643,7 @@ export const INITIAL_REVIEWS: CustomerReview[] = [
   {
     id: 'rev-04',
     customerName: 'Amina Hassan (Organic Beauty)',
-    productCategory: 'Product Stickers & Labels',
+    productCategory: 'Banners & Stickers',
     productName: 'Custom Waterproof Vinyl Product Die-Cut Stickers',
     rating: 5,
     comment: 'These stickers are truly waterproof! We stick them on glass cosmetic jars that get washed, and the print doesn’t peel off or bleed. Order completed via M-Pesa smoothly.',
@@ -783,5 +783,9 @@ export const DEFAULT_WORDPRESS_SETTINGS: WordPressSettings = {
   wpWooSyncEnabled: true,
   wpRestEndpoint: 'https://woodynatdesigners.co.ke/wp-json/wc/v3',
   heroHeadline: 'Woodynat Designers Limited — Premium Printing & Custom Apparel',
-  heroSubheadline: 'Custom T-Shirts, Hoodies, Banners, Signage & Express 24h Funeral Program Booklets. Visit us at Gatkim Complex, Nairobi or order online via Paybill 247247 (Acc: 0797939199)!'
+  heroSubheadline: 'Custom T-Shirts, Hoodies, Banners, Signage & Express 24h Funeral Program Booklets. Visit us at Gatkim Complex, Nairobi or order online via Paybill 247247 (Acc: 0797939199)!',
+  mpesaEnvironment: 'production',
+  mpesaConsumerKey: '',
+  mpesaConsumerSecret: '',
+  mpesaPasskey: ''
 };

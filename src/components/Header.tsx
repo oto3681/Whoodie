@@ -4,14 +4,14 @@ import { Logo } from './Logo';
 import { 
   Search, 
   ShoppingBag, 
-  User, 
-  MessageCircle, 
+  MessageCircle,
   Package, 
   LayoutDashboard, 
   Menu, 
   X, 
   CheckCircle,
-  Settings
+  Settings,
+  LogOut
 } from 'lucide-react';
 import { ProductCategory } from '../types';
 
@@ -25,6 +25,7 @@ export const Header: React.FC = () => {
     setSelectedCategory,
     cart, 
     currentUser, 
+    logout,
     setActiveModal, 
     activeView, 
     setActiveView 
@@ -56,7 +57,7 @@ export const Header: React.FC = () => {
 
           {/* Jumia-Style Central Search & Category Bar */}
           <div className="hidden lg:flex items-center flex-1 max-w-2xl mx-4">
-            <div className="flex w-full rounded-xl border-2 border-orange-500 bg-white focus-within:ring-2 focus-within:ring-orange-200 transition-all overflow-hidden shadow-xs">
+            <div className="flex w-full rounded-xl border-2 border-blue-600 bg-white focus-within:ring-2 focus-within:ring-blue-200 transition-all overflow-hidden shadow-xs">
               
               {/* Category Selector Dropdown inside Search */}
               <select
@@ -91,7 +92,7 @@ export const Header: React.FC = () => {
               </div>
 
               {/* Search Submit Button */}
-              <button className="bg-orange-500 hover:bg-orange-600 text-white px-6 flex items-center justify-center font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer">
+              <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 flex items-center justify-center font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer">
                 <Search className="w-4 h-4 mr-1" /> SEARCH
               </button>
             </div>
@@ -114,42 +115,20 @@ export const Header: React.FC = () => {
             {/* Tracking Button */}
             <button
               onClick={() => setActiveModal('track')}
-              className="hidden md:flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-orange-600 px-2.5 py-2 rounded-xl hover:bg-orange-50 transition-colors cursor-pointer"
+              className="hidden md:flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-blue-600 px-2.5 py-2 rounded-xl hover:bg-blue-50 transition-colors cursor-pointer"
             >
-              <Package className="w-4 h-4 text-orange-500" />
+              <Package className="w-4 h-4 text-blue-600" />
               <span>Track Order</span>
             </button>
 
-            {/* View Switching Navigation */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
-              <button
-                onClick={() => setActiveView('shop')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  activeView === 'shop' 
-                    ? 'bg-orange-500 text-white shadow-xs' 
-                    : 'text-slate-700 hover:text-slate-900'
-                }`}
-              >
-                Shop
-              </button>
-
-              <button
-                onClick={() => setActiveView('reviews')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  activeView === 'reviews' 
-                    ? 'bg-orange-500 text-white shadow-xs' 
-                    : 'text-slate-700 hover:text-slate-900'
-                }`}
-              >
-                Reviews
-              </button>
-
-              {currentUser ? (
+            {/* If user logged in, show quick Account/Admin badge */}
+            {currentUser && (
+              <div className="hidden md:flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
                 <button
                   onClick={() => setActiveView(currentUser.role === 'admin' ? 'admin' : 'dashboard')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                     activeView === 'dashboard' || activeView === 'admin'
-                      ? 'bg-slate-900 text-orange-400 shadow-xs' 
+                      ? 'bg-slate-900 text-blue-400 shadow-xs' 
                       : 'text-slate-700 hover:text-slate-900'
                   }`}
                 >
@@ -163,25 +142,27 @@ export const Header: React.FC = () => {
                     </>
                   )}
                 </button>
-              ) : (
+
                 <button
-                  onClick={() => setActiveModal('login')}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 hover:text-orange-600 flex items-center gap-1 transition-all cursor-pointer"
+                  onClick={logout}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-extrabold text-red-600 hover:bg-red-50 border border-red-200 flex items-center gap-1 transition-all cursor-pointer"
+                  title="Log Out of Account"
                 >
-                  <User className="w-3.5 h-3.5" /> Account
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Log Out</span>
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Cart Button */}
             <button
               onClick={() => setActiveModal('cart')}
-              className="relative bg-orange-500 hover:bg-orange-600 text-white font-extrabold p-2.5 sm:px-4 sm:py-2.5 rounded-xl flex items-center gap-2 transition-transform active:scale-95 shadow-md cursor-pointer"
+              className="relative bg-blue-600 hover:bg-blue-700 text-white font-extrabold p-2.5 sm:px-4 sm:py-2.5 rounded-xl flex items-center gap-2 transition-transform active:scale-95 shadow-md cursor-pointer"
             >
               <ShoppingBag className="w-5 h-5" />
               <span className="hidden sm:inline text-xs uppercase tracking-wider">Cart</span>
               {cartItemsCount > 0 && (
-                <span className="bg-white text-orange-600 text-xs font-black w-5 h-5 rounded-full flex items-center justify-center border border-orange-200 shadow-xs">
+                <span className="bg-white text-blue-600 text-xs font-black w-5 h-5 rounded-full flex items-center justify-center border border-blue-200 shadow-xs">
                   {cartItemsCount}
                 </span>
               )}
@@ -199,7 +180,7 @@ export const Header: React.FC = () => {
 
         {/* Mobile Search Bar */}
         <div className="lg:hidden pb-3">
-          <div className="flex w-full rounded-xl border-2 border-orange-500 bg-white focus-within:bg-white overflow-hidden shadow-xs">
+          <div className="flex w-full rounded-xl border-2 border-blue-600 bg-white focus-within:bg-white overflow-hidden shadow-xs">
             <input
               type="text"
               placeholder="Search T-Shirts, Hoodies, Banners, Eulogies..."
@@ -207,7 +188,7 @@ export const Header: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full text-xs text-slate-900 px-3 py-2 bg-transparent focus:outline-none"
             />
-            <button className="bg-orange-500 text-white px-3 flex items-center justify-center font-bold">
+            <button className="bg-blue-600 text-white px-3 flex items-center justify-center font-bold">
               <Search className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -215,8 +196,8 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Category Pills Navigation Bar */}
-      <div className="bg-white border-t border-b border-slate-200 overflow-x-auto scrollbar-none py-2 px-4 shadow-xs">
-        <div className="max-w-7xl mx-auto flex items-center gap-2 whitespace-nowrap min-w-max">
+      <div className="bg-slate-100/80 border-t border-b border-slate-200 overflow-x-auto scrollbar-none py-2 px-4 shadow-2xs">
+        <div className="max-w-7xl mx-auto flex items-center justify-start lg:justify-center gap-2 whitespace-nowrap min-w-max">
           {categories.map((cat) => {
             const isSelected = selectedCategory === cat;
             return (
@@ -228,8 +209,8 @@ export const Header: React.FC = () => {
                 }}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-orange-500 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-orange-50 hover:text-orange-600'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-blue-50 hover:text-blue-600'
                 }`}
               >
                 {cat}
@@ -281,7 +262,7 @@ export const Header: React.FC = () => {
                   setActiveView(currentUser.role === 'admin' ? 'admin' : 'dashboard'); 
                   setMobileMenuOpen(false); 
                 }}
-                className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold text-center"
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold text-center transition-colors shadow-xs"
               >
                 Go to {currentUser.role === 'admin' ? 'WordPress Admin' : 'User Dashboard'}
               </button>

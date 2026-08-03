@@ -1,12 +1,11 @@
 export type ProductCategory = 
   | 'All'
   | 'Printed T-Shirts'
-  | 'Hoodies & Sweatshirts'
-  | 'Reflectors & Safety'
-  | 'Banners & Displays'
+  | 'Hoodies'
+  | 'Reflectors & Aprons'
+  | 'Banners & Stickers'
   | 'Branding & Signage'
-  | 'Product Stickers & Labels'
-  | 'Brochures & Flyers'
+  | 'Flyers & Posters'
   | 'Eulogies & Memorials';
 
 export interface Product {
@@ -49,7 +48,10 @@ export interface CartItem {
 }
 
 export type OrderStatus = 
+  | 'Order Placed'
   | 'Order Received'
+  | 'Order Received by Admin'
+  | 'Design Approved'
   | 'Design Proof Approved'
   | 'Printing & Production'
   | 'Quality Check'
@@ -126,4 +128,8 @@ export interface WordPressSettings {
   wpRestEndpoint: string;
   heroHeadline: string;
   heroSubheadline: string;
+  mpesaEnvironment?: 'sandbox' | 'production';
+  mpesaConsumerKey?: string;
+  mpesaConsumerSecret?: string;
+  mpesaPasskey?: string;
 }

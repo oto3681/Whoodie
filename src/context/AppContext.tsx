@@ -164,12 +164,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const categories: ProductCategory[] = [
     'All',
     'Printed T-Shirts',
-    'Hoodies & Sweatshirts',
-    'Reflectors & Safety',
-    'Banners & Displays',
+    'Hoodies',
+    'Reflectors & Aprons',
+    'Banners & Stickers',
     'Branding & Signage',
-    'Product Stickers & Labels',
-    'Brochures & Flyers',
+    'Flyers & Posters',
     'Eulogies & Memorials'
   ];
 
@@ -302,40 +301,40 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const trackingHistory: Order['trackingHistory'] = [
       {
-        status: 'Order Received',
+        status: 'Order Placed',
         timestamp: nowStr,
         completed: true,
-        description: 'Order placed & payment authorized successfully.'
+        description: 'Order placed & M-Pesa payment authorized successfully.'
       },
       {
-        status: 'Design Proof Approved',
+        status: 'Order Received by Admin',
+        timestamp: 'Processing',
+        completed: false,
+        description: 'Order acknowledged & assigned to Woodynat production team.'
+      },
+      {
+        status: 'Design Approved',
         timestamp: 'Pending Review',
         completed: false,
-        description: 'Design proofing & artwork vectorization underway.'
-      },
-      {
-        status: 'Printing & Production',
-        timestamp: 'Queued',
-        completed: false,
-        description: 'High definition digital printing on press.'
+        description: 'Design proofing & artwork vectorization approved.'
       },
       {
         status: 'Quality Check',
-        timestamp: 'Pending',
+        timestamp: 'Queued',
         completed: false,
-        description: 'Color inspection & packaging.'
+        description: 'Color inspection, print calibration & packaging check.'
       },
       {
         status: 'Out for Delivery',
-        timestamp: 'Pending',
+        timestamp: 'Pending Dispatch',
         completed: false,
-        description: 'Dispatched with courier rider.'
+        description: 'Package handed over to dispatch courier rider.'
       },
       {
         status: 'Delivered',
-        timestamp: 'Pending',
+        timestamp: 'Pending Arrival',
         completed: false,
-        description: 'Delivered to customer or pick-up point.'
+        description: 'Delivered to customer or designated pick-up station.'
       }
     ];
 
@@ -343,7 +342,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       ...orderData,
       id,
       userId: currentUser?.id || 'guest',
-      orderStatus: 'Order Received',
+      orderStatus: 'Order Placed',
       paymentStatus: 'Paid',
       createdAt: nowStr,
       estimatedDelivery: 'Tomorrow, 02:00 PM',
@@ -359,15 +358,40 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const updateOrderStatus = (orderId: string, status: OrderStatus) => {
     const targetOrder = orders.find((o) => o.id === orderId);
     if (targetOrder) {
-      const updatedHistory = targetOrder.trackingHistory.map((step) => {
-        if (step.status === status) {
-          return {
-            ...step,
-            completed: true,
-            timestamp: new Date().toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }),
-          };
-        }
-        return step;
+      const canonicalStepsDescriptions: Record<string, string> = {
+        'Order Placed': 'Order placed & M-Pesa payment authorized successfully.',
+        'Order Received by Admin': 'Order acknowledged & assigned to Woodynat production team.',
+        'Design Approved': 'Design proofing & artwork vectorization approved.',
+        'Quality Check': 'Color inspection, print calibration & packaging check.',
+        'Out for Delivery': 'Package handed over to dispatch courier rider.',
+        'Delivered': 'Delivered to customer or designated pick-up station.'
+      };
+
+      const canonicalSteps: OrderStatus[] = [
+        'Order Placed',
+        'Order Received by Admin',
+        'Design Approved',
+        'Quality Check',
+        'Out for Delivery',
+        'Delivered'
+      ];
+
+      const targetIdx = canonicalSteps.indexOf(status);
+      const nowFormatted = new Date().toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
+
+      // Build updated tracking history ensuring progressive completion
+      const updatedHistory: Order['trackingHistory'] = canonicalSteps.map((stepName, idx) => {
+        const existingStep = targetOrder.trackingHistory?.find(s => s.status === stepName);
+        const isCompleted = idx <= targetIdx;
+
+        return {
+          status: stepName,
+          completed: isCompleted,
+          timestamp: isCompleted 
+            ? (existingStep?.timestamp && existingStep.timestamp !== 'Pending' && existingStep.timestamp !== 'Queued' ? existingStep.timestamp : nowFormatted)
+            : 'Pending',
+          description: existingStep?.description || canonicalStepsDescriptions[stepName] || 'Step processing'
+        };
       });
 
       const updatedOrder: Order = {
@@ -377,7 +401,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       };
 
       saveOrderToFirestore(updatedOrder);
-      showToast('Order Updated 🚚', `Order ${orderId} status set to "${status}".`);
+      showToast('Order Status Updated 🚚', `Order ${orderId} progressed to "${status}".`);
     }
   };
 

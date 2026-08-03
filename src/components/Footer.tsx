@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export const Footer: React.FC = () => {
-  const { wpSettings, setActiveModal, setActiveView } = useApp();
+  const { wpSettings, setActiveModal, setActiveView, currentUser, logout } = useApp();
 
   const rawPhone = wpSettings.whatsappNumber.replace(/[^0-9]/g, '');
   const cleanPhone = rawPhone.startsWith('0') ? '254' + rawPhone.slice(1) : rawPhone;
@@ -26,7 +26,7 @@ export const Footer: React.FC = () => {
         {/* Trust Badges */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 pb-12 border-b border-slate-800">
           <div className="flex items-center gap-3 bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
-            <div className="p-3 bg-orange-500/20 text-orange-400 rounded-lg shrink-0">
+            <div className="p-3 bg-blue-500/20 text-blue-400 rounded-lg shrink-0">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
@@ -121,13 +121,13 @@ export const Footer: React.FC = () => {
           <div>
             <h4 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">Products & Print</h4>
             <ul className="space-y-2 text-xs text-slate-400">
-              <li><button onClick={() => setActiveView('shop')} className="hover:text-orange-400 transition-colors">Printed T-Shirts & Polos</button></li>
-              <li><button onClick={() => setActiveView('shop')} className="hover:text-orange-400 transition-colors">Custom Branded Hoodies</button></li>
-              <li><button onClick={() => setActiveView('shop')} className="hover:text-orange-400 transition-colors">Safety Vests & Reflectors</button></li>
-              <li><button onClick={() => setActiveView('shop')} className="hover:text-orange-400 transition-colors">Rollup & Vinyl Banners</button></li>
-              <li><button onClick={() => setActiveView('shop')} className="hover:text-orange-400 transition-colors">Vehicle & Office Signage</button></li>
-              <li><button onClick={() => setActiveView('shop')} className="hover:text-orange-400 transition-colors">Die-Cut Waterproof Stickers</button></li>
-              <li><button onClick={() => setActiveView('shop')} className="hover:text-orange-400 transition-colors">24h Express Eulogies</button></li>
+              <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Printed T-Shirts & Polos</button></li>
+              <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Custom Branded Hoodies</button></li>
+              <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Safety Vests & Reflectors</button></li>
+              <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Rollup & Vinyl Banners</button></li>
+              <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Vehicle & Office Signage</button></li>
+              <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Die-Cut Waterproof Stickers</button></li>
+              <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">24h Express Eulogies</button></li>
             </ul>
           </div>
 
@@ -135,11 +135,15 @@ export const Footer: React.FC = () => {
           <div>
             <h4 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">Customer Care</h4>
             <ul className="space-y-2 text-xs text-slate-400">
-              <li><button onClick={() => setActiveModal('track')} className="hover:text-orange-400 font-semibold transition-colors">Track Real-Time Order</button></li>
-              <li><button onClick={() => setActiveView('reviews')} className="hover:text-orange-400 transition-colors">Customer Feedback & Reviews</button></li>
-              <li><button onClick={() => setActiveModal('login')} className="hover:text-orange-400 transition-colors">User & Admin Login</button></li>
-              <li><a href="#payment-methods" className="hover:text-orange-400 transition-colors">Accepted Payments</a></li>
-              <li><button onClick={() => setActiveModal('track')} className="hover:text-orange-400 transition-colors">Shipping & Pick-Up Stations</button></li>
+              <li><button onClick={() => setActiveModal('track')} className="hover:text-blue-400 font-semibold transition-colors">Track Real-Time Order</button></li>
+              <li><button onClick={() => setActiveView('reviews')} className="hover:text-blue-400 transition-colors">Customer Feedback & Reviews</button></li>
+              {currentUser ? (
+                <li><button onClick={logout} className="text-red-400 hover:text-red-300 font-bold transition-colors">Log Out ({currentUser.name})</button></li>
+              ) : (
+                <li><button onClick={() => setActiveModal('login')} className="hover:text-blue-400 font-semibold transition-colors">User & Admin Login</button></li>
+              )}
+              <li><a href="#payment-methods" className="hover:text-blue-400 transition-colors">Accepted Payments</a></li>
+              <li><button onClick={() => setActiveModal('track')} className="hover:text-blue-400 transition-colors">Shipping & Pick-Up Stations</button></li>
             </ul>
           </div>
 
@@ -148,7 +152,7 @@ export const Footer: React.FC = () => {
             <h4 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">Inquiry & Office</h4>
             <div className="space-y-3 text-xs text-slate-400">
               <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                 <span>{wpSettings.companyAddress || 'Ronald Ngala street, Gatkim complex building, 4th floor, Wing B, Room 4B1'}, {wpSettings.companyCity || 'Nairobi'}, Kenya</span>
               </div>
               <div className="flex items-center gap-2">
@@ -156,8 +160,8 @@ export const Footer: React.FC = () => {
                 <span>{wpSettings.supportPhone}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-orange-400 shrink-0" />
-                <a href={`mailto:${wpSettings.companyEmail}`} className="hover:text-orange-400 transition-colors">{wpSettings.companyEmail}</a>
+                <Mail className="w-4 h-4 text-blue-400 shrink-0" />
+                <a href={`mailto:${wpSettings.companyEmail}`} className="hover:text-blue-400 transition-colors">{wpSettings.companyEmail}</a>
               </div>
               <a
                 href={`https://wa.me/${cleanPhone}`}

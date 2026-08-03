@@ -7,13 +7,21 @@ import {
   getDocs 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Product, Order, CustomerReview, WordPressSettings, OrderStatus } from '../types';
+import { Product, Order, CustomerReview, WordPressSettings, OrderStatus, ProductCategory } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_REVIEWS, MOCK_ORDERS, DEFAULT_WORDPRESS_SETTINGS } from '../data/initialData';
 
 const PRODUCTS_COL = 'products';
 const ORDERS_COL = 'orders';
 const REVIEWS_COL = 'reviews';
 const SETTINGS_COL = 'settings';
+
+const CATEGORY_MAPPINGS: Record<string, ProductCategory> = {
+  'Hoodies & Sweatshirts': 'Hoodies',
+  'Reflectors & Safety': 'Reflectors & Aprons',
+  'Banners & Displays': 'Banners & Stickers',
+  'Brochures & Flyers': 'Flyers & Posters',
+  'Product Stickers & Labels': 'Banners & Stickers'
+};
 
 // Subscribe to Products
 export const subscribeProducts = (onUpdate: (products: Product[]) => void) => {
@@ -36,6 +44,12 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void) => {
         if (data.id === 'prod-documentary-01' || data.category === ('Documentaries & Video' as any)) {
           deleteProductFromFirestore(data.id);
           return;
+        }
+
+        // Migrate old category names to new category names automatically
+        if (CATEGORY_MAPPINGS[data.category]) {
+          data.category = CATEGORY_MAPPINGS[data.category];
+          saveProductToFirestore(data);
         }
         let img = data.image || '';
         if (img.startsWith('/src/assets/')) {

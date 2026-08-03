@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
+import { OrderStatus } from '../types';
 import { 
   Package, 
   Truck, 
@@ -113,12 +114,60 @@ export const UserDashboard: React.FC = () => {
                         setActiveTrackingId(ord.id);
                         setActiveModal('track');
                       }}
-                      className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3 py-1 rounded-xl text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded-xl text-xs flex items-center gap-1 transition-colors cursor-pointer shadow-xs"
                     >
                       <Truck className="w-3.5 h-3.5 text-amber-400" /> Track Live
                     </button>
                   </div>
                 </div>
+
+                {/* Order Progress Bar filling a path */}
+                {(() => {
+                  const getStageIdx = (status: OrderStatus) => {
+                    switch (status) {
+                      case 'Order Placed': case 'Order Received': return 0;
+                      case 'Order Received by Admin': return 1;
+                      case 'Design Approved': case 'Design Proof Approved': case 'Printing & Production': return 2;
+                      case 'Quality Check': return 3;
+                      case 'Out for Delivery': return 4;
+                      case 'Delivered': return 5;
+                      default: return 0;
+                    }
+                  };
+                  const sIdx = getStageIdx(ord.orderStatus);
+                  const pct = Math.round(((sIdx + 1) / 6) * 100);
+                  const pathFill = Math.round((sIdx / 5) * 100);
+
+                  return (
+                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-extrabold text-slate-800">
+                          Status: <span className="text-blue-600 font-black">{ord.orderStatus}</span>
+                        </span>
+                        <span className="font-mono font-black text-blue-600 bg-blue-100 px-2 py-0.5 rounded text-[11px]">
+                          {pct}% Complete
+                        </span>
+                      </div>
+
+                      {/* Bar Filling a Path */}
+                      <div className="relative h-2 bg-slate-200 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-blue-600 via-sky-500 to-emerald-500 transition-all duration-500 rounded-full"
+                          style={{ width: `${pathFill}%` }}
+                        />
+                      </div>
+
+                      <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+                        <span>1. Placed</span>
+                        <span>2. Admin</span>
+                        <span>3. Design</span>
+                        <span>4. Quality</span>
+                        <span>5. Delivery</span>
+                        <span>6. Delivered</span>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Items in order */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
