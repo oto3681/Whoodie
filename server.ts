@@ -169,7 +169,7 @@ app.post('/api/mpesa/stkpush', async (req, res) => {
         return res.json({
           success: true,
           liveApi: true,
-          environment: envMode,
+          environment: mpesaConfig.environment,
           merchantRequestId: stkData.MerchantRequestID,
           checkoutRequestId: stkData.CheckoutRequestID,
           responseCode: stkData.ResponseCode,
@@ -180,7 +180,7 @@ app.post('/api/mpesa/stkpush', async (req, res) => {
         return res.status(400).json({
           success: false,
           liveApi: true,
-          environment: envMode,
+          environment: mpesaConfig.environment,
           responseCode: stkData.ResponseCode,
           message: stkData.ResponseDescription || stkData.errorMessage || 'M-Pesa STK Push request failed',
           details: stkData
@@ -211,7 +211,7 @@ app.post('/api/mpesa/stkpush', async (req, res) => {
       success: true,
       liveApi: false,
       simulationMode: true,
-      environment: envMode,
+      environment: mpesaConfig.environment,
       merchantRequestId: mockMerchantId,
       checkoutRequestId: mockCheckoutId,
       responseCode: "0",
@@ -478,7 +478,7 @@ app.post('/api/mpesa/c2b/register-url', async (req, res) => {
         return res.json({
           success: true,
           liveApi: true,
-          environment: envMode,
+          environment: mpesaConfig.environment,
           shortCode,
           confirmationURL,
           validationURL,
@@ -489,7 +489,7 @@ app.post('/api/mpesa/c2b/register-url', async (req, res) => {
         return res.status(400).json({
           success: false,
           liveApi: true,
-          environment: envMode,
+          environment: mpesaConfig.environment,
           message: regData.ResponseDescription || regData.errorMessage || 'Failed to register C2B URLs with Safaricom',
           details: regData
         });
@@ -501,7 +501,7 @@ app.post('/api/mpesa/c2b/register-url', async (req, res) => {
       success: true,
       liveApi: false,
       simulationMode: true,
-      environment: envMode,
+      environment: mpesaConfig.environment,
       shortCode,
       confirmationURL,
       validationURL,
@@ -558,7 +558,7 @@ app.post('/api/mpesa/c2b/confirmation', (req, res) => {
 // Health Check API
 app.get('/api/health', (req, res) => {
   const mpesaRuntime = getMpesaRuntimeConfig({
-    environment: process.env.MPESA_ENVIRONMENT || 'production',
+    environment: normalizeMpesaEnvironment(process.env.MPESA_ENVIRONMENT),
     consumerKey: process.env.MPESA_CONSUMER_KEY || '',
     consumerSecret: process.env.MPESA_CONSUMER_SECRET || '',
     passkey: process.env.MPESA_PASSKEY || '',
