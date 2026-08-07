@@ -46,7 +46,7 @@ interface AppContextType {
   reviews: CustomerReview[];
   currentUser: UserProfile | null;
   wpSettings: WordPressSettings;
-  activeModal: 'login' | 'cart' | 'checkout' | 'product-detail' | 'track' | 'feedback' | null;
+  activeModal: 'login' | 'cart' | 'checkout' | 'product-detail' | 'track' | 'feedback' | 'catalogue' | null;
   selectedProductForDetail: Product | null;
   activeTrackingId: string | null;
   toasts: ToastMessage[];

@@ -13,6 +13,7 @@ import { OrderTracker } from './components/OrderTracker';
 import { CustomerFeedback } from './components/CustomerFeedback';
 import { SocialFeeds } from './components/SocialFeeds';
 import { AuthModal } from './components/AuthModal';
+import { PriceCatalogueModal } from './components/PriceCatalogueModal';
 import { UserDashboard } from './components/UserDashboard';
 import { AdminDashboard } from './components/AdminDashboard';
 import { RegistrationGate } from './components/RegistrationGate';
@@ -161,11 +162,19 @@ const ShopContent: React.FC = () => {
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-3 z-10">
                 <button
-                  onClick={() => setSelectedCategory('Printed T-Shirts')}
+                  onClick={() => setActiveModal('catalogue')}
                   className="bg-slate-900 hover:bg-slate-950 text-white font-black px-6 py-3 rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all cursor-pointer"
                 >
-                  <span>Explore Bulk Branding Deals</span>
+                  <FileText className="w-4 h-4 text-blue-400" />
+                  <span>View Full Price Catalogue</span>
                   <ArrowRight className="w-4 h-4 text-blue-400" />
+                </button>
+
+                <button
+                  onClick={() => setSelectedCategory('Printed T-Shirts')}
+                  className="bg-blue-800/80 hover:bg-blue-800 text-white font-bold px-5 py-3 rounded-xl text-xs flex items-center gap-2 transition-colors cursor-pointer shadow-md border border-blue-400/30"
+                >
+                  <span>Explore Bulk Deals</span>
                 </button>
 
                 <button
@@ -173,7 +182,7 @@ const ShopContent: React.FC = () => {
                   className="bg-white hover:bg-blue-50 text-slate-900 font-bold px-5 py-3 rounded-xl text-xs flex items-center gap-2 transition-colors cursor-pointer shadow-md"
                 >
                   <Truck className="w-4 h-4 text-emerald-600" />
-                  <span>Track Existing Order</span>
+                  <span>Track Order</span>
                 </button>
               </div>
 
@@ -286,6 +295,7 @@ export default function App() {
         
         {/* Modals & Overlays */}
         <ProductDetailModal />
+        <PriceCatalogueModal />
         <CartDrawer />
         <CheckoutModal />
         <OrderTracker />

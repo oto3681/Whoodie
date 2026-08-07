@@ -12,7 +12,8 @@ import {
   CheckCircle,
   Settings,
   LogOut,
-  User
+  User,
+  FileText
 } from 'lucide-react';
 import { ProductCategory } from '../types';
 
@@ -112,6 +113,15 @@ export const Header: React.FC = () => {
               <MessageCircle className="w-4 h-4 fill-emerald-600 text-emerald-50" />
               <span>WhatsApp Inquiry</span>
             </a>
+
+            {/* Price Catalogue Button */}
+            <button
+              onClick={() => setActiveModal('catalogue')}
+              className="hidden md:flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-3 py-2 rounded-xl transition-colors cursor-pointer shadow-2xs"
+            >
+              <FileText className="w-4 h-4 text-blue-600" />
+              <span>Price Catalogue</span>
+            </button>
 
             {/* Tracking Button */}
             <button
@@ -241,6 +251,13 @@ export const Header: React.FC = () => {
           >
             <span>Browse Products</span>
             {activeView === 'shop' && <CheckCircle className="w-4 h-4 text-blue-600" />}
+          </button>
+          <button
+            onClick={() => { setActiveModal('catalogue'); setMobileMenuOpen(false); }}
+            className="w-full text-left py-2 text-sm font-semibold text-blue-600 font-bold border-b border-slate-100 flex items-center justify-between"
+          >
+            <span>Price Catalogue & Rate Card</span>
+            <FileText className="w-4 h-4 text-blue-600" />
           </button>
           <button
             onClick={() => { setActiveView('reviews'); setMobileMenuOpen(false); }}
