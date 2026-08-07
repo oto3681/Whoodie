@@ -1,7 +1,6 @@
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import { buildMpesaCallbackUrl, getMpesaBaseUrl, getMpesaCredentials, getMpesaRuntimeConfig, normalizeMpesaEnvironment } from './server/mpesa';
 
 const app = express();
 const PORT = 3000;
@@ -83,22 +82,21 @@ app.post('/api/mpesa/stkpush', async (req, res) => {
       });
     }
 
-    const mpesaConfig = getMpesaCredentials({
-      environment: customEnv || process.env.MPESA_ENVIRONMENT || 'production',
-      consumerKey: customConsumerKey || process.env.MPESA_CONSUMER_KEY || '',
-      consumerSecret: customConsumerSecret || process.env.MPESA_CONSUMER_SECRET || '',
-      passkey: customPasskey || process.env.MPESA_PASSKEY || '',
-      paybillNumber: customPaybill || process.env.MPESA_SHORTCODE || '247247',
-      appUrl: process.env.APP_URL || ''
-    });
+    // Resolve configuration parameters
+    const envMode = (customEnv || process.env.MPESA_ENVIRONMENT || 'sandbox').toLowerCase();
+    const isProduction = envMode === 'production' || envMode === 'live';
+    
+    const baseUrl = isProduction
+      ? 'https://api.safaricom.co.ke'
+      : 'https://sandbox.safaricom.co.ke';
 
-    const isProduction = mpesaConfig.isProduction;
-    const baseUrl = mpesaConfig.baseUrl;
-    const consumerKey = mpesaConfig.consumerKey;
-    const consumerSecret = mpesaConfig.consumerSecret;
-    const passkey = mpesaConfig.passkey || process.env.MPESA_PASSKEY || 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
-    const businessShortCode = mpesaConfig.businessShortCode;
+    // Default Safaricom Sandbox test credentials if custom ones aren't provided
+    const consumerKey = customConsumerKey || process.env.MPESA_CONSUMER_KEY || (isProduction ? '' : 'mG153Z5rA6X12VGG');
+    const consumerSecret = customConsumerSecret || process.env.MPESA_CONSUMER_SECRET || (isProduction ? '' : 'G6GA37gG0a6g6g');
+    const passkey = customPasskey || process.env.MPESA_PASSKEY || 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
+    const businessShortCode = customPaybill || process.env.MPESA_SHORTCODE || '174379';
 
+    // If live credentials are missing in production, inform user gracefully
     if (isProduction && (!consumerKey || !consumerSecret)) {
       console.warn('M-Pesa Production credentials missing. Set MPESA_CONSUMER_KEY and MPESA_CONSUMER_SECRET in environment or Admin Dashboard.');
     }
@@ -133,7 +131,8 @@ app.post('/api/mpesa/stkpush', async (req, res) => {
 
     const timestamp = getMpesaTimestamp();
     const password = Buffer.from(`${businessShortCode}${passkey}${timestamp}`).toString('base64');
-    const callbackUrl = mpesaConfig.appUrl ? buildMpesaCallbackUrl(mpesaConfig.appUrl) : `${process.env.APP_URL || 'https://ais-dev-2iuxn6sprxbypdohuvit2v-317405887209.europe-west2.run.app'}/api/mpesa/callback`;
+    const appUrl = process.env.APP_URL || 'https://ais-dev-2iuxn6sprxbypdohuvit2v-317405887209.europe-west2.run.app';
+    const callbackUrl = `${appUrl}/api/mpesa/callback`;
 
     // If we obtained a valid access token, make the real Daraja STK Push request
     if (accessToken) {
@@ -169,7 +168,7 @@ app.post('/api/mpesa/stkpush', async (req, res) => {
         return res.json({
           success: true,
           liveApi: true,
-          environment: mpesaConfig.environment,
+          environment: envMode,
           merchantRequestId: stkData.MerchantRequestID,
           checkoutRequestId: stkData.CheckoutRequestID,
           responseCode: stkData.ResponseCode,
@@ -180,7 +179,7 @@ app.post('/api/mpesa/stkpush', async (req, res) => {
         return res.status(400).json({
           success: false,
           liveApi: true,
-          environment: mpesaConfig.environment,
+          environment: envMode,
           responseCode: stkData.ResponseCode,
           message: stkData.ResponseDescription || stkData.errorMessage || 'M-Pesa STK Push request failed',
           details: stkData
@@ -211,7 +210,7 @@ app.post('/api/mpesa/stkpush', async (req, res) => {
       success: true,
       liveApi: false,
       simulationMode: true,
-      environment: mpesaConfig.environment,
+      environment: envMode,
       merchantRequestId: mockMerchantId,
       checkoutRequestId: mockCheckoutId,
       responseCode: "0",
@@ -261,20 +260,14 @@ app.post('/api/mpesa/query', async (req, res) => {
     }
 
     // If query parameters exist, attempt live Daraja query
-    const mpesaConfig = getMpesaCredentials({
-      environment: customEnv || process.env.MPESA_ENVIRONMENT || 'production',
-      consumerKey: customConsumerKey || process.env.MPESA_CONSUMER_KEY || '',
-      consumerSecret: customConsumerSecret || process.env.MPESA_CONSUMER_SECRET || '',
-      passkey: customPasskey || process.env.MPESA_PASSKEY || '',
-      paybillNumber: customPaybill || process.env.MPESA_SHORTCODE || '247247',
-      appUrl: process.env.APP_URL || ''
-    });
+    const envMode = (customEnv || process.env.MPESA_ENVIRONMENT || 'sandbox').toLowerCase();
+    const isProduction = envMode === 'production' || envMode === 'live';
+    const baseUrl = isProduction ? 'https://api.safaricom.co.ke' : 'https://sandbox.safaricom.co.ke';
 
-    const baseUrl = mpesaConfig.baseUrl;
-    const consumerKey = mpesaConfig.consumerKey;
-    const consumerSecret = mpesaConfig.consumerSecret;
-    const passkey = mpesaConfig.passkey || process.env.MPESA_PASSKEY || 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
-    const businessShortCode = mpesaConfig.businessShortCode;
+    const consumerKey = customConsumerKey || process.env.MPESA_CONSUMER_KEY || (isProduction ? '' : 'mG153Z5rA6X12VGG');
+    const consumerSecret = customConsumerSecret || process.env.MPESA_CONSUMER_SECRET || (isProduction ? '' : 'G6GA37gG0a6g6g');
+    const passkey = customPasskey || process.env.MPESA_PASSKEY || 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
+    const businessShortCode = customPaybill || process.env.MPESA_SHORTCODE || '174379';
 
     if (consumerKey && consumerSecret) {
       const authHeader = Buffer.from(`${consumerKey.trim()}:${consumerSecret.trim()}`).toString('base64');
@@ -396,19 +389,13 @@ app.post('/api/mpesa/c2b/register-url', async (req, res) => {
       validationUrl: customValidationUrl
     } = req.body;
 
-    const mpesaConfig = getMpesaCredentials({
-      environment: customEnv || process.env.MPESA_ENVIRONMENT || 'production',
-      consumerKey: customConsumerKey || process.env.MPESA_CONSUMER_KEY || '',
-      consumerSecret: customConsumerSecret || process.env.MPESA_CONSUMER_SECRET || '',
-      passkey: process.env.MPESA_PASSKEY || '',
-      paybillNumber: customShortCode || process.env.MPESA_SHORTCODE || '247247',
-      appUrl: process.env.APP_URL || ''
-    });
+    const envMode = (customEnv || process.env.MPESA_ENVIRONMENT || 'sandbox').toLowerCase();
+    const isProduction = envMode === 'production' || envMode === 'live';
+    const baseUrl = isProduction ? 'https://api.safaricom.co.ke' : 'https://sandbox.safaricom.co.ke';
 
-    const baseUrl = mpesaConfig.baseUrl;
-    const consumerKey = mpesaConfig.consumerKey;
-    const consumerSecret = mpesaConfig.consumerSecret;
-    const shortCode = mpesaConfig.businessShortCode;
+    const consumerKey = customConsumerKey || process.env.MPESA_CONSUMER_KEY || (isProduction ? '' : 'mG153Z5rA6X12VGG');
+    const consumerSecret = customConsumerSecret || process.env.MPESA_CONSUMER_SECRET || (isProduction ? '' : 'G6GA37gG0a6g6g');
+    const shortCode = customShortCode || process.env.MPESA_SHORTCODE || '600000';
     const responseType = customResponseType || 'Completed';
 
     const appUrl = process.env.APP_URL || 'https://ais-dev-2iuxn6sprxbypdohuvit2v-317405887209.europe-west2.run.app';
@@ -478,7 +465,7 @@ app.post('/api/mpesa/c2b/register-url', async (req, res) => {
         return res.json({
           success: true,
           liveApi: true,
-          environment: mpesaConfig.environment,
+          environment: envMode,
           shortCode,
           confirmationURL,
           validationURL,
@@ -489,7 +476,7 @@ app.post('/api/mpesa/c2b/register-url', async (req, res) => {
         return res.status(400).json({
           success: false,
           liveApi: true,
-          environment: mpesaConfig.environment,
+          environment: envMode,
           message: regData.ResponseDescription || regData.errorMessage || 'Failed to register C2B URLs with Safaricom',
           details: regData
         });
@@ -501,7 +488,7 @@ app.post('/api/mpesa/c2b/register-url', async (req, res) => {
       success: true,
       liveApi: false,
       simulationMode: true,
-      environment: mpesaConfig.environment,
+      environment: envMode,
       shortCode,
       confirmationURL,
       validationURL,
@@ -557,27 +544,7 @@ app.post('/api/mpesa/c2b/confirmation', (req, res) => {
 
 // Health Check API
 app.get('/api/health', (req, res) => {
-  const mpesaRuntime = getMpesaRuntimeConfig({
-    environment: normalizeMpesaEnvironment(process.env.MPESA_ENVIRONMENT),
-    consumerKey: process.env.MPESA_CONSUMER_KEY || '',
-    consumerSecret: process.env.MPESA_CONSUMER_SECRET || '',
-    passkey: process.env.MPESA_PASSKEY || '',
-    paybillNumber: process.env.MPESA_SHORTCODE || '247247',
-    appUrl: process.env.APP_URL || ''
-  });
-
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    service: 'Woodynat M-Pesa Payment Engine',
-    mpesa: {
-      environment: mpesaRuntime.environment,
-      baseUrl: mpesaRuntime.baseUrl,
-      isReady: mpesaRuntime.isReady,
-      missingFields: mpesaRuntime.missingFields,
-      shortCode: mpesaRuntime.businessShortCode
-    }
-  });
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), service: 'Woodynat M-Pesa Payment Engine' });
 });
 
 async function startServer() {

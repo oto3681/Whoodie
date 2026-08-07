@@ -397,6 +397,34 @@ export const INITIAL_PRODUCTS: Product[] = [
     }
   },
 
+  // 13b. Custom Branded Apron (Ask for quote through inquiry number - bulk production)
+  {
+    id: 'prod-custom-apron-bulk',
+    name: 'Custom Branded Apron (Bulk Production)',
+    category: 'Reflectors & Aprons',
+    price: 0,
+    isQuoteOnly: true,
+    priceDisplay: 'Ask for Quote via WhatsApp Inquiry',
+    rating: 4.9,
+    reviewCount: 215,
+    image: '/assets/images/apron_bulk_production_1786094965199.jpg',
+    description: 'Custom branded kitchen, chef, and service aprons with dual front pockets and adjustable neck straps. Ask for quote through the inquiry number for bulk production. High precision screen printing, DTF, or embroidery.',
+    features: [
+      'Ask for quote through inquiry number (Bulk Production)',
+      'Heavy-Duty Washable Cotton Twill Blend',
+      'Dual Front Storage Pockets & Adjustable Strap',
+      'High Precision Screen Print / Embroidery Logo Branding'
+    ],
+    stockCount: 600,
+    isFlashDeal: true,
+    expressDeliveryAvailable: true,
+    customizationOptions: {
+      sizes: ['Standard Adult (One Size Fits All)', 'Extra Wide Commercial'],
+      finishes: ['Screen Printed Logo', 'High-Density Embroidery', 'DTF Full Color Print'],
+      minQuantity: 10,
+    }
+  },
+
   // 14. Calendars (Ask for quote through the whatsapp inquiry number)
   {
     id: 'prod-calendars',
@@ -776,9 +804,9 @@ export const DEFAULT_WORDPRESS_SETTINGS: WordPressSettings = {
   companyAddress: 'Ronald Ngala street, Gatkim complex building, 4th floor, Wing B, Room 4B1',
   companyCity: 'Nairobi',
   topBannerText: '⚡ MEGA FLASH SALE: Up to 30% OFF Custom Hoodies, T-Shirts & Banners! | M-PESA Paybill: 247247 Acc: 0797939199',
-  facebookUrl: 'https://facebook.com/woodynatdesigners',
-  instagramUrl: 'https://instagram.com/woodynatdesigners',
-  tiktokUrl: 'https://tiktok.com/@woodynatdesigners',
+  facebookUrl: 'https://facebook.com/WoodynatDesignersLimited',
+  instagramUrl: 'https://instagram.com/woodynatdesigners_14',
+  tiktokUrl: 'https://tiktok.com/@woodynatdesigners_14',
   primaryColor: '#f68b1e',
   wpWooSyncEnabled: true,
   wpRestEndpoint: 'https://woodynatdesigners.co.ke/wp-json/wc/v3',

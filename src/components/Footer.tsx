@@ -90,7 +90,7 @@ export const Footer: React.FC = () => {
                   rel="noopener noreferrer"
                   className="bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700"
                 >
-                  <span>Facebook</span>
+                  <span>Facebook (Woodynat Designers Limited)</span>
                   <ExternalLink className="w-3 h-3" />
                 </a>
 
@@ -100,7 +100,7 @@ export const Footer: React.FC = () => {
                   rel="noopener noreferrer"
                   className="bg-slate-800 hover:bg-pink-600 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700"
                 >
-                  <span>Instagram</span>
+                  <span>Instagram (@woodynatdesigners_14)</span>
                   <ExternalLink className="w-3 h-3" />
                 </a>
 
@@ -110,7 +110,7 @@ export const Footer: React.FC = () => {
                   rel="noopener noreferrer"
                   className="bg-slate-800 hover:bg-slate-950 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700"
                 >
-                  <span>TikTok</span>
+                  <span>TikTok (@woodynatdesigners_14)</span>
                   <ExternalLink className="w-3 h-3" />
                 </a>
               </div>
