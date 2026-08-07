@@ -98,7 +98,24 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(() => {
     const saved = localStorage.getItem('pixelprint_products');
-    return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
+    if (saved) {
+      try {
+        const parsed: Product[] = JSON.parse(saved);
+        return parsed.map((p) => {
+          const match = INITIAL_PRODUCTS.find((initP) => initP.id === p.id);
+          if (match && match.image) {
+            return { ...p, image: match.image };
+          }
+          if (p.image && p.image.startsWith('/src/assets/')) {
+            return { ...p, image: p.image.replace('/src/assets/', '/assets/') };
+          }
+          return p;
+        });
+      } catch (e) {
+        console.error('Error parsing saved products from localStorage:', e);
+      }
+    }
+    return INITIAL_PRODUCTS;
   });
 
   const [cart, setCart] = useState<CartItem[]>(() => {

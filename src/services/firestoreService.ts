@@ -49,45 +49,19 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void) => {
         // Migrate old category names to new category names automatically
         if (CATEGORY_MAPPINGS[data.category]) {
           data.category = CATEGORY_MAPPINGS[data.category];
+        }
+
+        // Sync latest local images from INITIAL_PRODUCTS if available
+        const initMatch = INITIAL_PRODUCTS.find(p => p.id === data.id);
+        if (initMatch && initMatch.image && (data.image !== initMatch.image || data.image.startsWith('/src/assets/'))) {
+          data.image = initMatch.image;
+          saveProductToFirestore(data);
+        } else if (data.image && data.image.startsWith('/src/assets/')) {
+          data.image = data.image.replace('/src/assets/', '/assets/');
           saveProductToFirestore(data);
         }
-        let img = data.image || '';
-        if (img.startsWith('/src/assets/')) {
-          img = img.replace('/src/assets/', '/assets/');
-          const updated = { ...data, image: img };
-          saveProductToFirestore(updated);
-          items.push(updated);
-        } else if (data.id === 'prod-rollup-banner' && !img.includes('rollup_banner_8500')) {
-          const updated = { ...data, image: '/assets/images/rollup_banner_8500_1785222380932.jpg' };
-          saveProductToFirestore(updated);
-          items.push(updated);
-        } else if (data.id === 'prod-poloneck-tshirt' && !img.includes('executive_polo_white')) {
-          const updated = { ...data, image: '/assets/images/executive_polo_white_1785246660138.jpg' };
-          saveProductToFirestore(updated);
-          items.push(updated);
-        } else if (data.id === 'prod-roundneck-tshirt' && !img.includes('roundneck_tshirt_white')) {
-          const updated = { ...data, image: '/assets/images/roundneck_tshirt_white_1785246799771.jpg' };
-          saveProductToFirestore(updated);
-          items.push(updated);
-        } else if (data.id === 'prod-teardrop-banner' && !img.includes('teardrop_banner_white')) {
-          const updated = { ...data, image: '/assets/images/teardrop_banner_white_1785246922568.jpg' };
-          saveProductToFirestore(updated);
-          items.push(updated);
-        } else if (data.id === 'prod-lightweight-reflectors' && !img.includes('lightweight_reflectors_vest')) {
-          const updated = { ...data, image: '/assets/images/lightweight_reflectors_vest_1785247161011.jpg' };
-          saveProductToFirestore(updated);
-          items.push(updated);
-        } else if (data.id === 'prod-vinyl-cutting' && !img.includes('vinyl_cutting_plotter')) {
-          const updated = { ...data, image: '/assets/images/vinyl_cutting_plotter_1785478250327.jpg' };
-          saveProductToFirestore(updated);
-          items.push(updated);
-        } else if (data.id === 'prod-business-cards' && !img.includes('executive_business_cards')) {
-          const updated = { ...data, image: '/assets/images/executive_business_cards_1785478450280.jpg' };
-          saveProductToFirestore(updated);
-          items.push(updated);
-        } else {
-          items.push(data);
-        }
+
+        items.push(data);
       });
 
       // Ensure any newly introduced products in INITIAL_PRODUCTS are synced to Firestore

@@ -15,13 +15,12 @@ export const Logo: React.FC<LogoProps> = ({
   const iconHeight = size === 'sm' ? 36 : size === 'md' ? 48 : size === 'lg' ? 64 : 80;
 
   // Exact Brand Colors from Official WoodyNat Logo
-  const brandRed = '#e52b2b';
-  const brandBlue = '#008ecf';
-  const brandDarkText = '#1a1f2c';
+  const brandRed = '#E30613';
+  const brandBlue = '#0071CE';
 
   return (
     <div className={`inline-flex items-center gap-2.5 sm:gap-3 select-none ${className}`}>
-      {/* Emblem Graphic */}
+      {/* Official Emblem Mark Graphic */}
       <div className="relative shrink-0 flex flex-col items-center">
         <svg
           height={iconHeight}
@@ -30,23 +29,22 @@ export const Logo: React.FC<LogoProps> = ({
           xmlns="http://www.w3.org/2000/svg"
           className="drop-shadow-xs transition-transform duration-200 hover:scale-105"
         >
-          {/* Red Background Box & Curved Elements */}
-          <rect x="40" y="20" width="80" height="110" fill={brandRed} rx="2" />
+          {/* Red Background Box */}
+          <rect x="40" y="20" width="80" height="110" fill={brandRed} rx="3" />
           
           {/* White Oval Backdrop with Blue Fill */}
           <ellipse cx="80" cy="72" rx="46" ry="60" fill="#ffffff" />
           <ellipse cx="80" cy="72" rx="42" ry="56" fill={brandBlue} />
 
-          {/* White Oval Accent Outer Ring */}
+          {/* Oval Outer Accent Ring */}
           <ellipse cx="80" cy="72" rx="46" ry="60" stroke={brandRed} strokeWidth="3" fill="none" />
 
-          {/* Target / Crosshair Graphic on Left Wing */}
+          {/* Target / Crosshair Symbol on Left Wing */}
           <g transform="translate(24, 60)">
             <circle cx="12" cy="12" r="10" fill="#ffffff" />
             <circle cx="12" cy="12" r="8" fill={brandRed} />
             <circle cx="12" cy="12" r="4" fill="#ffffff" />
             <circle cx="12" cy="12" r="2" fill={brandRed} />
-            {/* Crosshair Ticks */}
             <line x1="12" y1="0" x2="12" y2="24" stroke="#ffffff" strokeWidth="2" />
             <line x1="0" y1="12" x2="24" y2="12" stroke="#ffffff" strokeWidth="2" />
           </g>
@@ -57,7 +55,7 @@ export const Logo: React.FC<LogoProps> = ({
             fill="#ffffff"
           />
 
-          {/* Accent Oval Ring in Red */}
+          {/* Accent Arc Ring in Red */}
           <path
             d="M 40 40 C 60 10, 110 10, 130 40 C 145 65, 135 110, 110 132"
             stroke={brandRed}
@@ -66,18 +64,18 @@ export const Logo: React.FC<LogoProps> = ({
             fill="none"
           />
 
-          {/* "Vogue en Designe" Tag Pillar Badge */}
-          <g transform="translate(20, 138)">
-            <rect x="0" y="0" width="120" height="24" rx="6" fill="#848a94" />
+          {/* "Vogue en Designe" Pillar Badge */}
+          <g transform="translate(18, 138)">
+            <rect x="0" y="0" width="124" height="24" rx="6" fill="#4B5563" />
             <text
-              x="60"
+              x="62"
               y="16"
               fill="#ffffff"
               fontSize="12"
               fontWeight="800"
-              fontFamily="system-ui, sans-serif"
+              fontFamily="system-ui, -apple-system, sans-serif"
               textAnchor="middle"
-              letterSpacing="0.5"
+              letterSpacing="0.3"
             >
               Vogue en Designe
             </text>
@@ -85,27 +83,27 @@ export const Logo: React.FC<LogoProps> = ({
         </svg>
       </div>
 
-      {/* Typography Section */}
+      {/* Official Typography Section */}
       {variant !== 'icon' && (
         <div className="flex flex-col justify-center">
           {/* Main Title */}
-          <div className="flex items-center tracking-tight leading-none font-black text-sm sm:text-base md:text-lg">
+          <div className="flex items-center tracking-tight leading-none font-black text-base sm:text-lg md:text-xl">
             <span style={{ color: brandBlue }} className="font-extrabold uppercase tracking-wide">
               WOODYNAT
             </span>
-            <span style={{ color: brandBlue }} className="font-extrabold uppercase tracking-wide ml-1">
+            <span style={{ color: brandBlue }} className="font-extrabold uppercase tracking-wide ml-1.5">
               DESIGNERS LTD
             </span>
           </div>
 
-          {/* Tagline / Subtitle */}
-          {(variant === 'full' || variant === 'white') && (
+          {/* Official Tagline */}
+          {(variant === 'full' || variant === 'compact' || variant === 'white') && (
             <p
-              className={`text-[10px] sm:text-[11px] font-bold mt-1 tracking-tight leading-none ${
-                variant === 'white' ? 'text-slate-300' : 'text-slate-800'
+              className={`text-[11px] sm:text-[12px] font-bold mt-1 tracking-tight leading-none ${
+                variant === 'white' ? 'text-slate-300' : 'text-slate-900'
               }`}
             >
-              Creativity at its best with high print precision that speaks
+              Your Reliable Partner in Design and Branding
             </p>
           )}
         </div>

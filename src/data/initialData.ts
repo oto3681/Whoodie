@@ -115,7 +115,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     priceDisplay: 'Ask for Quote via WhatsApp',
     rating: 5.0,
     reviewCount: 320,
-    image: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/funeral_program_express_1786096486661.jpg',
     description: 'Respectful, beautifully formatted eulogy booklets, funeral order-of-service programs, and memorial tributes with 24-hour express printing & countrywide delivery.',
     features: [
       'Ask for quote through WhatsApp inquiry',
@@ -143,7 +143,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     priceDisplay: 'Ask for Quote via WhatsApp',
     rating: 4.8,
     reviewCount: 195,
-    image: 'https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/flyers_printing_a5_1786096505695.jpg',
     description: 'Full color single or double-sided A5, A6, and DL promotional marketing flyers on 150GSM - 300GSM art paper with glossy or matte lamination.',
     features: [
       'Ask for quote through WhatsApp inquiry',
@@ -170,7 +170,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     priceDisplay: 'Ask for Quote via WhatsApp',
     rating: 4.9,
     reviewCount: 280,
-    image: 'https://images.unsplash.com/photo-1572375992501-4b0892d50c69?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/stickers_labels_vinyl_1786096514817.jpg',
     description: '100% waterproof vinyl die-cut stickers, jar labels, packaging seals, and clear transparent product labels tailored to any shape or size.',
     features: [
       'Ask for quote through WhatsApp inquiry',
@@ -226,7 +226,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     priceDisplay: 'Ask for Quote via WhatsApp',
     rating: 5.0,
     reviewCount: 110,
-    image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/wedding_invitation_cards_1786096524464.jpg',
     description: 'Bespoke luxury wedding invitation cards featuring metallic gold foil stamping, laser-cut lace sleeves, textured cardstock, and wax seal stamps.',
     features: [
       'Ask for quote through WhatsApp inquiry',
@@ -279,7 +279,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     priceDisplay: 'Ask for Quote via WhatsApp',
     rating: 4.8,
     reviewCount: 92,
-    image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/water_bottle_branding_1786096534054.jpg',
     description: 'Personalized corporate stainless steel vacuum thermal flasks, sports aluminum water bottles, and promotional bottled water labels.',
     features: [
       'Ask for quote through WhatsApp inquiry',
@@ -303,7 +303,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     originalPrice: 500,
     rating: 4.9,
     reviewCount: 245,
-    image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/normal_white_mug_1786096548095.jpg',
     description: 'High quality 11oz white ceramic coffee mug custom sublimation printed with your photo, corporate logo, or customized message.',
     features: [
       '11oz Premium White Ceramic',
@@ -329,7 +329,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     originalPrice: 900,
     rating: 5.0,
     reviewCount: 188,
-    image: 'https://images.unsplash.com/photo-1577937927133-66ef06acdf18?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/magic_mug_color_change_1786096556926.jpg',
     description: 'Heat-sensitive color changing ceramic magic mug. Appears pitch black when cold, and magically reveals your custom photo or logo when hot liquid is poured inside!',
     features: [
       'Heat-Sensitive Color Reveal',
@@ -355,7 +355,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     priceDisplay: 'Ask for Quote via WhatsApp',
     rating: 4.9,
     reviewCount: 75,
-    image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/billboard_outdoor_ad_1786096565693.jpg',
     description: 'Large format outdoor billboard skins, highway lightboxes, promotional ad boards, building wraps, and commercial campaign media.',
     features: [
       'Ask for quote through WhatsApp inquiry',
@@ -435,7 +435,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     priceDisplay: 'Ask for Quote via WhatsApp',
     rating: 4.8,
     reviewCount: 160,
-    image: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/calendars_desktop_wall_1786096575716.jpg',
     description: 'Custom 12-month wire-o bound desktop tent calendars, shipping calendars, and A2 / A3 corporate wall calendars tailored with your branding.',
     features: [
       'Ask for quote through WhatsApp inquiry',
@@ -460,7 +460,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     priceDisplay: 'Ask for Quote via WhatsApp',
     rating: 5.0,
     reviewCount: 130,
-    image: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/signs_3d_led_storefront_1786096587846.jpg',
     description: 'Laser-cut 3D acrylic channel letter signs, backlit LED office reception signs, metallic door plaques, and outdoor directional signboards.',
     features: [
       'Ask for quote through WhatsApp inquiry',
@@ -485,7 +485,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     priceDisplay: 'Ask for Quote via WhatsApp',
     rating: 4.9,
     reviewCount: 175,
-    image: 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/diaries_executive_leather_1786096597781.jpg',
     description: 'Premium faux leather annual executive diaries debossed or metallic foil-stamped with company logo, year, and personalized staff names.',
     features: [
       'Ask for quote through WhatsApp inquiry',
@@ -511,7 +511,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     priceDisplay: 'Ask for Quote via WhatsApp',
     rating: 4.8,
     reviewCount: 140,
-    image: 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/notebooks_hardcover_custom_1786096607523.jpg',
     description: 'Customized case-bound hardcover or wire spiral notebooks with elastic band closures, pen holders, and custom inner page printing.',
     features: [
       'Ask for quote through WhatsApp inquiry',
@@ -536,7 +536,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     priceDisplay: 'Ask for Quote via WhatsApp',
     rating: 4.9,
     reviewCount: 210,
-    image: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/brochures_company_profile_1786096616550.jpg',
     description: 'Multi-page corporate company profile booklets, bifold & trifold glossy brochures with spot UV varnish, foil accents, and saddle stitching.',
     features: [
       'Ask for quote through WhatsApp inquiry',
@@ -561,7 +561,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     originalPrice: 3200,
     rating: 5.0,
     reviewCount: 380,
-    image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/hoodies_heavyweight_custom_1786096627969.jpg',
     description: 'Cozy 320GSM fleece cotton pullover hoodies with double-layer hood and kangaroo pockets. Custom screen printed, embroidered, or 3D puff print.',
     features: [
       '320 GSM Plush Fleece Cotton',
@@ -588,7 +588,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     priceDisplay: 'Ask for Quote via WhatsApp',
     rating: 4.8,
     reviewCount: 165,
-    image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/shopping_bags_kraft_1786096636995.jpg',
     description: 'Eco-friendly non-woven tote bags, custom printed luxury glossy paper shopping bags with rope handles, and branded brown kraft gift bags.',
     features: [
       'Ask for quote through WhatsApp inquiry',
@@ -614,7 +614,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     priceDisplay: 'Ask for Quote via WhatsApp',
     rating: 4.9,
     reviewCount: 115,
-    image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80',
+    image: '/assets/images/umbrella_golf_branded_1786096647251.jpg',
     description: 'Heavy duty windproof double-canopy golf umbrellas, automatic folding rain umbrellas, and outdoor parasols screen printed on alternate panels.',
     features: [
       'Ask for quote through WhatsApp inquiry',
@@ -795,7 +795,7 @@ export const MOCK_ORDERS: Order[] = [
 
 export const DEFAULT_WORDPRESS_SETTINGS: WordPressSettings = {
   siteTitle: 'Woodynat Designers Limited',
-  tagline: 'Creativity at its best with high print precision that speaks',
+  tagline: 'Your Reliable Partner in Design and Branding',
   whatsappNumber: '0797939199',
   supportPhone: '0797939199',
   companyEmail: 'woodynatdesigners12@gmail.com',
