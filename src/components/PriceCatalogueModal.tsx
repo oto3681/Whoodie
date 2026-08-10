@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { ProductCategory, Product } from '../types';
+import { getProductFallbackImage } from '../data/initialData';
 import { 
   X, 
   Search, 
@@ -184,12 +185,12 @@ export const PriceCatalogueModal: React.FC = () => {
                     className="relative bg-slate-100 aspect-16/10 overflow-hidden cursor-pointer"
                   >
                     <img
-                      src={item.image}
+                      src={item.image || getProductFallbackImage(item.name, item.category)}
                       alt={item.name}
                       referrerPolicy="no-referrer"
                       loading="lazy"
                       onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
+                        (e.currentTarget as HTMLImageElement).src = getProductFallbackImage(item.name, item.category);
                       }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />

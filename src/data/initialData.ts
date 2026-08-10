@@ -817,3 +817,32 @@ export const DEFAULT_WORDPRESS_SETTINGS: WordPressSettings = {
   mpesaConsumerSecret: '',
   mpesaPasskey: ''
 };
+
+export const getProductFallbackImage = (name?: string, category?: string): string => {
+  const n = (name || '').toLowerCase();
+  const c = (category || '').toLowerCase();
+
+  if (n.includes('t-shirt') || n.includes('tshirt') || n.includes('polo') || n.includes('shirt') || c.includes('t-shirt')) {
+    return 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80';
+  }
+  if (n.includes('hoodie') || c.includes('hoodie')) {
+    return 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&auto=format&fit=crop&q=80';
+  }
+  if (n.includes('banner') || n.includes('flag') || n.includes('sticker') || c.includes('banner')) {
+    return 'https://images.unsplash.com/photo-1579165466741-7f35e4755660?w=800&auto=format&fit=crop&q=80';
+  }
+  if (n.includes('mug') || n.includes('bottle') || n.includes('flask') || c.includes('drinkware')) {
+    return 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800&auto=format&fit=crop&q=80';
+  }
+  if (n.includes('card') || n.includes('flyer') || n.includes('brochure') || n.includes('program') || c.includes('stationery') || c.includes('flyer')) {
+    return 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80';
+  }
+  if (n.includes('diary') || n.includes('notebook') || n.includes('calendar') || c.includes('gift')) {
+    return 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&auto=format&fit=crop&q=80';
+  }
+  if (n.includes('sign') || n.includes('billboard') || c.includes('signage')) {
+    return 'https://images.unsplash.com/photo-1572949645841-094f3a9c4c94?w=800&auto=format&fit=crop&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
+};
+

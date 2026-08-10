@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import { OrderStatus } from '../types';
+import { getProductFallbackImage } from '../data/initialData';
 import { 
   Package, 
   Truck, 
@@ -174,11 +175,11 @@ export const UserDashboard: React.FC = () => {
                   {ord.items.map((item, idx) => (
                     <div key={idx} className="flex gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200/80">
                       <img
-                        src={item.product.image || 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80'}
+                        src={item.product.image || getProductFallbackImage(item.product.name, item.product.category)}
                         alt={item.product.name}
                         referrerPolicy="no-referrer"
                         onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
+                          (e.currentTarget as HTMLImageElement).src = getProductFallbackImage(item.product.name, item.product.category);
                         }}
                         className="w-14 h-14 object-cover rounded-lg border border-slate-200 shrink-0"
                       />

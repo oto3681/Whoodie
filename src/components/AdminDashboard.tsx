@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { getProductFallbackImage } from '../data/initialData';
 import { 
   BarChart3, 
   Package, 
@@ -487,7 +488,7 @@ export const AdminDashboard: React.FC = () => {
                         alt="Product preview"
                         referrerPolicy="no-referrer"
                         onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
+                          (e.currentTarget as HTMLImageElement).src = getProductFallbackImage(editingProduct.name, editingProduct.category);
                         }}
                         className="w-full h-full object-cover"
                       />
@@ -751,11 +752,11 @@ export const AdminDashboard: React.FC = () => {
                         <div className="flex items-center gap-3">
                           <div className="relative group shrink-0">
                             <img 
-                              src={p.image || 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80'} 
+                              src={p.image || getProductFallbackImage(p.name, p.category)} 
                               alt={p.name} 
                               referrerPolicy="no-referrer"
                               onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
+                                (e.currentTarget as HTMLImageElement).src = getProductFallbackImage(p.name, p.category);
                               }}
                               className="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-2xs" 
                             />

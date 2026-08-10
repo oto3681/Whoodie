@@ -51,13 +51,22 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void) => {
           data.category = CATEGORY_MAPPINGS[data.category];
         }
 
-        // Sync latest local images from INITIAL_PRODUCTS if available
+        // Ensure product image is sanitized, valid, and preserved
         const initMatch = INITIAL_PRODUCTS.find(p => p.id === data.id);
-        if (initMatch && initMatch.image && (data.image !== initMatch.image || data.image.startsWith('/src/assets/'))) {
-          data.image = initMatch.image;
+        if (!data.image || data.image.trim() === '') {
+          data.image = initMatch?.image || 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
           saveProductToFirestore(data);
-        } else if (data.image && data.image.startsWith('/src/assets/')) {
+        } else if (data.image.startsWith('/src/assets/')) {
           data.image = data.image.replace('/src/assets/', '/assets/');
+          saveProductToFirestore(data);
+        } else if (data.image.startsWith('src/assets/')) {
+          data.image = '/' + data.image.replace('src/assets/', 'assets/');
+          saveProductToFirestore(data);
+        } else if (data.image.startsWith('assets/')) {
+          data.image = '/' + data.image;
+          saveProductToFirestore(data);
+        } else if (initMatch && initMatch.image && !data.image.startsWith('/') && !data.image.startsWith('http') && !data.image.startsWith('data:')) {
+          data.image = initMatch.image;
           saveProductToFirestore(data);
         }
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Product } from '../types';
 import { useApp } from '../context/AppContext';
 import { Star, Zap, Clock, ShoppingCart, MessageCircle, FileUp, ShieldCheck } from 'lucide-react';
+import { getProductFallbackImage } from '../data/initialData';
 
 interface ProductCardProps {
   product: Product;
@@ -42,11 +43,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         className="relative bg-slate-100 aspect-4/3 overflow-hidden cursor-pointer"
       >
         <img
-          src={product.image || 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80'}
+          src={product.image || getProductFallbackImage(product.name, product.category)}
           alt={product.name}
           referrerPolicy="no-referrer"
           onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
+            (e.currentTarget as HTMLImageElement).src = getProductFallbackImage(product.name, product.category);
           }}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />

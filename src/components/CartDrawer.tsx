@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
+import { getProductFallbackImage } from '../data/initialData';
 import { 
   X, 
   Trash2, 
@@ -81,11 +82,11 @@ export const CartDrawer: React.FC = () => {
                 className="bg-white border border-slate-200 rounded-xl p-3 flex gap-3 shadow-xs relative"
               >
                 <img
-                  src={item.product.image || 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80'}
+                  src={item.product.image || getProductFallbackImage(item.product.name, item.product.category)}
                   alt={item.product.name}
                   referrerPolicy="no-referrer"
                   onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
+                    (e.currentTarget as HTMLImageElement).src = getProductFallbackImage(item.product.name, item.product.category);
                   }}
                   className="w-16 h-16 object-cover rounded-lg border border-slate-200 shrink-0"
                 />
