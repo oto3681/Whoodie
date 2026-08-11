@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { getProductFallbackImage } from '../data/initialData';
+import { restoreAllProductImages } from '../services/firestoreService';
 import { 
   BarChart3, 
   Package, 
@@ -53,6 +54,7 @@ export const AdminDashboard: React.FC = () => {
   // Product Editing state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isCreatingNewProduct, setIsCreatingNewProduct] = useState(false);
+  const [isSyncingImages, setIsSyncingImages] = useState(false);
 
   // WordPress Customizer form state
   const [siteTitle, setSiteTitle] = useState(wpSettings.siteTitle);
@@ -423,30 +425,46 @@ export const AdminDashboard: React.FC = () => {
                 Upload product photos, set live prices, write descriptions, and update catalog items in real-time.
               </p>
             </div>
-            <button
-              onClick={() => {
-                setEditingProduct({
-                  id: `prod-custom-${Date.now()}`,
-                  name: '',
-                  category: 'Printed T-Shirts',
-                  price: 1500,
-                  originalPrice: 2000,
-                  priceDisplay: '',
-                  rating: 5.0,
-                  reviewCount: 1,
-                  image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80',
-                  description: '',
-                  features: ['High DPI Print Resolution', 'Premium Material & Finishing', 'Express 24-Hour Turnaround'],
-                  stockCount: 100,
-                  isFlashDeal: false,
-                  isQuoteOnly: false,
-                });
-                setIsCreatingNewProduct(true);
-              }}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-black px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer shrink-0"
-            >
-              <Plus className="w-4 h-4" /> Add New Catalog Product
-            </button>
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <button
+                onClick={async () => {
+                  setIsSyncingImages(true);
+                  await restoreAllProductImages();
+                  setIsSyncingImages(false);
+                  showToast('All product catalog photos refreshed and updated across Firestore!');
+                }}
+                disabled={isSyncingImages}
+                className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer"
+                title="Restore official product photos for all items in database"
+              >
+                <RefreshCw className={`w-4 h-4 ${isSyncingImages ? 'animate-spin' : ''}`} />
+                {isSyncingImages ? 'Updating Photos...' : 'Update All Product Photos'}
+              </button>
+              <button
+                onClick={() => {
+                  setEditingProduct({
+                    id: `prod-custom-${Date.now()}`,
+                    name: '',
+                    category: 'Printed T-Shirts',
+                    price: 1500,
+                    originalPrice: 2000,
+                    priceDisplay: '',
+                    rating: 5.0,
+                    reviewCount: 1,
+                    image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80',
+                    description: '',
+                    features: ['High DPI Print Resolution', 'Premium Material & Finishing', 'Express 24-Hour Turnaround'],
+                    stockCount: 100,
+                    isFlashDeal: false,
+                    isQuoteOnly: false,
+                  });
+                  setIsCreatingNewProduct(true);
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-black px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer shrink-0"
+              >
+                <Plus className="w-4 h-4" /> Add New Catalog Product
+              </button>
+            </div>
           </div>
 
           {/* Product Edit / Creation Form */}

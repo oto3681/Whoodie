@@ -140,7 +140,7 @@ export const Footer: React.FC = () => {
               {currentUser ? (
                 <li><button onClick={logout} className="text-red-400 hover:text-red-300 font-bold transition-colors">Log Out ({currentUser.name})</button></li>
               ) : (
-                <li><button onClick={() => setActiveModal('login')} className="hover:text-blue-400 font-semibold transition-colors">User & Admin Login</button></li>
+                <li><button onClick={() => setActiveModal('login')} className="hover:text-blue-400 font-semibold transition-colors">Customer Account Sign In</button></li>
               )}
               <li><a href="#payment-methods" className="hover:text-blue-400 transition-colors">Accepted Payments</a></li>
               <li><button onClick={() => setActiveModal('track')} className="hover:text-blue-400 transition-colors">Shipping & Pick-Up Stations</button></li>

@@ -280,7 +280,7 @@ export const Header: React.FC = () => {
                 onClick={() => { setActiveModal('login'); setMobileMenuOpen(false); }}
                 className="w-full py-2.5 bg-blue-600 text-white rounded-xl text-xs font-bold shadow-xs text-center"
               >
-                Sign In / Admin Login
+                Sign In / Register
               </button>
             ) : (
               <button
@@ -290,7 +290,7 @@ export const Header: React.FC = () => {
                 }}
                 className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold text-center transition-colors shadow-xs"
               >
-                Go to {currentUser.role === 'admin' ? 'WordPress Admin' : 'User Dashboard'}
+                Go to {currentUser.role === 'admin' ? 'Admin Console' : 'User Dashboard'}
               </button>
             )}
           </div>

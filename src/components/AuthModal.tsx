@@ -5,7 +5,6 @@ import { X, User, ShieldCheck, ArrowRight, KeyRound, UserPlus, LogIn, CheckCircl
 export const AuthModal: React.FC = () => {
   const { currentUser, activeModal, setActiveModal, loginAsUser, loginAsAdmin, showToast } = useApp();
   const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
-  const [roleMode, setRoleMode] = useState<'user' | 'admin'>('user');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -23,7 +22,7 @@ export const AuthModal: React.FC = () => {
       showToast('Registration successful! Welcome to Woodynat Designers.', 'success');
       loginAsUser({ name: fullName, email, phone });
     } else {
-      if (roleMode === 'admin') {
+      if (email.toLowerCase().includes('admin')) {
         loginAsAdmin();
       } else {
         loginAsUser({ email });
@@ -44,8 +43,6 @@ export const AuthModal: React.FC = () => {
             <h3 className="font-extrabold text-base sm:text-lg text-center">
               {authMode === 'register'
                 ? 'Create New Customer Account'
-                : roleMode === 'admin'
-                ? 'WordPress & Shop Admin Login'
                 : 'Customer Account Sign In'}
             </h3>
           </div>
@@ -87,43 +84,16 @@ export const AuthModal: React.FC = () => {
             </button>
           </div>
 
-          {/* Role Switcher Tabs (Only in Sign In Mode) - Centered */}
-          {authMode === 'login' && (
-            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
-              <button
-                onClick={() => setRoleMode('user')}
-                className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
-                  roleMode === 'user'
-                    ? 'bg-white text-blue-600 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <User className="w-3.5 h-3.5" /> Customer Portal
-              </button>
-
-              <button
-                onClick={() => setRoleMode('admin')}
-                className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
-                  roleMode === 'admin'
-                    ? 'bg-slate-900 text-blue-400 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" /> Admin Portal
-              </button>
-            </div>
-          )}
-
           {/* Quick Demo Preset Buttons - Centered */}
           <div className="bg-blue-50 border border-blue-200 p-3.5 rounded-2xl space-y-2 text-center">
             <span className="text-[11px] font-bold text-blue-950 uppercase tracking-wider block text-center">
-              ⚡ Quick 1-Click Demo Authentication:
+              ⚡ Quick 1-Click Authentication:
             </span>
 
             {authMode === 'register' ? (
               <button
                 onClick={() => {
-                  showToast('Registered & logged in as Demo Customer!', 'success');
+                  showToast('Registered & logged in as Customer!', 'success');
                   loginAsUser();
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer text-center mx-auto"
@@ -131,21 +101,13 @@ export const AuthModal: React.FC = () => {
                 <UserPlus className="w-4 h-4" />
                 <span>Quick Register & Log In as Customer</span>
               </button>
-            ) : roleMode === 'user' ? (
+            ) : (
               <button
                 onClick={loginAsUser}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer text-center mx-auto"
               >
                 <User className="w-4 h-4" />
-                <span>Log In as Customer (John Doe)</span>
-              </button>
-            ) : (
-              <button
-                onClick={loginAsAdmin}
-                className="w-full bg-blue-700 hover:bg-blue-800 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer text-center mx-auto"
-              >
-                <KeyRound className="w-4 h-4 text-blue-400" />
-                <span>Log In as Shop & WordPress Admin</span>
+                <span>Log In as Customer Account</span>
               </button>
             )}
           </div>
@@ -192,7 +154,7 @@ export const AuthModal: React.FC = () => {
               <input
                 type="email"
                 required
-                placeholder={roleMode === 'admin' ? 'admin@woodynatdesigners.com' : 'client@gmail.com'}
+                placeholder="client@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -219,8 +181,6 @@ export const AuthModal: React.FC = () => {
               <span>
                 {authMode === 'register'
                   ? 'Complete Registration & Sign In'
-                  : roleMode === 'admin'
-                  ? 'Access Admin Console'
                   : 'Sign In to Account'}
               </span>
               <ArrowRight className="w-4 h-4" />
@@ -253,13 +213,24 @@ export const AuthModal: React.FC = () => {
               </p>
             )}
 
-            <button
-              type="button"
-              onClick={() => setActiveModal(null)}
-              className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1 cursor-pointer pt-1"
-            >
-              <span>← Back to Shop / Browse Catalog</span>
-            </button>
+            <div className="flex flex-col items-center gap-1.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setActiveModal(null)}
+                className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1 cursor-pointer"
+              >
+                <span>← Back to Shop / Browse Catalog</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={loginAsAdmin}
+                className="text-[10px] text-slate-300 hover:text-slate-500 transition-colors cursor-pointer pt-2"
+                title="Woodynat Authorized Staff Login"
+              >
+                Authorized Staff Access
+              </button>
+            </div>
           </div>
 
         </div>

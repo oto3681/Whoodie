@@ -18,7 +18,6 @@ import {
 export const RegistrationGate: React.FC = () => {
   const { loginAsUser, loginAsAdmin, setIsGuestBrowsing, showToast } = useApp();
   const [authMode, setAuthMode] = useState<'register' | 'login'>('register');
-  const [roleMode, setRoleMode] = useState<'user' | 'admin'>('user');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -30,7 +29,7 @@ export const RegistrationGate: React.FC = () => {
       showToast('Account Created! Welcome to Woodynat Designers.', 'success');
       loginAsUser({ name: fullName, email, phone });
     } else {
-      if (roleMode === 'admin') {
+      if (email.toLowerCase().includes('admin')) {
         loginAsAdmin();
       } else {
         loginAsUser({ email });
@@ -133,7 +132,7 @@ export const RegistrationGate: React.FC = () => {
           {/* Quick 1-Click Demo Buttons */}
           <div className="bg-blue-50 border border-blue-200 p-3 rounded-2xl space-y-2 text-center">
             <span className="text-[10px] font-bold text-blue-900 uppercase tracking-wider block">
-              ⚡ Instant 1-Click Demo Login:
+              ⚡ Instant 1-Click Customer Access:
             </span>
             <div className="flex flex-col sm:flex-row gap-2">
               <button
@@ -142,17 +141,9 @@ export const RegistrationGate: React.FC = () => {
                   showToast('Registered & logged in as Customer!', 'success');
                   loginAsUser();
                 }}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
               >
-                <UserPlus className="w-3.5 h-3.5" /> Customer Access
-              </button>
-
-              <button
-                type="button"
-                onClick={loginAsAdmin}
-                className="flex-1 bg-slate-900 hover:bg-slate-950 text-blue-400 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
-              >
-                <KeyRound className="w-3.5 h-3.5 text-blue-400" /> Admin Access
+                <UserPlus className="w-3.5 h-3.5" /> Quick Customer Login
               </button>
             </div>
           </div>

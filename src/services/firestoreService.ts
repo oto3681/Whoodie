@@ -51,22 +51,16 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void) => {
           data.category = CATEGORY_MAPPINGS[data.category];
         }
 
-        // Ensure product image is sanitized, valid, and preserved
+        // Ensure product image is sanitized, valid, and preserved with high quality photo asset
         const initMatch = INITIAL_PRODUCTS.find(p => p.id === data.id);
-        if (!data.image || data.image.trim() === '') {
-          data.image = initMatch?.image || 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
-          saveProductToFirestore(data);
-        } else if (data.image.startsWith('/src/assets/')) {
-          data.image = data.image.replace('/src/assets/', '/assets/');
-          saveProductToFirestore(data);
-        } else if (data.image.startsWith('src/assets/')) {
-          data.image = '/' + data.image.replace('src/assets/', 'assets/');
-          saveProductToFirestore(data);
-        } else if (data.image.startsWith('assets/')) {
-          data.image = '/' + data.image;
-          saveProductToFirestore(data);
-        } else if (initMatch && initMatch.image && !data.image.startsWith('/') && !data.image.startsWith('http') && !data.image.startsWith('data:')) {
-          data.image = initMatch.image;
+        if (initMatch && initMatch.image) {
+          // If Firestore image is missing, empty, or mismatched/generic, restore the official photo asset
+          if (!data.image || data.image.trim() === '' || data.image.includes('photo-1542744094-3a3172720177') || data.image.startsWith('/src/assets/') || data.image.startsWith('src/assets/') || (data.id === 'prod-custom-apron-bulk' && !data.image.includes('apron_bulk_production')) || (data.id === 'prod-lightweight-reflectors' && !data.image.includes('lightweight_reflectors_vest'))) {
+            data.image = initMatch.image;
+            saveProductToFirestore(data);
+          }
+        } else if (!data.image || data.image.trim() === '') {
+          data.image = 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
           saveProductToFirestore(data);
         }
 
@@ -198,5 +192,19 @@ export const saveWpSettingsToFirestore = async (settings: WordPressSettings) => 
     await setDoc(doc(db, SETTINGS_COL, 'wpSettings'), settings);
   } catch (err) {
     console.error('Failed to save wpSettings to Firestore:', err);
+  }
+};
+
+export const restoreAllProductImages = async () => {
+  try {
+    for (const initProd of INITIAL_PRODUCTS) {
+      if (initProd.image) {
+        await setDoc(doc(db, PRODUCTS_COL, initProd.id), {
+          image: initProd.image
+        }, { merge: true });
+      }
+    }
+  } catch (err) {
+    console.error('Failed to restore all product images:', err);
   }
 };

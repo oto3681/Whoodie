@@ -822,6 +822,12 @@ export const getProductFallbackImage = (name?: string, category?: string): strin
   const n = (name || '').toLowerCase();
   const c = (category || '').toLowerCase();
 
+  if (n.includes('apron') || c.includes('apron')) {
+    return '/assets/images/apron_bulk_production_1786094965199.jpg';
+  }
+  if (n.includes('reflector') || n.includes('vest') || n.includes('reflective') || c.includes('reflector')) {
+    return '/assets/images/lightweight_reflectors_vest_1785247161011.jpg';
+  }
   if (n.includes('t-shirt') || n.includes('tshirt') || n.includes('polo') || n.includes('shirt') || c.includes('t-shirt')) {
     return 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80';
   }
