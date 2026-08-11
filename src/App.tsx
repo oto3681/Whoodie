@@ -192,19 +192,19 @@ const ShopContent: React.FC = () => {
         </section>
       )}
 
-      {/* 24-HOUR EXPRESS EULOGY & MEMORIALS SPOTLIGHT BANNER */}
+      {/* EULOGY & MEMORIALS SPOTLIGHT BANNER */}
       {selectedCategory === 'All' && !searchQuery && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
           <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-md border-2 border-blue-600 text-slate-900 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
             <div className="space-y-2 text-center md:text-left z-10">
               <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider inline-block shadow-xs">
-                ⚡ 24-Hour Express Emergency Service
+                ⚡ Memorial Printing Service
               </span>
               <h3 className="text-xl sm:text-2xl font-black text-slate-900">
                 Funeral Program Booklets, Tribute Books & Eulogies
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 max-w-2xl font-medium">
-                Respectful, dignified funeral service programs designed & printed in 24 hours with express overnight delivery nationwide. Free digital photo restoration included.
+                Respectful, dignified funeral service programs designed & printed with nationwide delivery. Free digital photo restoration included.
               </p>
             </div>
 

@@ -76,7 +76,7 @@ export const RegistrationGate: React.FC = () => {
             <div className="space-y-3 pt-2">
               {[
                 'Full access to T-Shirts, Hoodies, Banners & Eulogies catalog',
-                '24-Hour Express Funeral Program Booklets service',
+                'Funeral Program Booklets service',
                 'Instant M-Pesa Push Checkout & Live Order Tracker',
                 'Custom Artwork Vectorization & Proofing Engine'
               ].map((feat, i) => (

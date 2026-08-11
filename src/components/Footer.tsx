@@ -50,7 +50,7 @@ export const Footer: React.FC = () => {
               <Clock className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white">Express 24h Service</h4>
+              <h4 className="text-sm font-bold text-white">Fast Print Service</h4>
               <p className="text-xs text-slate-400">Eulogies & Event Banners</p>
             </div>
           </div>
@@ -127,7 +127,7 @@ export const Footer: React.FC = () => {
               <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Rollup & Vinyl Banners</button></li>
               <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Vehicle & Office Signage</button></li>
               <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Die-Cut Waterproof Stickers</button></li>
-              <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">24h Express Eulogies</button></li>
+              <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Funeral & Eulogy Programs</button></li>
             </ul>
           </div>
 

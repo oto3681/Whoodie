@@ -496,7 +496,7 @@ export const AdminDashboard: React.FC = () => {
                     reviewCount: 1,
                     image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80',
                     description: '',
-                    features: ['High DPI Print Resolution', 'Premium Material & Finishing', 'Express 24-Hour Turnaround'],
+                    features: ['High DPI Print Resolution', 'Premium Material & Finishing', 'Fast Delivery Option'],
                     stockCount: 100,
                     isFlashDeal: false,
                     isQuoteOnly: false,
@@ -708,7 +708,7 @@ export const AdminDashboard: React.FC = () => {
                   <label className="text-slate-300 font-bold block mb-1">Key Features (One feature per line):</label>
                   <textarea
                     rows={4}
-                    placeholder={`High Resolution Full-Color Print\n24-Hour Express Delivery Option\nDurable Premium Material`}
+                    placeholder={`High Resolution Full-Color Print\nFast Countrywide Delivery Option\nDurable Premium Material`}
                     value={editingProduct.features.join('\n')}
                     onChange={(e) => setEditingProduct({
                       ...editingProduct,

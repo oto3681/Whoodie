@@ -105,7 +105,7 @@ export const CustomerFeedback: React.FC = () => {
             <Sparkles className="w-6 h-6" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-white">24-Hour Express Proofing</h4>
+            <h4 className="text-xs font-bold text-white">Fast Digital Proofing</h4>
             <p className="text-[11px] text-slate-400">Digital proofs sent on WhatsApp before printing.</p>
           </div>
         </div>
@@ -249,7 +249,7 @@ export const CustomerFeedback: React.FC = () => {
                 <label className="text-xs font-bold text-slate-700 block mb-1">Specific Item Name:</label>
                 <input
                   type="text"
-                  placeholder="e.g. Custom Printed Hoodies or 24h Eulogy Booklets"
+                  placeholder="e.g. Custom Printed Hoodies or Eulogy Booklets"
                   value={productName}
                   onChange={(e) => setProductName(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"

@@ -22,7 +22,7 @@ export const BannerNotice: React.FC = () => {
 
         <div className="flex items-center gap-4 text-slate-600 text-xs shrink-0 font-medium">
           <span className="hidden sm:flex items-center gap-1 text-slate-700 font-semibold">
-            <Truck className="w-3.5 h-3.5 text-blue-600" /> Express 24h Delivery
+            <Truck className="w-3.5 h-3.5 text-blue-600" /> Countrywide Delivery
           </span>
           <a 
             href={`https://wa.me/${cleanPhone}`}

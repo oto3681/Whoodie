@@ -59,11 +59,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               <Zap className="w-3 h-3 fill-white" /> FLASH SALE
             </span>
           )}
-          {product.expressDeliveryAvailable && (
-            <span className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1">
-              <Clock className="w-3 h-3" /> Express 24h
-            </span>
-          )}
         </div>
 
         {/* Top Right Price & Discount Badge */}

@@ -27,7 +27,7 @@ export const SocialFeeds: React.FC = () => {
     {
       id: 3,
       platform: 'Facebook',
-      title: 'Behind the press: Express 24-Hour Funeral Booklet printing department at work.',
+      title: 'Behind the press: Funeral Booklet printing department at work.',
       likes: '5.4K',
       comments: '95',
       image: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80',

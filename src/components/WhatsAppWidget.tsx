@@ -15,7 +15,7 @@ export const WhatsAppWidget: React.FC = () => {
     'Executive Business Cards Quote',
     'Custom T-Shirt / Hoodie Quote',
     'Precision Vinyl Cutting & Decals',
-    'Express 24h Funeral Program / Eulogy',
+    'Funeral Program / Eulogy',
     'Banners & Vehicle Branding',
     'Bulk Sticker / Label Printing'
   ];
