@@ -8,7 +8,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Product, Order, CustomerReview, WordPressSettings, OrderStatus, ProductCategory } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_REVIEWS, MOCK_ORDERS, DEFAULT_WORDPRESS_SETTINGS } from '../data/initialData';
+import { INITIAL_PRODUCTS, INITIAL_REVIEWS, MOCK_ORDERS, DEFAULT_WORDPRESS_SETTINGS, getProductFallbackImage } from '../data/initialData';
 
 const PRODUCTS_COL = 'products';
 const ORDERS_COL = 'orders';
@@ -51,16 +51,10 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void) => {
           data.category = CATEGORY_MAPPINGS[data.category];
         }
 
-        // Ensure product image is sanitized, valid, and preserved with high quality photo asset
+        // Preserve uploaded photos (base64, external links, assets) or fallback if missing/invalid
         const initMatch = INITIAL_PRODUCTS.find(p => p.id === data.id);
-        if (initMatch && initMatch.image) {
-          // If Firestore image is missing, empty, or mismatched/generic, restore the official photo asset
-          if (!data.image || data.image.trim() === '' || data.image.includes('photo-1542744094-3a3172720177') || data.image.startsWith('/src/assets/') || data.image.startsWith('src/assets/') || (data.id === 'prod-custom-apron-bulk' && !data.image.includes('apron_bulk_production')) || (data.id === 'prod-lightweight-reflectors' && !data.image.includes('lightweight_reflectors_vest'))) {
-            data.image = initMatch.image;
-            saveProductToFirestore(data);
-          }
-        } else if (!data.image || data.image.trim() === '') {
-          data.image = 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
+        if (!data.image || data.image.trim() === '' || data.image.startsWith('/src/assets/') || data.image.startsWith('src/assets/')) {
+          data.image = initMatch?.image || getProductFallbackImage(data.name, data.category);
           saveProductToFirestore(data);
         }
 

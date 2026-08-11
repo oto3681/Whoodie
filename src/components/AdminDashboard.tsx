@@ -81,6 +81,49 @@ export const AdminDashboard: React.FC = () => {
   const [mpesaPasskey, setMpesaPasskey] = useState(wpSettings.mpesaPasskey || '');
   const [isRegisteringC2b, setIsRegisteringC2b] = useState(false);
 
+  const processAndCompressImage = (file: File, callback: (compressedUrl: string) => void) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1200;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          callback(compressedDataUrl);
+        } else {
+          callback(e.target?.result as string);
+        }
+      };
+      img.onerror = () => {
+        if (typeof e.target?.result === 'string') {
+          callback(e.target.result);
+        }
+      };
+      if (typeof e.target?.result === 'string') {
+        img.src = e.target.result;
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleRegisterC2bUrls = async () => {
     setIsRegisteringC2b(true);
     try {
@@ -529,13 +572,9 @@ export const AdminDashboard: React.FC = () => {
                         e.preventDefault();
                         const file = e.dataTransfer.files?.[0];
                         if (file) {
-                          const reader = new FileReader();
-                          reader.onload = () => {
-                            if (typeof reader.result === 'string') {
-                              setEditingProduct({ ...editingProduct, image: reader.result });
-                            }
-                          };
-                          reader.readAsDataURL(file);
+                          processAndCompressImage(file, (compressedUrl) => {
+                            setEditingProduct({ ...editingProduct, image: compressedUrl });
+                          });
                         }
                       }}
                       className="border-2 border-dashed border-slate-600 hover:border-blue-500 bg-slate-900/60 hover:bg-slate-900/90 rounded-2xl p-4 text-center cursor-pointer transition-all group"
@@ -548,13 +587,9 @@ export const AdminDashboard: React.FC = () => {
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                              if (typeof reader.result === 'string') {
-                                setEditingProduct({ ...editingProduct, image: reader.result });
-                              }
-                            };
-                            reader.readAsDataURL(file);
+                            processAndCompressImage(file, (compressedUrl) => {
+                              setEditingProduct({ ...editingProduct, image: compressedUrl });
+                            });
                           }
                         }}
                       />
