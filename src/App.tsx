@@ -44,9 +44,16 @@ const ShopContent: React.FC = () => {
     wpSettings, 
     setActiveModal, 
     activeView, 
+    setActiveView,
     currentUser,
     isGuestBrowsing
   } = useApp();
+
+  useEffect(() => {
+    if (activeView === 'admin' && currentUser?.role !== 'admin') {
+      setActiveView('shop');
+    }
+  }, [activeView, currentUser, setActiveView]);
 
   // Filter products by selectedCategory & searchQuery
   const filteredProducts = products.filter((p) => {

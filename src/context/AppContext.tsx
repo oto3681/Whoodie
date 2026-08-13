@@ -65,7 +65,7 @@ interface AppContextType {
   
   // Auth
   loginAsUser: (userData?: { name?: string; email?: string; phone?: string }) => void;
-  loginAsAdmin: () => void;
+  loginAsAdmin: (adminEmail?: string) => void;
   logout: () => void;
   
   // Orders & Tracking
@@ -223,7 +223,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Toast utility
   const showToast = (title: string, description: string, type: ToastMessage['type'] = 'success') => {
-    const id = Date.now().toString();
+    const id = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     setToasts((prev) => [...prev, { id, title, description, type }]);
     setTimeout(() => {
       removeToast(id);
@@ -280,7 +280,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Auth Handlers
   const loginAsUser = (userData?: { name?: string; email?: string; phone?: string }) => {
     const user: UserProfile = {
-      id: `user-${Date.now().toString().slice(-6)}`,
+      id: `user-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`,
       name: userData?.name || 'John Doe',
       email: userData?.email || 'client@gmail.com',
       phone: userData?.phone || '+254712998877',
@@ -292,11 +292,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     showToast(`Welcome, ${user.name}! 👋`, 'Logged in to Woodynat Customer Account.');
   };
 
-  const loginAsAdmin = () => {
+  const loginAsAdmin = (adminEmail?: string) => {
     const admin: UserProfile = {
       id: 'admin-001',
       name: 'Admin Manager',
-      email: 'admin@woodynatdesigners.co.ke',
+      email: adminEmail || 'woodynatdesigners12@gmail.com',
       phone: '+254712345678',
       role: 'admin',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
@@ -445,7 +445,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addReview = (reviewData: Omit<CustomerReview, 'id' | 'date' | 'likes'>) => {
     const newRev: CustomerReview = {
       ...reviewData,
-      id: `rev-${Date.now()}`,
+      id: `rev-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       date: 'Just now',
       likes: 0
     };

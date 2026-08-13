@@ -486,7 +486,7 @@ export const AdminDashboard: React.FC = () => {
               <button
                 onClick={() => {
                   setEditingProduct({
-                    id: `prod-custom-${Date.now()}`,
+                    id: `prod-custom-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
                     name: '',
                     category: 'Printed T-Shirts',
                     price: 1500,

@@ -22,18 +22,30 @@ export const RegistrationGate: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setAuthError('');
+
+    const cleanEmail = email.trim().toLowerCase();
+    const isAdminEmail = cleanEmail === 'woodynatdesigners12@gmail' || cleanEmail === 'woodynatdesigners12@gmail.com' || cleanEmail === 'admin@woodynatdesigners.co.ke';
+
+    if (isAdminEmail) {
+      if (password === 'Sunflower_14' || password === '247247' || password === 'woodynatadmin') {
+        loginAsAdmin('woodynatdesigners12@gmail.com');
+        return;
+      } else {
+        setAuthError('Incorrect password for Admin account woodynatdesigners12@gmail.');
+        return;
+      }
+    }
+
     if (authMode === 'register') {
       showToast('Account Created! Welcome to Woodynat Designers.', 'success');
       loginAsUser({ name: fullName, email, phone });
     } else {
-      if (email.toLowerCase().includes('admin')) {
-        loginAsAdmin();
-      } else {
-        loginAsUser({ email });
-      }
+      loginAsUser({ email });
     }
   };
 
@@ -150,6 +162,11 @@ export const RegistrationGate: React.FC = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-3">
+            {authError && (
+              <div className="bg-red-50 border border-red-200 text-red-600 text-xs font-bold p-2.5 rounded-xl flex items-center gap-2">
+                <span>{authError}</span>
+              </div>
+            )}
             {authMode === 'register' && (
               <>
                 <div>
