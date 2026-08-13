@@ -112,6 +112,7 @@ export interface UserProfile {
 export interface WordPressSettings {
   siteTitle: string;
   tagline: string;
+  siteLogo?: string;
   whatsappNumber: string;
   supportPhone: string;
   companyEmail: string;

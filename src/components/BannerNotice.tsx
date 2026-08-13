@@ -21,6 +21,10 @@ export const BannerNotice: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4 text-slate-600 text-xs shrink-0 font-medium">
+          <span className="hidden lg:flex items-center gap-1.5 bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded text-[10px] font-black uppercase">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+            M-PESA Express Live (Paybill {wpSettings.paybillNumber || '247247'})
+          </span>
           <span className="hidden sm:flex items-center gap-1 text-slate-700 font-semibold">
             <Truck className="w-3.5 h-3.5 text-blue-600" /> Countrywide Delivery
           </span>

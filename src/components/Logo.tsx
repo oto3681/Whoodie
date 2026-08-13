@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useApp } from '../context/AppContext';
 
 interface LogoProps {
   variant?: 'full' | 'compact' | 'icon' | 'white';
@@ -6,125 +7,113 @@ interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
+const DEFAULT_IMAGE_SOURCES = [
+  '/assets/images/woodynat_official_logo.jpg',
+  '/logo.jpg',
+  '/logo.png',
+  '/assets/images/official_woodynat_logo.jpg',
+];
+
 export const Logo: React.FC<LogoProps> = ({
   variant = 'full',
   className = '',
   size = 'md',
 }) => {
-  const [imgError, setImgError] = useState(false);
+  let customLogo = '';
+  try {
+    const app = useApp();
+    customLogo = app?.wpSettings?.siteLogo || '';
+  } catch (err) {
+    // Fallback if rendered outside provider
+  }
 
-  // Height mappings based on size prop
+  const sources = customLogo
+    ? [customLogo, ...DEFAULT_IMAGE_SOURCES]
+    : DEFAULT_IMAGE_SOURCES;
+
+  const [imgIndex, setImgIndex] = useState(0);
+  const [allImagesFailed, setAllImagesFailed] = useState(false);
+
+  const handleImageError = () => {
+    if (imgIndex < sources.length - 1) {
+      setImgIndex(prev => prev + 1);
+    } else {
+      setAllImagesFailed(true);
+    }
+  };
+
+  // Height mappings based on size prop for prominent, crystal-clear visibility
   const logoHeightClass =
-    size === 'sm' ? 'h-9 sm:h-10' :
-    size === 'md' ? 'h-12 sm:h-14' :
-    size === 'lg' ? 'h-16 sm:h-20' : 'h-20 sm:h-24';
+    size === 'sm' ? 'h-10 sm:h-12' :
+    size === 'md' ? 'h-14 sm:h-18' :
+    size === 'lg' ? 'h-20 sm:h-26' : 'h-28 sm:h-36';
 
-  const iconHeight = size === 'sm' ? 38 : size === 'md' ? 52 : size === 'lg' ? 68 : 84;
-
-  const brandRed = '#E30613';
-  const brandBlue = '#0071CE';
+  // For footer / dark backgrounds (variant === 'white')
+  const darkBgWrapper = variant === 'white' ? 'bg-white p-1.5 sm:p-2 rounded-xl shadow-md border border-slate-100' : '';
 
   return (
-    <div className={`inline-flex items-center gap-2.5 sm:gap-3 select-none ${className}`}>
-      {!imgError ? (
+    <div className={`inline-flex items-center shrink-0 select-none ${darkBgWrapper} ${className}`}>
+      {!allImagesFailed ? (
         <img
-          src="/assets/images/woodynat_official_logo.jpg"
+          key={sources[imgIndex] || 'logo-img'}
+          src={sources[imgIndex]}
           alt="WOODYNAT DESIGNERS LTD - Your Reliable Partner in Design and Branding"
-          className={`${logoHeightClass} w-auto object-contain rounded-lg transition-transform duration-200 hover:scale-105`}
-          onError={() => setImgError(true)}
+          className={`${logoHeightClass} w-auto object-contain rounded-md transition-transform duration-200 hover:scale-[1.02] shadow-2xs`}
+          onError={handleImageError}
         />
       ) : (
-        <>
-          {/* Official Emblem Mark Graphic Fallback */}
-          <div className="relative shrink-0 flex flex-col items-center">
-            <svg
-              height={iconHeight}
-              viewBox="0 0 160 170"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="drop-shadow-xs transition-transform duration-200 hover:scale-105"
-            >
-              {/* Red Background Box */}
-              <rect x="40" y="20" width="80" height="110" fill={brandRed} rx="3" />
-              
-              {/* White Oval Backdrop with Blue Fill */}
-              <ellipse cx="80" cy="72" rx="46" ry="60" fill="#ffffff" />
-              <ellipse cx="80" cy="72" rx="42" ry="56" fill={brandBlue} />
+        /* Precise High-Definition Vector SVG Fallback guaranteeing live visibility */
+        <svg
+          viewBox="0 0 560 380"
+          className={`${logoHeightClass} w-auto object-contain transition-transform duration-200 hover:scale-[1.02]`}
+          xmlns="http://www.w3.org/2000/svg"
+          role="img"
+          aria-label="WOODYNAT DESIGNERS LTD - Your Reliable Partner in Design and Branding"
+        >
+          {/* White Background Box */}
+          <rect width="560" height="380" fill="#ffffff" rx="16"/>
 
-              {/* Oval Outer Accent Ring */}
-              <ellipse cx="80" cy="72" rx="46" ry="60" stroke={brandRed} strokeWidth="3" fill="none" />
+          {/* EMBLEM GROUP */}
+          <g transform="translate(280, 135)">
+            {/* 1. Red Background Box */}
+            <rect x="-55" y="-60" width="110" height="142" fill="#ED1C24" rx="4" />
 
-              {/* Target / Crosshair Symbol on Left Wing */}
-              <g transform="translate(24, 60)">
-                <circle cx="12" cy="12" r="10" fill="#ffffff" />
-                <circle cx="12" cy="12" r="8" fill={brandRed} />
-                <circle cx="12" cy="12" r="4" fill="#ffffff" />
-                <circle cx="12" cy="12" r="2" fill={brandRed} />
-                <line x1="12" y1="0" x2="12" y2="24" stroke="#ffffff" strokeWidth="2" />
-                <line x1="0" y1="12" x2="24" y2="12" stroke="#ffffff" strokeWidth="2" />
-              </g>
+            {/* 2. Tilted Blue Oval with Letter N (Rotated -20 deg) */}
+            <g transform="rotate(-20)">
+              <ellipse cx="0" cy="0" rx="64" ry="86" fill="none" stroke="#ED1C24" strokeWidth="7" />
+              <ellipse cx="0" cy="0" rx="58" ry="80" fill="#ffffff" />
+              <ellipse cx="0" cy="0" rx="52" ry="74" fill="#0084D1" />
+              <path d="M -32,54 L -32,-48 L -14,-48 L 16,36 L 16,-48 L 32,-48 L 32,54 L 14,54 L -14,-28 L -14,54 Z" fill="#ffffff" />
+            </g>
 
-              {/* Stylized White Letter 'N' inside oval */}
-              <path
-                d="M 52 110 L 52 38 L 74 38 L 108 102 L 108 38 L 122 38 L 122 110 L 100 110 L 66 46 L 66 110 Z"
-                fill="#ffffff"
-              />
+            {/* 3. Target / Crosshair Icon on Left Overlap */}
+            <g transform="translate(-76, 18)">
+              <circle cx="0" cy="0" r="18" fill="#ffffff" />
+              <circle cx="0" cy="0" r="14" fill="#ED1C24" />
+              <circle cx="0" cy="0" r="7" fill="#ffffff" />
+              <circle cx="0" cy="0" r="3.5" fill="#ED1C24" />
+              <line x1="0" y1="-22" x2="0" y2="22" stroke="#ffffff" strokeWidth="3" />
+              <line x1="-22" y1="0" x2="22" y2="0" stroke="#ffffff" strokeWidth="3" />
+            </g>
 
-              {/* Accent Arc Ring in Red */}
-              <path
-                d="M 40 40 C 60 10, 110 10, 130 40 C 145 65, 135 110, 110 132"
-                stroke={brandRed}
-                strokeWidth="5"
-                strokeLinecap="round"
-                fill="none"
-              />
+            {/* 4. "Vogue en Designe" Dark Gray Pill Badge */}
+            <g transform="translate(0, 102)">
+              <rect x="-90" y="-15" width="180" height="30" rx="10" fill="#6B7280" />
+              <text x="0" y="5" fill="#ffffff" fontSize="16" fontWeight="800" fontFamily="system-ui, -apple-system, sans-serif" textAnchor="middle" letterSpacing="0.3">Vogue en Designe</text>
+            </g>
+          </g>
 
-              {/* "Vogue en Designe" Pillar Badge */}
-              <g transform="translate(18, 138)">
-                <rect x="0" y="0" width="124" height="24" rx="6" fill="#4B5563" />
-                <text
-                  x="62"
-                  y="16"
-                  fill="#ffffff"
-                  fontSize="12"
-                  fontWeight="800"
-                  fontFamily="system-ui, -apple-system, sans-serif"
-                  textAnchor="middle"
-                  letterSpacing="0.3"
-                >
-                  Vogue en Designe
-                </text>
-              </g>
-            </svg>
-          </div>
+          {/* 5. WOODYNAT DESIGNERS LTD */}
+          <text x="280" y="300" fill="#0084D1" fontSize="30" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" textAnchor="middle" letterSpacing="0.8">WOODYNAT DESIGNERS LTD</text>
 
-          {/* Official Typography Section */}
-          {variant !== 'icon' && (
-            <div className="flex flex-col justify-center">
-              <div className="flex items-center tracking-tight leading-none font-black text-base sm:text-lg md:text-xl">
-                <span style={{ color: brandBlue }} className="font-extrabold uppercase tracking-wide">
-                  WOODYNAT
-                </span>
-                <span style={{ color: brandBlue }} className="font-extrabold uppercase tracking-wide ml-1.5">
-                  DESIGNERS LTD
-                </span>
-              </div>
-
-              {(variant === 'full' || variant === 'compact' || variant === 'white') && (
-                <p
-                  className={`text-[11px] sm:text-[12px] font-bold mt-1 tracking-tight leading-none ${
-                    variant === 'white' ? 'text-slate-300' : 'text-slate-900'
-                  }`}
-                >
-                  Your Reliable Partner in Design and Branding
-                </p>
-              )}
-            </div>
-          )}
-        </>
+          {/* 6. Tagline: Your Reliable Partner in Design and Branding */}
+          <text x="280" y="338" fill="#1F2937" fontSize="17" fontWeight="700" fontFamily="system-ui, -apple-system, sans-serif" textAnchor="middle" letterSpacing="0.2">Your Reliable Partner in Design and Branding</text>
+        </svg>
       )}
     </div>
   );
 };
 
 export default Logo;
+
+

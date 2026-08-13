@@ -58,9 +58,14 @@ export const AdminDashboard: React.FC = () => {
   const [isCreatingNewProduct, setIsCreatingNewProduct] = useState(false);
   const [isSyncingImages, setIsSyncingImages] = useState(false);
 
+  // Product Catalog search & filter state
+  const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
+  const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<string>('All');
+
   // WordPress Customizer form state
   const [siteTitle, setSiteTitle] = useState(wpSettings.siteTitle);
   const [tagline, setTagline] = useState(wpSettings.tagline);
+  const [siteLogo, setSiteLogo] = useState(wpSettings.siteLogo || '');
   const [whatsappNumber, setWhatsappNumber] = useState(wpSettings.whatsappNumber);
   const [supportPhone, setSupportPhone] = useState(wpSettings.supportPhone);
   const [companyEmail, setCompanyEmail] = useState(wpSettings.companyEmail);
@@ -220,6 +225,7 @@ export const AdminDashboard: React.FC = () => {
     updateWpSettings({
       siteTitle,
       tagline,
+      siteLogo,
       whatsappNumber,
       supportPhone,
       companyEmail,
@@ -239,7 +245,7 @@ export const AdminDashboard: React.FC = () => {
       mpesaConsumerSecret,
       mpesaPasskey,
     });
-    showToast('Settings Saved 💾', 'Site and Safaricom M-Pesa API settings updated successfully.');
+    showToast('Settings & Active Logo Saved 💾', 'Site logo and WordPress customizer settings updated successfully live!');
   };
 
   const handleExportWpJson = () => {
@@ -537,12 +543,17 @@ export const AdminDashboard: React.FC = () => {
                 </button>
               </div>
 
-              {/* SECTION 1: Product Picture Upload */}
+              {/* SECTION 1: Product Picture Upload & Sample Presets */}
               <div className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/80 space-y-3">
-                <label className="text-xs font-extrabold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Upload className="w-4 h-4" />
-                  Product Picture / Photo Asset
-                </label>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <label className="text-xs font-extrabold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Upload className="w-4 h-4" />
+                    Product Picture / Photo Asset
+                  </label>
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    Upload photo file, paste link, or pick a stock preset
+                  </span>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                   {/* Photo Preview Card */}
@@ -568,7 +579,7 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Upload Controls */}
+                  {/* Upload Controls & Quick Presets */}
                   <div className="md:col-span-2 space-y-3">
                     <div 
                       onDragOver={(e) => e.preventDefault()}
@@ -610,6 +621,31 @@ export const AdminDashboard: React.FC = () => {
                       </label>
                     </div>
 
+                    {/* Quick Stock Sample Photo Presets */}
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase block">Or Choose Quick Sample Stock Picture:</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { label: '👕 T-Shirt', url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80' },
+                          { label: '🧥 Hoodie', url: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&auto=format&fit=crop&q=80' },
+                          { label: '🎽 Reflector', url: 'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?w=800&auto=format&fit=crop&q=80' },
+                          { label: '🚩 Rollup Banner', url: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop&q=80' },
+                          { label: '☕ Mug', url: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800&auto=format&fit=crop&q=80' },
+                          { label: '📄 Flyer / Poster', url: 'https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=800&auto=format&fit=crop&q=80' },
+                          { label: '🕊️ Funeral Program', url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=800&auto=format&fit=crop&q=80' },
+                        ].map((preset, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setEditingProduct({ ...editingProduct, image: preset.url })}
+                            className="px-2.5 py-1 bg-slate-900 hover:bg-blue-600 text-slate-300 hover:text-white rounded-lg text-[11px] font-semibold transition-colors cursor-pointer border border-slate-700"
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Alternative Image URL Input */}
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-bold text-slate-400 uppercase shrink-0">Or Image URL:</span>
@@ -618,7 +654,7 @@ export const AdminDashboard: React.FC = () => {
                         placeholder="https://example.com/photo.jpg"
                         value={editingProduct.image}
                         onChange={(e) => setEditingProduct({ ...editingProduct, image: e.target.value })}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
                       />
                     </div>
                   </div>
@@ -695,7 +731,75 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* SECTION 3: Description & Features */}
+              {/* SECTION 3: Customization Options (Sizes, Finishes, Min Quantity) */}
+              <div className="bg-slate-800/60 p-4 rounded-2xl border border-slate-700/60 space-y-3">
+                <label className="text-xs font-extrabold text-blue-400 uppercase tracking-wider block">
+                  Product Customization Options (Sizes & Finishes)
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <label className="text-slate-300 font-bold block mb-1">Available Sizes (Comma separated):</label>
+                    <input
+                      type="text"
+                      placeholder="S, M, L, XL, XXL or A4, A3, A2"
+                      value={editingProduct.customizationOptions?.sizes?.join(', ') || ''}
+                      onChange={(e) => {
+                        const sizesArr = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                        setEditingProduct({
+                          ...editingProduct,
+                          customizationOptions: {
+                            ...editingProduct.customizationOptions,
+                            sizes: sizesArr,
+                          }
+                        });
+                      }}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white font-mono text-xs focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-slate-300 font-bold block mb-1">Available Finishes (Comma separated):</label>
+                    <input
+                      type="text"
+                      placeholder="Screen Print, Embroidery, Sublimation, Glossy"
+                      value={editingProduct.customizationOptions?.finishes?.join(', ') || ''}
+                      onChange={(e) => {
+                        const finishesArr = e.target.value.split(',').map(f => f.trim()).filter(Boolean);
+                        setEditingProduct({
+                          ...editingProduct,
+                          customizationOptions: {
+                            ...editingProduct.customizationOptions,
+                            finishes: finishesArr,
+                          }
+                        });
+                      }}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white font-mono text-xs focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-slate-300 font-bold block mb-1">Min Order Quantity:</label>
+                    <input
+                      type="number"
+                      placeholder="1"
+                      value={editingProduct.customizationOptions?.minQuantity || 1}
+                      onChange={(e) => {
+                        const minQ = parseInt(e.target.value) || 1;
+                        setEditingProduct({
+                          ...editingProduct,
+                          customizationOptions: {
+                            ...editingProduct.customizationOptions,
+                            minQuantity: minQ,
+                          }
+                        });
+                      }}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white font-bold focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 4: Description & Features */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 <div>
                   <label className="text-slate-300 font-bold block mb-1">Full Product Description:</label>
@@ -723,7 +827,7 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* SECTION 4: Toggles */}
+              {/* SECTION 5: Toggles & Badges */}
               <div className="flex flex-wrap gap-4 items-center pt-2">
                 <label className="flex items-center gap-2 cursor-pointer bg-slate-800 px-3 py-2 rounded-xl border border-slate-700">
                   <input
@@ -740,6 +844,18 @@ export const AdminDashboard: React.FC = () => {
                 <label className="flex items-center gap-2 cursor-pointer bg-slate-800 px-3 py-2 rounded-xl border border-slate-700">
                   <input
                     type="checkbox"
+                    checked={editingProduct.expressDeliveryAvailable || false}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, expressDeliveryAvailable: e.target.checked })}
+                    className="w-4 h-4 rounded text-blue-600 bg-slate-900 border-slate-700 focus:ring-0"
+                  />
+                  <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" /> 24h Express Printing Badge
+                  </span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer bg-slate-800 px-3 py-2 rounded-xl border border-slate-700">
+                  <input
+                    type="checkbox"
                     checked={editingProduct.isQuoteOnly || false}
                     onChange={(e) => setEditingProduct({ ...editingProduct, isQuoteOnly: e.target.checked })}
                     className="w-4 h-4 rounded text-blue-600 bg-slate-900 border-slate-700 focus:ring-0"
@@ -750,7 +866,7 @@ export const AdminDashboard: React.FC = () => {
                 </label>
               </div>
 
-              {/* SECTION 5: Save & Cancel Buttons */}
+              {/* SECTION 6: Save & Cancel Buttons */}
               <div className="flex items-center gap-3 pt-3 border-t border-slate-800">
                 <button
                   onClick={() => {
@@ -760,15 +876,17 @@ export const AdminDashboard: React.FC = () => {
                     }
                     if (isCreatingNewProduct) {
                       addProduct(editingProduct);
+                      showToast('New Product Created! 🚀', `Published ${editingProduct.name} to live catalogue.`);
                     } else {
                       updateProduct(editingProduct);
+                      showToast('Product Updated! ✏️', `Saved changes for ${editingProduct.name}.`);
                     }
                     setEditingProduct(null);
                     setIsCreatingNewProduct(false);
                   }}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg transition-all cursor-pointer"
                 >
-                  <Save className="w-4 h-4" /> Save Product & Publish Photo
+                  <Save className="w-4 h-4" /> Save Product & Publish Live
                 </button>
                 <button
                   onClick={() => { setEditingProduct(null); setIsCreatingNewProduct(false); }}
@@ -780,15 +898,37 @@ export const AdminDashboard: React.FC = () => {
             </div>
           )}
 
-          {/* Product Catalog Live Table */}
+          {/* Product Catalog Live Table with Search & Category Filter */}
           <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-              <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
-                Live Catalog Products ({products.length} Items)
-              </span>
-              <span className="text-[11px] font-semibold text-slate-500">
-                All changes reflect live in the shop and price catalogue instantly
-              </span>
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider block">
+                  Live Catalog Products ({products.length} Total)
+                </span>
+                <span className="text-[11px] font-semibold text-slate-500">
+                  All additions & edits reflect live on shop & price catalog instantly
+                </span>
+              </div>
+
+              {/* Search & Category Filter Bar */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={catalogSearchQuery}
+                  onChange={(e) => setCatalogSearchQuery(e.target.value)}
+                  className="bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-48"
+                />
+                <select
+                  value={catalogCategoryFilter}
+                  onChange={(e) => setCatalogCategoryFilter(e.target.value)}
+                  className="bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -803,7 +943,15 @@ export const AdminDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {products.map((p) => (
+                  {products
+                    .filter(p => {
+                      const matchesCategory = catalogCategoryFilter === 'All' || p.category === catalogCategoryFilter;
+                      const matchesSearch = !catalogSearchQuery.trim() || 
+                        p.name.toLowerCase().includes(catalogSearchQuery.toLowerCase()) || 
+                        p.description.toLowerCase().includes(catalogSearchQuery.toLowerCase());
+                      return matchesCategory && matchesSearch;
+                    })
+                    .map((p) => (
                     <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="p-3">
                         <div className="flex items-center gap-3">
@@ -833,13 +981,10 @@ export const AdminDashboard: React.FC = () => {
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  const reader = new FileReader();
-                                  reader.onload = () => {
-                                    if (typeof reader.result === 'string') {
-                                      updateProduct({ ...p, image: reader.result });
-                                    }
-                                  };
-                                  reader.readAsDataURL(file);
+                                  processAndCompressImage(file, (compressedUrl) => {
+                                    updateProduct({ ...p, image: compressedUrl });
+                                    showToast('Photo Updated! 📸', `Updated photo for ${p.name}.`);
+                                  });
                                 }
                               }}
                             />
@@ -879,14 +1024,31 @@ export const AdminDashboard: React.FC = () => {
                           <button
                             onClick={() => { setEditingProduct(p); setIsCreatingNewProduct(false); }}
                             className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
+                            title="Edit Product Details & Price"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                             <span>Edit</span>
                           </button>
                           <button
                             onClick={() => {
+                              const duplicatedProduct = {
+                                ...p,
+                                id: `prod-custom-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                                name: `${p.name} (Copy)`,
+                              };
+                              setEditingProduct(duplicatedProduct);
+                              setIsCreatingNewProduct(true);
+                            }}
+                            className="p-1.5 bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 rounded-lg font-bold transition-colors cursor-pointer"
+                            title="Duplicate Product"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => {
                               if (confirm(`Delete ${p.name} from catalog?`)) {
                                 deleteProduct(p.id);
+                                showToast('Product Deleted', `Removed ${p.name} from catalog.`);
                               }
                             }}
                             className="p-1.5 bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-lg font-bold transition-colors cursor-pointer"
@@ -925,6 +1087,99 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+            {/* Site Logo Upload & Live Activation Card */}
+            <div className="col-span-1 sm:col-span-2 md:col-span-3 bg-slate-900 text-white p-5 rounded-2xl border border-blue-900/80 shadow-md space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                <div>
+                  <h4 className="text-sm font-black text-white flex items-center gap-2">
+                    <Upload className="w-4 h-4 text-blue-400" /> Insert New Official Site Logo (Live Activation)
+                  </h4>
+                  <p className="text-[11px] text-slate-300">
+                    Upload or paste an image link for a new logo. Once inserted, it will immediately become live and active across the entire website.
+                  </p>
+                </div>
+
+                {siteLogo && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSiteLogo('');
+                      updateWpSettings({ siteLogo: '' });
+                      showToast('Logo Reset 🔄', 'Restored official default WoodyNat Designers logo.');
+                    }}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-bold transition-colors self-start sm:self-auto cursor-pointer"
+                  >
+                    Reset to Default Logo
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                {/* Upload & Link Controls */}
+                <div className="space-y-3">
+                  <label className="block text-[11px] font-bold text-slate-300">
+                    1. Upload Logo Image File (PNG, JPG, SVG, WebP):
+                  </label>
+                  <label className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-3 rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-colors">
+                    <Upload className="w-4 h-4" />
+                    <span>Upload & Insert New Logo File</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          processAndCompressImage(file, (compressedUrl) => {
+                            setSiteLogo(compressedUrl);
+                            updateWpSettings({ siteLogo: compressedUrl });
+                            showToast('New Logo Live! 🎨', 'Your uploaded logo is now live and active across all screens.');
+                          });
+                        }
+                      }}
+                    />
+                  </label>
+
+                  <div className="space-y-1 pt-1">
+                    <label className="block text-[11px] font-bold text-slate-300">
+                      2. Or Paste Direct Image URL:
+                    </label>
+                    <input
+                      type="text"
+                      value={siteLogo}
+                      onChange={(e) => {
+                        setSiteLogo(e.target.value);
+                        updateWpSettings({ siteLogo: e.target.value });
+                      }}
+                      placeholder="https://example.com/woodynat-custom-logo.png"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* Live Preview Panel */}
+                <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center space-y-2.5">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-blue-400">
+                    Live Active Logo Preview
+                  </span>
+                  <div className="bg-white p-3 rounded-xl shadow-inner border border-slate-200 flex items-center justify-center min-h-[95px] w-full max-w-xs">
+                    <img
+                      src={siteLogo || '/assets/images/woodynat_official_logo.jpg'}
+                      alt="Active Logo Preview"
+                      className="max-h-20 max-w-full object-contain"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = '/assets/images/woodynat_official_logo.jpg';
+                      }}
+                    />
+                  </div>
+                  <span className="text-[11px] font-extrabold text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    {siteLogo ? 'Custom Uploaded Logo Active' : 'Default WoodyNat Logo Active'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1">Site Title:</label>
               <input

@@ -796,6 +796,7 @@ export const MOCK_ORDERS: Order[] = [
 export const DEFAULT_WORDPRESS_SETTINGS: WordPressSettings = {
   siteTitle: 'Woodynat Designers Limited',
   tagline: 'Your Reliable Partner in Design and Branding',
+  siteLogo: '',
   whatsappNumber: '0797939199',
   supportPhone: '0797939199',
   companyEmail: 'woodynatdesigners12@gmail.com',

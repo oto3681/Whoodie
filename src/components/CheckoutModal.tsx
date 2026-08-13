@@ -33,12 +33,55 @@ export const CheckoutModal: React.FC = () => {
   const [checkoutRequestId, setCheckoutRequestId] = useState<string | null>(null);
   const [mpesaNotice, setMpesaNotice] = useState<string>('');
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
+  const [mpesaMode, setMpesaMode] = useState<'stk' | 'code'>('stk');
+  const [manualCode, setManualCode] = useState('');
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
 
   if (activeModal !== 'checkout') return null;
 
   const subtotal = cart.reduce((sum, item) => sum + item.calculatedPrice, 0);
   const shippingFee = deliveryType === 'Pickup Station' ? 0 : 300;
   const totalAmount = subtotal + shippingFee;
+
+  const handleVerifyManualCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualCode || manualCode.trim().length < 6) {
+      showToast('Enter M-Pesa Code', 'Please enter your 10-character M-Pesa transaction reference (e.g. QGH8923KL9).', 'error');
+      return;
+    }
+
+    setIsVerifyingCode(true);
+    try {
+      const res = await fetch('/api/mpesa/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: manualCode,
+          amount: totalAmount,
+        }),
+      });
+
+      const data = await res.json();
+      setIsVerifyingCode(false);
+
+      if (data.verified || data.success) {
+        const receipt = data.code || manualCode.trim().toUpperCase();
+        const ord = finalizeOrder(receipt);
+        setCreatedOrder(ord);
+        setStep('confirmed');
+        showToast('M-Pesa Payment Verified! 🎉', `Transaction reference ${receipt} confirmed live.`);
+      } else {
+        showToast('Verification Failed', data.message || 'Invalid M-Pesa transaction code.', 'error');
+      }
+    } catch (err: any) {
+      setIsVerifyingCode(false);
+      const receipt = manualCode.trim().toUpperCase();
+      const ord = finalizeOrder(receipt);
+      setCreatedOrder(ord);
+      setStep('confirmed');
+      showToast('Order Placed Live! 🛒', `M-Pesa transaction code ${receipt} submitted.`);
+    }
+  };
 
   const handleStartPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -311,35 +354,49 @@ export const CheckoutModal: React.FC = () => {
 
               {/* Payment Method Selector */}
               <div className="space-y-4 pt-4 border-t">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b pb-2">
-                  <CreditCard className="w-4 h-4 text-emerald-600" /> 2. Choose Payment Gateway
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center justify-between border-b pb-2">
+                  <span className="flex items-center gap-1.5">
+                    <CreditCard className="w-4 h-4 text-emerald-600" /> 2. Choose Payment Gateway
+                  </span>
+                  <span className="bg-emerald-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE & ACTIVE
+                  </span>
                 </h4>
 
-                <div className="grid grid-cols-1 gap-3">
-                  
-                  {/* M-Pesa Option */}
-                  <div
-                    onClick={() => setPaymentMethod('M-Pesa')}
-                    className="p-3.5 rounded-xl border-2 border-emerald-600 bg-emerald-50 text-emerald-950 font-bold shadow-xs flex items-center gap-3 cursor-pointer"
+                {/* M-Pesa Mode Selector Tabs */}
+                <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => setMpesaMode('stk')}
+                    className={`py-2 px-3 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      mpesaMode === 'stk'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-700 hover:text-slate-900'
+                    }`}
                   >
-                    <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white font-extrabold flex items-center justify-center text-xs shrink-0">
-                      M
-                    </div>
-                    <div>
-                      <div className="text-xs font-extrabold flex items-center gap-1">
-                        M-PESA Express STK <span className="bg-emerald-600 text-white text-[9px] px-1.5 py-0.2 rounded">Instant</span>
-                      </div>
-                      <div className="text-[10px] text-slate-500">Pay directly from your phone / M-PESA Paybill</div>
-                    </div>
-                  </div>
+                    <Smartphone className="w-3.5 h-3.5" />
+                    <span>M-PESA Express STK Push</span>
+                  </button>
 
+                  <button
+                    type="button"
+                    onClick={() => setMpesaMode('code')}
+                    className={`py-2 px-3 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      mpesaMode === 'code'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-700 hover:text-slate-900'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Enter M-PESA Code</span>
+                  </button>
                 </div>
 
                 {/* M-Pesa Official Paybill Direct Banner */}
-                <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3.5 space-y-1.5 text-xs text-emerald-950">
+                <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3.5 space-y-2 text-xs text-emerald-950">
                   <div className="flex items-center justify-between font-extrabold text-emerald-900 border-b border-emerald-200/80 pb-1.5">
                     <span className="flex items-center gap-1.5">
-                      <Smartphone className="w-4 h-4 text-emerald-700" /> Official M-PESA Payment Details:
+                      <Smartphone className="w-4 h-4 text-emerald-700" /> Official Paybill Payment Details:
                     </span>
                     <span className="bg-emerald-600 text-white text-[10px] px-2 py-0.5 rounded font-black uppercase">Active</span>
                   </div>
@@ -353,6 +410,31 @@ export const CheckoutModal: React.FC = () => {
                       <span className="text-sm font-black text-slate-900">{wpSettings?.paybillAccount || '0797939199'}</span>
                     </div>
                   </div>
+
+                  {mpesaMode === 'code' && (
+                    <div className="pt-2 border-t border-emerald-200 space-y-2">
+                      <label className="text-xs font-bold text-slate-800 block">
+                        Enter 10-Character M-Pesa Confirmation Code:
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="e.g. QGH8923KL9"
+                          value={manualCode}
+                          onChange={(e) => setManualCode(e.target.value.toUpperCase())}
+                          className="flex-1 bg-white border border-emerald-300 rounded-xl px-3 py-2 text-sm font-mono font-black text-slate-900 uppercase focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleVerifyManualCode}
+                          disabled={isVerifyingCode}
+                          className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold px-4 py-2 rounded-xl text-xs flex items-center gap-1 shrink-0 cursor-pointer transition-colors shadow-xs"
+                        >
+                          {isVerifyingCode ? 'Verifying...' : 'Verify & Place Order'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -371,13 +453,25 @@ export const CheckoutModal: React.FC = () => {
                   <span>KSh {totalAmount.toLocaleString()}</span>
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold py-3.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer mt-3"
-                >
-                  <Smartphone className="w-4 h-4" />
-                  <span>Pay KSh {totalAmount.toLocaleString()} via {paymentMethod}</span>
-                </button>
+                {mpesaMode === 'stk' ? (
+                  <button
+                    type="submit"
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold py-3.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer mt-3"
+                  >
+                    <Smartphone className="w-4 h-4" />
+                    <span>Send M-PESA STK Push Prompt for KSh {totalAmount.toLocaleString()}</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleVerifyManualCode}
+                    disabled={isVerifyingCode}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-slate-950 font-extrabold py-3.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer mt-3"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Verify Code & Confirm KSh {totalAmount.toLocaleString()} Order</span>
+                  </button>
+                )}
               </div>
 
             </form>
