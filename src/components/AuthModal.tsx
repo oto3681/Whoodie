@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { X, User, ShieldCheck, ArrowRight, KeyRound, UserPlus, LogIn, Lock, AlertCircle } from 'lucide-react';
+import { X, User, ShieldCheck, ArrowRight, KeyRound, UserPlus, LogIn, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export const AuthModal: React.FC = () => {
   const { currentUser, activeModal, setActiveModal, loginAsUser, loginAsAdmin, showToast } = useApp();
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'staff'>('register');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [adminPasscode, setAdminPasscode] = useState('');
+  const [showAdminPasscode, setShowAdminPasscode] = useState(false);
   const [staffAuthError, setStaffAuthError] = useState('');
 
   if (activeModal !== 'login' && currentUser) return null;
@@ -170,14 +172,24 @@ export const AuthModal: React.FC = () => {
 
                 <div>
                   <label className="text-xs font-bold text-slate-300 block mb-1">Admin Security Passcode / PIN:</label>
-                  <input
-                    type="password"
-                    required
-                    placeholder="Enter Admin Passcode (e.g. 247247)"
-                    value={adminPasscode}
-                    onChange={(e) => setAdminPasscode(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showAdminPasscode ? 'text' : 'password'}
+                      required
+                      placeholder="Enter Admin Passcode (e.g. 247247)"
+                      value={adminPasscode}
+                      onChange={(e) => setAdminPasscode(e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 pr-10 text-xs text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAdminPasscode(!showAdminPasscode)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-400 transition-colors p-1 cursor-pointer"
+                      title={showAdminPasscode ? 'Hide passcode' : 'Show passcode'}
+                    >
+                      {showAdminPasscode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 <button
@@ -237,14 +249,24 @@ export const AuthModal: React.FC = () => {
 
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1">Password:</label>
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 pr-10 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors p-1 cursor-pointer"
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Submit Button */}

@@ -30,7 +30,9 @@ import {
   FileText,
   Zap,
   X,
-  Check
+  Check,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Product, OrderStatus, ProductCategory } from '../types';
 
@@ -79,6 +81,8 @@ export const AdminDashboard: React.FC = () => {
   const [mpesaConsumerKey, setMpesaConsumerKey] = useState(wpSettings.mpesaConsumerKey || '');
   const [mpesaConsumerSecret, setMpesaConsumerSecret] = useState(wpSettings.mpesaConsumerSecret || '');
   const [mpesaPasskey, setMpesaPasskey] = useState(wpSettings.mpesaPasskey || '');
+  const [showPasskey, setShowPasskey] = useState(false);
+  const [showConsumerSecret, setShowConsumerSecret] = useState(false);
   const [isRegisteringC2b, setIsRegisteringC2b] = useState(false);
 
   const processAndCompressImage = (file: File, callback: (compressedUrl: string) => void) => {
@@ -1017,13 +1021,23 @@ export const AdminDashboard: React.FC = () => {
 
                 <div>
                   <label className="text-[11px] font-bold text-emerald-200 block mb-1">Passkey (Online Passkey):</label>
-                  <input
-                    type="password"
-                    placeholder="Safaricom Online Passkey"
-                    value={mpesaPasskey}
-                    onChange={(e) => setMpesaPasskey(e.target.value)}
-                    className="w-full bg-slate-900 border border-emerald-800 text-white rounded-xl p-2.5 font-mono text-xs focus:ring-2 focus:ring-emerald-500"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPasskey ? 'text' : 'password'}
+                      placeholder="Safaricom Online Passkey"
+                      value={mpesaPasskey}
+                      onChange={(e) => setMpesaPasskey(e.target.value)}
+                      className="w-full bg-slate-900 border border-emerald-800 text-white rounded-xl p-2.5 pr-10 font-mono text-xs focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasskey(!showPasskey)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-400 hover:text-emerald-200 transition-colors p-1 cursor-pointer"
+                      title={showPasskey ? 'Hide passkey' : 'Show passkey'}
+                    >
+                      {showPasskey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
@@ -1039,13 +1053,23 @@ export const AdminDashboard: React.FC = () => {
 
                 <div>
                   <label className="text-[11px] font-bold text-emerald-200 block mb-1">Consumer Secret:</label>
-                  <input
-                    type="password"
-                    placeholder="Safaricom Consumer Secret"
-                    value={mpesaConsumerSecret}
-                    onChange={(e) => setMpesaConsumerSecret(e.target.value)}
-                    className="w-full bg-slate-900 border border-emerald-800 text-white rounded-xl p-2.5 font-mono text-xs focus:ring-2 focus:ring-emerald-500"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showConsumerSecret ? 'text' : 'password'}
+                      placeholder="Safaricom Consumer Secret"
+                      value={mpesaConsumerSecret}
+                      onChange={(e) => setMpesaConsumerSecret(e.target.value)}
+                      className="w-full bg-slate-900 border border-emerald-800 text-white rounded-xl p-2.5 pr-10 font-mono text-xs focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConsumerSecret(!showConsumerSecret)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-400 hover:text-emerald-200 transition-colors p-1 cursor-pointer"
+                      title={showConsumerSecret ? 'Hide consumer secret' : 'Show consumer secret'}
+                    >
+                      {showConsumerSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
               </div>
 
