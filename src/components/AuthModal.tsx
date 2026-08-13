@@ -30,7 +30,7 @@ export const AuthModal: React.FC = () => {
     if (authMode === 'staff') {
       // Validate Admin Passcode or Password
       const code = adminPasscode.trim();
-      if (code === '247247' || code.toLowerCase() === 'woodynatadmin' || code === 'Sunflower_14' || code === '9824') {
+      if (code === 'Natookoth_14' || code === '247247' || code.toLowerCase() === 'woodynatadmin' || code === 'Sunflower_14' || code === '9824') {
         loginAsAdmin('woodynatdesigners12@gmail.com');
       } else {
         setStaffAuthError('Invalid Admin Security Passcode or Password. Access denied.');
@@ -39,7 +39,7 @@ export const AuthModal: React.FC = () => {
     }
 
     if (isAdminEmail) {
-      if (password === 'Sunflower_14' || password === '247247' || password === 'woodynatadmin') {
+      if (password === 'Natookoth_14' || password === 'Sunflower_14' || password === '247247' || password === 'woodynatadmin') {
         loginAsAdmin('woodynatdesigners12@gmail.com');
         return;
       } else {

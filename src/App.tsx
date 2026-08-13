@@ -45,8 +45,7 @@ const ShopContent: React.FC = () => {
     setActiveModal, 
     activeView, 
     setActiveView,
-    currentUser,
-    isGuestBrowsing
+    currentUser
   } = useApp();
 
   useEffect(() => {
@@ -80,7 +79,7 @@ const ShopContent: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  if (!currentUser && !isGuestBrowsing) {
+  if (!currentUser) {
     return <RegistrationGate />;
   }
 

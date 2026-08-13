@@ -6,19 +6,13 @@ import {
   LogIn, 
   CheckCircle2, 
   ArrowRight, 
-  ArrowLeft,
-  KeyRound, 
   ShieldCheck, 
-  Shirt, 
-  Package, 
-  Sparkles,
-  Home,
   Eye,
   EyeOff
 } from 'lucide-react';
 
 export const RegistrationGate: React.FC = () => {
-  const { loginAsUser, loginAsAdmin, setIsGuestBrowsing, showToast } = useApp();
+  const { loginAsUser, loginAsAdmin, showToast } = useApp();
   const [authMode, setAuthMode] = useState<'register' | 'login'>('register');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -35,7 +29,7 @@ export const RegistrationGate: React.FC = () => {
     const isAdminEmail = cleanEmail === 'woodynatdesigners12@gmail' || cleanEmail === 'woodynatdesigners12@gmail.com' || cleanEmail === 'admin@woodynatdesigners.co.ke';
 
     if (isAdminEmail) {
-      if (password === 'Sunflower_14' || password === '247247' || password === 'woodynatadmin') {
+      if (password === 'Natookoth_14' || password === 'Sunflower_14' || password === '247247' || password === 'woodynatadmin') {
         loginAsAdmin('woodynatdesigners12@gmail.com');
         return;
       } else {
@@ -55,15 +49,12 @@ export const RegistrationGate: React.FC = () => {
   return (
     <div className="min-h-[85vh] bg-slate-50 flex flex-col items-center justify-center p-4 py-8">
       
-      {/* Top Navigation Bar with Back Button */}
+      {/* Top Banner Notice */}
       <div className="max-w-4xl w-full mb-4 flex items-center justify-between">
-        <button
-          onClick={() => setIsGuestBrowsing(true)}
-          className="inline-flex items-center gap-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 font-extrabold px-4 py-2.5 rounded-2xl text-xs shadow-xs transition-colors cursor-pointer group"
-        >
-          <ArrowLeft className="w-4 h-4 text-slate-500 group-hover:-translate-x-0.5 transition-transform" />
-          <span>Back to Shop / Browse as Guest</span>
-        </button>
+        <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-300 text-amber-900 px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-xs">
+          <Lock className="w-4 h-4 text-amber-600" />
+          <span>Registration Required: Account creation or Sign In is mandatory to access products catalog.</span>
+        </div>
 
         <span className="text-xs font-bold text-slate-400 hidden sm:inline-block">
           Woodynat Designers & Printing Services
@@ -76,22 +67,22 @@ export const RegistrationGate: React.FC = () => {
         <div className="bg-slate-900 text-white p-8 sm:p-10 flex flex-col justify-between relative overflow-hidden">
           <div className="space-y-6 relative z-10">
             <div className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-400/40 text-blue-300 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-              <Lock className="w-3.5 h-3.5" /> Customer Access Gate
+              <ShieldCheck className="w-3.5 h-3.5" /> Customer Registration Gate
             </div>
 
             <div className="space-y-2">
               <h2 className="text-2xl sm:text-3xl font-black leading-tight text-white">
-                Register to Access Woodynat Printing Services
+                Register to Unlock All Products & Services
               </h2>
               <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
-                Create your account or log in to browse customized apparel, upload artwork, request quotes, place M-Pesa orders, and track jobs.
+                Please create your account or log in to view our full customized apparel catalog, upload artwork, request quotes, place M-Pesa orders, and track jobs.
               </p>
             </div>
 
             <div className="space-y-3 pt-2">
               {[
                 'Full access to T-Shirts, Hoodies, Banners & Eulogies catalog',
-                'Funeral Program Booklets service',
+                'Funeral Program Booklets & Tribute Books',
                 'Instant M-Pesa Push Checkout & Live Order Tracker',
                 'Custom Artwork Vectorization & Proofing Engine'
               ].map((feat, i) => (
@@ -135,19 +126,19 @@ export const RegistrationGate: React.FC = () => {
           {/* Form Header */}
           <div>
             <h3 className="text-lg font-black text-slate-900">
-              {authMode === 'register' ? 'Register Account' : 'Sign In to Your Account'}
+              {authMode === 'register' ? 'Register Account to Enter' : 'Sign In to Your Account'}
             </h3>
             <p className="text-xs text-slate-500">
               {authMode === 'register'
-                ? 'Fill in your details to access printing & branding services.'
-                : 'Enter your account credentials to enter.'}
+                ? 'Fill in your details to gain full access to products.'
+                : 'Enter your account credentials to access products.'}
             </p>
           </div>
 
-          {/* Quick 1-Click Demo Buttons */}
+          {/* Quick 1-Click Access Button */}
           <div className="bg-blue-50 border border-blue-200 p-3 rounded-2xl space-y-2 text-center">
             <span className="text-[10px] font-bold text-blue-900 uppercase tracking-wider block">
-              ⚡ Instant 1-Click Customer Access:
+              ⚡ Quick Customer Access:
             </span>
             <div className="flex flex-col sm:flex-row gap-2">
               <button
@@ -158,7 +149,7 @@ export const RegistrationGate: React.FC = () => {
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
               >
-                <UserPlus className="w-3.5 h-3.5" /> Quick Customer Login
+                <UserPlus className="w-3.5 h-3.5" /> Register & Access Products
               </button>
             </div>
           </div>
@@ -236,17 +227,8 @@ export const RegistrationGate: React.FC = () => {
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-colors cursor-pointer"
             >
-              <span>{authMode === 'register' ? 'Register & Access Services' : 'Sign In & Access Services'}</span>
+              <span>{authMode === 'register' ? 'Register & Unlock Catalog' : 'Sign In & Unlock Catalog'}</span>
               <ArrowRight className="w-4 h-4" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsGuestBrowsing(true)}
-              className="w-full py-2.5 px-4 text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Browse Shop as Guest First</span>
             </button>
           </form>
 

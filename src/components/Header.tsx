@@ -42,73 +42,29 @@ export const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs">
-      {/* Main Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-4">
+      {/* Main Centered Header Bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 space-y-3">
+        
+        {/* 3-Column Balanced Layout: Left Links | EXACT MIDDLE CENTER LOGO | Right Actions */}
+        <div className="grid grid-cols-3 items-center gap-2 sm:gap-4 w-full">
           
-          {/* Official WoodyNat Logo & Brand Name */}
-          <div className="flex items-center gap-3 shrink-0">
-            <button 
-              onClick={() => { setActiveView('shop'); setSelectedCategory('All'); }}
-              className="flex items-center gap-2.5 text-left group cursor-pointer focus:outline-none"
-              title="WoodyNat Designers Limited"
+          {/* Column 1: Left Quick Links */}
+          <div className="flex items-center justify-start gap-1.5 sm:gap-2">
+            {/* Mobile Menu Toggle */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 text-slate-700 hover:text-slate-900 rounded-xl hover:bg-slate-100 border border-slate-200"
+              title="Open Navigation Menu"
             >
-              <Logo variant="compact" size="md" />
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
-          </div>
 
-          {/* Jumia-Style Central Search & Category Bar */}
-          <div className="hidden lg:flex items-center flex-1 max-w-2xl mx-4">
-            <div className="flex w-full rounded-xl border-2 border-blue-600 bg-white focus-within:ring-2 focus-within:ring-blue-200 transition-all overflow-hidden shadow-xs">
-              
-              {/* Category Selector Dropdown inside Search */}
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value as ProductCategory)}
-                className="bg-slate-50 text-slate-700 text-xs font-bold px-3 py-2.5 border-r border-slate-200 focus:outline-none cursor-pointer max-w-[160px] truncate"
-              >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-
-              {/* Search Input */}
-              <div className="relative flex-1 flex items-center">
-                <input
-                  type="text"
-                  placeholder="Search T-Shirts, Hoodies, Banners, Eulogies, Stickers..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full text-xs sm:text-sm text-slate-900 placeholder-slate-400 pl-3 pr-8 py-2.5 bg-transparent focus:outline-none"
-                />
-                {searchQuery && (
-                  <button 
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 text-slate-400 hover:text-slate-600 text-xs font-bold"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-
-              {/* Search Submit Button */}
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 flex items-center justify-center font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer">
-                <Search className="w-4 h-4 mr-1" /> SEARCH
-              </button>
-            </div>
-          </div>
-
-          {/* Actions & Utilities */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            
             {/* WhatsApp Direct Inquiry Button */}
             <a
               href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent("Hi Woodynat Designers Limited! I would like to inquire about custom design & printing pricing.")}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 px-3 py-2 rounded-xl transition-colors"
+              className="hidden lg:flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 px-3 py-2 rounded-xl transition-colors shrink-0"
             >
               <MessageCircle className="w-4 h-4 fill-emerald-600 text-emerald-50" />
               <span>WhatsApp Inquiry</span>
@@ -117,7 +73,7 @@ export const Header: React.FC = () => {
             {/* Price Catalogue Button */}
             <button
               onClick={() => setActiveModal('catalogue')}
-              className="hidden md:flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-3 py-2 rounded-xl transition-colors cursor-pointer shadow-2xs"
+              className="hidden md:flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-3 py-2 rounded-xl transition-colors cursor-pointer shadow-2xs shrink-0"
             >
               <FileText className="w-4 h-4 text-blue-600" />
               <span>Price Catalogue</span>
@@ -126,15 +82,30 @@ export const Header: React.FC = () => {
             {/* Tracking Button */}
             <button
               onClick={() => setActiveModal('track')}
-              className="hidden md:flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-blue-600 px-2.5 py-2 rounded-xl hover:bg-blue-50 transition-colors cursor-pointer"
+              className="hidden xl:flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-blue-600 px-2.5 py-2 rounded-xl hover:bg-blue-50 transition-colors cursor-pointer shrink-0"
             >
               <Package className="w-4 h-4 text-blue-600" />
               <span>Track Order</span>
             </button>
+          </div>
 
-            {/* If user logged in, show quick Account/Admin badge */}
+          {/* Column 2: EXACT MIDDLE CENTER LOGO (ENLARGED) */}
+          <div className="flex items-center justify-center text-center my-auto py-1">
+            <button 
+              onClick={() => { setActiveView('shop'); setSelectedCategory('All'); }}
+              className="flex flex-col items-center justify-center text-center group cursor-pointer focus:outline-none"
+              title="WoodyNat Designers Limited - Your Reliable Partner in Design and Branding"
+            >
+              <Logo variant="full" size="xl" className="mx-auto scale-105 sm:scale-110 transition-transform hover:scale-115" />
+            </button>
+          </div>
+
+          {/* Column 3: Right Actions & Cart */}
+          <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0">
+            
+            {/* User Account or Admin Console */}
             {currentUser ? (
-              <div className="hidden md:flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <div className="hidden sm:flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
                 <button
                   onClick={() => setActiveView(currentUser.role === 'admin' ? 'admin' : 'dashboard')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
@@ -156,29 +127,30 @@ export const Header: React.FC = () => {
 
                 <button
                   onClick={logout}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-extrabold text-red-600 hover:bg-red-50 border border-red-200 flex items-center gap-1 transition-all cursor-pointer"
+                  className="px-2 py-1.5 rounded-lg text-xs font-extrabold text-red-600 hover:bg-red-50 border border-red-200 flex items-center gap-1 transition-all cursor-pointer"
                   title="Log Out of Account"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span>Log Out</span>
+                  <span className="hidden md:inline">Log Out</span>
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => setActiveModal('login')}
-                className="hidden sm:flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs transition-colors cursor-pointer shadow-xs"
+                className="hidden sm:flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-3 py-2 rounded-xl text-xs transition-colors cursor-pointer shadow-xs"
               >
                 <User className="w-3.5 h-3.5" />
-                <span>Register / Sign In</span>
+                <span className="hidden md:inline">Register / Sign In</span>
+                <span className="md:hidden">Sign In</span>
               </button>
             )}
 
             {/* Cart Button */}
             <button
               onClick={() => setActiveModal('cart')}
-              className="relative bg-blue-600 hover:bg-blue-700 text-white font-extrabold p-2.5 sm:px-4 sm:py-2.5 rounded-xl flex items-center gap-2 transition-transform active:scale-95 shadow-md cursor-pointer"
+              className="relative bg-blue-600 hover:bg-blue-700 text-white font-extrabold p-2 sm:px-3.5 sm:py-2 rounded-xl flex items-center gap-1.5 transition-transform active:scale-95 shadow-md cursor-pointer shrink-0"
             >
-              <ShoppingBag className="w-5 h-5" />
+              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="hidden sm:inline text-xs uppercase tracking-wider">Cart</span>
               {cartItemsCount > 0 && (
                 <span className="bg-white text-blue-600 text-xs font-black w-5 h-5 rounded-full flex items-center justify-center border border-blue-200 shadow-xs">
@@ -186,29 +158,48 @@ export const Header: React.FC = () => {
                 </span>
               )}
             </button>
-
-            {/* Mobile Menu Toggle */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
           </div>
         </div>
 
-        {/* Mobile Search Bar */}
-        <div className="lg:hidden pb-3">
-          <div className="flex w-full rounded-xl border-2 border-blue-600 bg-white focus-within:bg-white overflow-hidden shadow-xs">
-            <input
-              type="text"
-              placeholder="Search T-Shirts, Hoodies, Banners, Eulogies..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-xs text-slate-900 px-3 py-2 bg-transparent focus:outline-none"
-            />
-            <button className="bg-blue-600 text-white px-3 flex items-center justify-center font-bold">
-              <Search className="w-3.5 h-3.5" />
+        {/* Central Search & Category Selector Bar */}
+        <div className="max-w-3xl mx-auto w-full">
+          <div className="flex w-full rounded-xl border-2 border-blue-600 bg-white focus-within:ring-2 focus-within:ring-blue-200 transition-all overflow-hidden shadow-xs">
+            
+            {/* Category Selector Dropdown inside Search */}
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value as ProductCategory)}
+              className="bg-slate-50 text-slate-700 text-xs font-bold px-3 py-2.5 border-r border-slate-200 focus:outline-none cursor-pointer max-w-[160px] truncate hidden sm:block"
+            >
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+
+            {/* Search Input */}
+            <div className="relative flex-1 flex items-center">
+              <input
+                type="text"
+                placeholder="Search T-Shirts, Hoodies, Banners, Eulogies, Stickers..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full text-xs sm:text-sm text-slate-900 placeholder-slate-400 pl-3 pr-8 py-2.5 bg-transparent focus:outline-none"
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            {/* Search Submit Button */}
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 sm:px-6 flex items-center justify-center font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer shrink-0">
+              <Search className="w-4 h-4 mr-1" /> <span className="hidden sm:inline">SEARCH</span>
             </button>
           </div>
         </div>
