@@ -125,6 +125,8 @@ export interface WordPressSettings {
   facebookUrl: string;
   instagramUrl: string;
   tiktokUrl: string;
+  twitterUrl?: string;
+  youtubeUrl?: string;
   primaryColor: string;
   wpWooSyncEnabled: boolean;
   wpRestEndpoint: string;
@@ -134,6 +136,19 @@ export interface WordPressSettings {
   mpesaConsumerKey?: string;
   mpesaConsumerSecret?: string;
   mpesaPasskey?: string;
+  // Footer Customization
+  footerAboutText?: string;
+  footerOfficeHours?: string;
+  footerCopyrightText?: string;
+  footerDeveloperCredit?: string;
+  footerTrustBadge1Title?: string;
+  footerTrustBadge1Desc?: string;
+  footerTrustBadge2Title?: string;
+  footerTrustBadge2Desc?: string;
+  footerTrustBadge3Title?: string;
+  footerTrustBadge3Desc?: string;
+  footerTrustBadge4Title?: string;
+  footerTrustBadge4Desc?: string;
 }
 
 export interface CustomerInquiry {

@@ -819,6 +819,8 @@ export const DEFAULT_WORDPRESS_SETTINGS: WordPressSettings = {
   facebookUrl: 'https://facebook.com/WoodynatDesignersLimited',
   instagramUrl: 'https://instagram.com/woodynatdesigners_14',
   tiktokUrl: 'https://tiktok.com/@woodynatdesigners_14',
+  twitterUrl: '',
+  youtubeUrl: '',
   primaryColor: '#f68b1e',
   wpWooSyncEnabled: true,
   wpRestEndpoint: 'https://woodynatdesigners.co.ke/wp-json/wc/v3',
@@ -827,7 +829,20 @@ export const DEFAULT_WORDPRESS_SETTINGS: WordPressSettings = {
   mpesaEnvironment: 'production',
   mpesaConsumerKey: '',
   mpesaConsumerSecret: '',
-  mpesaPasskey: ''
+  mpesaPasskey: '',
+  // Footer Defaults
+  footerAboutText: 'Commercial graphics, printing, custom apparel branding, corporate video production, and memorial publication studio based in Nairobi, Kenya.',
+  footerOfficeHours: 'Mon - Sat: 8:00 AM - 7:00 PM | Sun: On-Call / Urgent Proofing',
+  footerCopyrightText: '© 2026 Woodynat Designers Limited. All rights reserved.',
+  footerDeveloperCredit: 'A craft designed and developed by DaveTech Solutions',
+  footerTrustBadge1Title: 'Quality Guaranteed',
+  footerTrustBadge1Desc: '300DPI HD Precision Print',
+  footerTrustBadge2Title: 'Instant Payment',
+  footerTrustBadge2Desc: 'M-PESA Express STK & Paybill',
+  footerTrustBadge3Title: 'Fast Print Service',
+  footerTrustBadge3Desc: 'Eulogies & Event Banners',
+  footerTrustBadge4Title: 'Real-Time Tracking',
+  footerTrustBadge4Desc: 'Live Delivery Updates',
 };
 
 export const getProductFallbackImage = (name?: string, category?: string): string => {
