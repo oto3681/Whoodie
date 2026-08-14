@@ -40,11 +40,21 @@ export const UserDashboard: React.FC = () => {
             className="w-16 h-16 rounded-2xl object-cover border-2 border-amber-400 shadow-md"
           />
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-xl sm:text-2xl font-extrabold text-white">{currentUser.name}</h2>
               <span className="bg-blue-600/80 text-blue-200 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border border-blue-400/40">
                 Verified Client
               </span>
+              {currentUser.provider === 'google' && (
+                <span className="bg-red-500/20 text-red-300 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border border-red-500/40 flex items-center gap-1">
+                  <span>✉️ Signed in via Gmail</span>
+                </span>
+              )}
+              {currentUser.provider === 'facebook' && (
+                <span className="bg-[#1877F2]/30 text-blue-200 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border border-blue-400/40 flex items-center gap-1">
+                  <span>🌐 Signed in via Facebook</span>
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-300 mt-1 flex items-center gap-3">
               <span>✉️ {currentUser.email}</span>

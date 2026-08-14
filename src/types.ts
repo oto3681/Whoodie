@@ -107,6 +107,7 @@ export interface UserProfile {
   phone: string;
   role: 'admin' | 'user';
   avatar?: string;
+  provider?: 'email' | 'google' | 'facebook';
 }
 
 export interface WordPressSettings {
@@ -134,3 +135,246 @@ export interface WordPressSettings {
   mpesaConsumerSecret?: string;
   mpesaPasskey?: string;
 }
+
+export interface CustomerInquiry {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  companyName?: string;
+  inquiryTopic: string;
+  notes?: string;
+  createdAt: string;
+  status: 'New' | 'Catalogue Sent' | 'Quoted' | 'Approved' | 'Completed';
+  preferredCategory?: ProductCategory;
+  requestedQuantity?: number;
+}
+
+export interface CataloguePrintConfig {
+  title: string;
+  subtitle?: string;
+  clientName?: string;
+  layoutStyle?: 'grid' | 'table' | 'cards' | 'specsheet';
+  showPrices?: boolean;
+  showImages?: boolean;
+  showFeatures?: boolean;
+  showPaybillInfo?: boolean;
+  showTerms?: boolean;
+  discountPercentage?: number;
+  customNotes?: string;
+}
+
+export interface WhatsAppMessage {
+  id: string;
+  sender: 'customer' | 'agent' | 'bot';
+  text: string;
+  timestamp: string;
+  status: 'sent' | 'delivered' | 'read';
+  attachmentType?: 'quote' | 'image' | 'payment_request' | 'catalogue' | 'proof';
+  attachmentData?: {
+    productName?: string;
+    amount?: number;
+    pdfTitle?: string;
+    imageUrl?: string;
+    paybill?: string;
+    account?: string;
+  };
+}
+
+export interface WhatsAppChatThread {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  customerAvatar?: string;
+  companyName?: string;
+  unreadCount: number;
+  lastMessage: string;
+  lastMessageTime: string;
+  topic: string;
+  status: 'active' | 'quoted' | 'paid' | 'proof_pending' | 'resolved';
+  isBotActive: boolean;
+  messages: WhatsAppMessage[];
+}
+
+export interface BotRule {
+  id: string;
+  keyword: string;
+  title: string;
+  response: string;
+  enabled: boolean;
+  categoryTag?: string;
+}
+
+export interface CustomerContact {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  companyName?: string;
+  tags: string[];
+  source: 'order' | 'inquiry' | 'whatsapp' | 'manual' | 'csv_import';
+  subscribedEmail: boolean;
+  subscribedSms: boolean;
+  createdAt: string;
+  totalOrdersCount?: number;
+  lastActiveDate?: string;
+}
+
+export interface BulkSmsTemplate {
+  id: string;
+  title: string;
+  category: 'Promotion' | 'Memorial' | 'Corporate' | 'Payment' | 'Location' | 'Transactional';
+  body: string;
+}
+
+export interface BulkEmailTemplate {
+  id: string;
+  title: string;
+  category: 'Promotion' | 'Memorial' | 'Corporate' | 'Catalogue' | 'Payment' | 'Custom';
+  subject: string;
+  preheader: string;
+  headline: string;
+  heroImage?: string;
+  badgeText?: string;
+  bodyParagraphs: string[];
+  bulletPoints?: string[];
+  ctaButtonText: string;
+  ctaButtonUrl: string;
+  secondaryCtaText?: string;
+  secondaryCtaUrl?: string;
+  footerNote?: string;
+}
+
+export interface BulkCampaign {
+  id: string;
+  title: string;
+  channel: 'sms' | 'email' | 'both';
+  targetAudience: 'all' | 'orders' | 'corporate' | 'inquiries' | 'whatsapp' | 'custom';
+  audienceLabel: string;
+  recipientCount: number;
+  senderId?: string;
+  smsBody?: string;
+  emailSubject?: string;
+  emailPreheader?: string;
+  emailTemplateId?: string;
+  sentAt: string;
+  status: 'draft' | 'sending' | 'completed' | 'failed';
+  deliveredCount: number;
+  failedCount: number;
+  openRateEstimate?: string;
+  logs?: string[];
+}
+
+export interface AdminNotification {
+  id: string;
+  type: 'order_placed' | 'inquiry_submitted' | 'payment_received' | 'whatsapp_lead';
+  title: string;
+  message: string;
+  timestamp: string;
+  timeAgo?: string;
+  read: boolean;
+  status: 'pending' | 'accepted' | 'declined' | 'completed';
+  referenceId: string; // Order ID (e.g. PX-98241) or Inquiry ID (inq-...) or Thread ID
+  referenceData: {
+    customerName: string;
+    customerPhone: string;
+    customerEmail?: string;
+    amount?: number;
+    itemsSummary?: string;
+    itemsCount?: number;
+    deliveryCity?: string;
+    deliveryType?: string;
+    paymentMethod?: string;
+    paymentStatus?: string;
+    topic?: string;
+    companyName?: string;
+    notes?: string;
+    category?: string;
+    requestedQuantity?: number;
+  };
+  acceptedAt?: string;
+  acceptedBy?: string;
+  actionTakenNotes?: string;
+}
+
+export interface ZohoQuoteItem {
+  id: string;
+  productId?: string;
+  name: string;
+  category: string;
+  description: string;
+  quantity: number;
+  unit: string; // pcs, sets, rolls, books, etc.
+  unitPrice: number; // KSh
+  discountPercent: number; // 0 - 100
+  taxPercent: number; // 16 or 0
+  taxAmount: number;
+  total: number;
+  selectedSize?: string;
+  selectedFinish?: string;
+  artworkNotes?: string;
+}
+
+export type ZohoQuoteStatus = 'Draft' | 'Sent' | 'Approved' | 'Invoiced' | 'Declined' | 'Converted to Order';
+
+export interface ZohoQuotation {
+  id: string;
+  quoteNumber: string; // e.g. ZOHO-QT-2026-0042
+  referenceInquiryId?: string;
+  referenceChatId?: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  companyName?: string;
+  customerKraPin?: string;
+  billingAddress?: string;
+  deliveryLocation: string;
+  deliveryType: 'Pickup Station' | 'Express Home Delivery' | 'CBD Workshop Pickup';
+  quoteDate: string;
+  expiryDate: string;
+  validityDays: number;
+  paymentTerms: 'Due on Receipt' | 'Net 15' | 'Net 30' | '50% Deposit, 50% on Delivery' | 'Cash on Delivery';
+  deliveryTimeline: string; // e.g. "24-48 Hours Express", "3-5 Working Days"
+  currency: 'KSh' | 'USD';
+  items: ZohoQuoteItem[];
+  subtotal: number;
+  discountTotal: number;
+  taxRate: number; // 16% VAT or 0%
+  taxTotal: number;
+  shippingCost: number;
+  grandTotal: number;
+  isTaxInclusive: boolean;
+  notes: string;
+  termsAndConditions: string;
+  paybillNumber: string;
+  paybillAccount: string;
+  status: ZohoQuoteStatus;
+  zohoSyncStatus?: 'synced' | 'local_only' | 'pending';
+  zohoEstimateId?: string;
+  convertedOrderId?: string;
+  createdAt: string;
+  updatedAt: string;
+  preparedBy: string;
+}
+
+export interface ZohoSettings {
+  accountEmail: string;
+  notificationEmail: string;
+  senderName: string;
+  organizationId: string;
+  clientId: string;
+  clientSecret: string;
+  refreshToken: string;
+  environment: 'sandbox' | 'production';
+  autoSyncToZoho: boolean;
+  defaultQuotePrefix: string;
+  defaultPaymentTerms: 'Due on Receipt' | 'Net 15' | 'Net 30' | '50% Deposit, 50% on Delivery' | 'Cash on Delivery';
+  defaultValidityDays: number;
+  defaultTaxRate: number;
+  defaultDeliveryTimeline: string;
+  defaultNotes: string;
+  defaultTerms: string;
+  companyKraPin: string;
+  includeEtrQrCode: boolean;
+}
+

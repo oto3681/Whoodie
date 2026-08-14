@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { X, User, ShieldCheck, ArrowRight, KeyRound, UserPlus, LogIn, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { X, User, ShieldCheck, ArrowRight, KeyRound, UserPlus, LogIn, Lock, AlertCircle, Eye, EyeOff, Mail, Facebook, UserCheck } from 'lucide-react';
 
 export const AuthModal: React.FC = () => {
-  const { currentUser, activeModal, setActiveModal, loginAsUser, loginAsAdmin, showToast } = useApp();
+  const { currentUser, activeModal, setActiveModal, loginAsUser, loginWithGoogle, loginWithFacebook, loginAsAdmin, showToast } = useApp();
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'staff'>('register');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,6 +13,11 @@ export const AuthModal: React.FC = () => {
   const [adminPasscode, setAdminPasscode] = useState('');
   const [showAdminPasscode, setShowAdminPasscode] = useState(false);
   const [staffAuthError, setStaffAuthError] = useState('');
+
+  // Social Auth Modal states
+  const [socialModal, setSocialModal] = useState<'google' | 'facebook' | null>(null);
+  const [socialEmail, setSocialEmail] = useState('');
+  const [socialName, setSocialName] = useState('');
 
   if (activeModal !== 'login' && currentUser) return null;
   if (!currentUser && activeModal !== 'login') {
@@ -54,6 +59,33 @@ export const AuthModal: React.FC = () => {
     } else {
       loginAsUser({ email });
     }
+  };
+
+  const handleOpenGoogle = () => {
+    setSocialName(fullName || 'Jane Wambui');
+    setSocialEmail(email && email.includes('@') ? email : 'oto36810@gmail.com');
+    setSocialModal('google');
+  };
+
+  const handleOpenFacebook = () => {
+    setSocialName(fullName || 'David Ochieng');
+    setSocialEmail(email && email.includes('@') ? email : 'david.ochieng@facebook.com');
+    setSocialModal('facebook');
+  };
+
+  const handleConfirmSocial = (provider: 'google' | 'facebook') => {
+    if (provider === 'google') {
+      loginWithGoogle({
+        name: socialName || 'Google User',
+        email: socialEmail || 'user@gmail.com',
+      });
+    } else {
+      loginWithFacebook({
+        name: socialName || 'Facebook User',
+        email: socialEmail || 'user@facebook.com',
+      });
+    }
+    setSocialModal(null);
   };
 
   return (
@@ -114,32 +146,33 @@ export const AuthModal: React.FC = () => {
 
           {authMode !== 'staff' && (
             <>
-              {/* Quick Customer Authentication Button */}
-              <div className="bg-blue-50 border border-blue-200 p-3.5 rounded-2xl space-y-2 text-center">
-                <span className="text-[11px] font-bold text-blue-950 uppercase tracking-wider block text-center">
-                  ⚡ Quick 1-Click Customer Access:
-                </span>
+              {/* SOCIAL SIGN UP / SIGN IN OPTIONS */}
+              <div className="space-y-2">
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 text-center">
+                  ⚡ 1-Click Social Sign {authMode === 'register' ? 'Up' : 'In'}
+                </div>
 
-                {authMode === 'register' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
-                    onClick={() => {
-                      showToast('Registered & logged in as Customer!', 'success');
-                      loginAsUser();
-                    }}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer text-center mx-auto"
+                    type="button"
+                    onClick={handleOpenGoogle}
+                    className="w-full flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 font-bold py-2.5 px-3 rounded-xl border border-slate-300 shadow-xs text-xs transition-all cursor-pointer group"
                   >
-                    <UserPlus className="w-4 h-4" />
-                    <span>Quick Register & Log In as Customer</span>
+                    <div className="w-4 h-4 rounded-full bg-red-50 flex items-center justify-center text-red-600 group-hover:scale-110 transition-transform">
+                      <Mail className="w-3.5 h-3.5" />
+                    </div>
+                    <span>{authMode === 'register' ? 'Sign up with Gmail' : 'Sign in with Gmail'}</span>
                   </button>
-                ) : (
+
                   <button
-                    onClick={loginAsUser}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer text-center mx-auto"
+                    type="button"
+                    onClick={handleOpenFacebook}
+                    className="w-full flex items-center justify-center gap-2 bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold py-2.5 px-3 rounded-xl shadow-xs text-xs transition-all cursor-pointer group"
                   >
-                    <User className="w-4 h-4" />
-                    <span>Log In as Customer Account</span>
+                    <Facebook className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+                    <span>{authMode === 'register' ? 'Sign up with Facebook' : 'Sign in with Facebook'}</span>
                   </button>
-                )}
+                </div>
               </div>
 
               {/* Divider */}
@@ -347,6 +380,151 @@ export const AuthModal: React.FC = () => {
         </div>
 
       </div>
+
+      {/* POPUP / MODAL FOR GOOGLE GMAIL SIGN UP */}
+      {socialModal === 'google' && (
+        <div className="fixed inset-0 z-60 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="bg-slate-900 text-white p-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-sm">Sign in with Google / Gmail</h4>
+                  <span className="text-[10px] text-slate-300">Woodynat Designers OAuth 2.0</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSocialModal(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Connect your Google account to register and unlock full access to our customized print catalogue:
+              </p>
+
+              <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">Google Display Name:</label>
+                  <input
+                    type="text"
+                    value={socialName}
+                    onChange={(e) => setSocialName(e.target.value)}
+                    placeholder="Your Google Account Name"
+                    className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">Gmail Address:</label>
+                  <input
+                    type="email"
+                    value={socialEmail}
+                    onChange={(e) => setSocialEmail(e.target.value)}
+                    placeholder="user@gmail.com"
+                    className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => handleConfirmSocial('google')}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-colors cursor-pointer"
+                >
+                  <UserCheck className="w-4 h-4" />
+                  <span>Authorize & Sign Up with Google</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSocialModal(null)}
+                  className="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer text-center"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POPUP / MODAL FOR FACEBOOK SIGN UP */}
+      {socialModal === 'facebook' && (
+        <div className="fixed inset-0 z-60 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="bg-[#1877F2] text-white p-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Facebook className="w-5 h-5 text-white" />
+                <div>
+                  <h4 className="font-extrabold text-sm">Sign in with Facebook</h4>
+                  <span className="text-[10px] text-blue-100">Woodynat Designers Facebook Login</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSocialModal(null)}
+                className="text-white/80 hover:text-white p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Log in with Facebook to link your profile with Woodynat Designers:
+              </p>
+
+              <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">Facebook Profile Name:</label>
+                  <input
+                    type="text"
+                    value={socialName}
+                    onChange={(e) => setSocialName(e.target.value)}
+                    placeholder="Your Facebook Name"
+                    className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">Associated Email:</label>
+                  <input
+                    type="email"
+                    value={socialEmail}
+                    onChange={(e) => setSocialEmail(e.target.value)}
+                    placeholder="user@example.com"
+                    className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => handleConfirmSocial('facebook')}
+                  className="w-full bg-[#1877F2] hover:bg-[#166fe5] text-white font-extrabold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-colors cursor-pointer"
+                >
+                  <Facebook className="w-4 h-4" />
+                  <span>Authorize & Sign Up with Facebook</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSocialModal(null)}
+                  className="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer text-center"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

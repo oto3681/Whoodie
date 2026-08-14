@@ -23,7 +23,7 @@ export const CheckoutModal: React.FC = () => {
   const [customerPhone, setCustomerPhone] = useState(wpSettings?.paybillAccount || '0797939199');
   const [customerEmail, setCustomerEmail] = useState('customer@gmail.com');
   const [deliveryCity, setDeliveryCity] = useState(wpSettings?.companyCity || 'Nairobi');
-  const [deliveryAddress, setDeliveryAddress] = useState(wpSettings?.companyAddress || 'Ronald Ngala street, Gatkim complex building, 4th floor, Wing B, Room 4B1');
+  const [deliveryAddress, setDeliveryAddress] = useState(wpSettings?.companyAddress || 'Temple Road Gatkim complex building fourth floor wing B Room 4B1');
   const [deliveryType, setDeliveryType] = useState<'Pickup Station' | 'Express Home Delivery'>('Express Home Delivery');
   const [paymentMethod, setPaymentMethod] = useState<'M-Pesa'>('M-Pesa');
 

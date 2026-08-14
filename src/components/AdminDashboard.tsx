@@ -7,6 +7,11 @@ import {
   exportTransactionsToExcel, 
   exportAnalyticsToExcel 
 } from '../utils/excelExporter';
+import { AdminCatalogueStudio } from './AdminCatalogueStudio';
+import { AdminWhatsAppBotHub } from './AdminWhatsAppBotHub';
+import { AdminBulkBroadcastStudio } from './AdminBulkBroadcastStudio';
+import { AdminNotificationPanel } from './AdminNotificationPanel';
+import { AdminZohoQuotesStudio } from './AdminZohoQuotesStudio';
 import { 
   BarChart3, 
   Package, 
@@ -19,6 +24,10 @@ import {
   Save, 
   Smartphone, 
   MessageCircle, 
+  Bot,
+  Mail,
+  Send,
+  Users,
   CheckCircle2, 
   Truck, 
   Sparkles, 
@@ -41,7 +50,10 @@ import {
   FileSpreadsheet,
   TrendingUp,
   DollarSign,
-  ShieldCheck
+  ShieldCheck,
+  Printer,
+  Bell,
+  BellRing
 } from 'lucide-react';
 import { Product, OrderStatus, ProductCategory } from '../types';
 
@@ -49,6 +61,10 @@ export const AdminDashboard: React.FC = () => {
   const { 
     products, 
     orders, 
+    inquiries,
+    whatsappThreads,
+    adminNotifications,
+    unreadNotificationsCount,
     logout, 
     updateOrderStatus, 
     addProduct, 
@@ -57,10 +73,11 @@ export const AdminDashboard: React.FC = () => {
     wpSettings, 
     updateWpSettings, 
     categories,
+    zohoQuotations,
     showToast
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'kpis' | 'orders' | 'products' | 'wordpress'>('orders');
+  const [activeTab, setActiveTab] = useState<'notifications' | 'zoho' | 'kpis' | 'orders' | 'whatsapp' | 'bulk' | 'catalogue' | 'products' | 'wordpress'>('orders');
 
   // Product Editing state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -80,7 +97,7 @@ export const AdminDashboard: React.FC = () => {
   const [companyEmail, setCompanyEmail] = useState(wpSettings.companyEmail);
   const [paybillNumber, setPaybillNumber] = useState(wpSettings.paybillNumber || '247247');
   const [paybillAccount, setPaybillAccount] = useState(wpSettings.paybillAccount || '0797939199');
-  const [companyAddress, setCompanyAddress] = useState(wpSettings.companyAddress || 'Ronald Ngala street, Gatkim complex building, 4th floor, Wing B, Room 4B1');
+  const [companyAddress, setCompanyAddress] = useState(wpSettings.companyAddress || 'Temple Road Gatkim complex building fourth floor wing B Room 4B1');
   const [companyCity, setCompanyCity] = useState(wpSettings.companyCity || 'Nairobi');
   const [topBannerText, setTopBannerText] = useState(wpSettings.topBannerText);
   const [facebookUrl, setFacebookUrl] = useState(wpSettings.facebookUrl);
@@ -318,6 +335,50 @@ export const AdminDashboard: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Real-time Notification Center Button */}
+          <button
+            onClick={() => setActiveTab('notifications')}
+            className={`font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all cursor-pointer shadow-md border ${
+              activeTab === 'notifications'
+                ? 'bg-amber-500 text-slate-950 border-amber-400 ring-2 ring-amber-400/50'
+                : 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700'
+            }`}
+            title="Open Admin Notification Panel to accept incoming orders and inquiries"
+          >
+            <BellRing className={`w-4 h-4 ${unreadNotificationsCount > 0 ? 'text-amber-400 animate-pulse' : 'text-slate-300'}`} />
+            <span>Alerts & Inquiries</span>
+            {unreadNotificationsCount > 0 ? (
+              <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full animate-bounce">
+                {unreadNotificationsCount} Action
+              </span>
+            ) : (
+              <span className="bg-slate-700 text-slate-300 text-[10px] font-bold px-1.5 py-0.2 rounded-full">
+                {adminNotifications.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('whatsapp')}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-md border border-emerald-500"
+            title="Chat directly with customers on WhatsApp (0797939199) or manage 24/7 WhatBot automated replies"
+          >
+            <MessageCircle className="w-4 h-4 text-emerald-200" />
+            <span>WhatsApp & WhatBot Hub</span>
+            <span className="bg-emerald-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full border border-emerald-400/50">
+              0797939199
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('catalogue')}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-md border border-blue-500"
+            title="Generate custom product catalogues, PDF rate cards, and dispatch to inquiring clients"
+          >
+            <Printer className="w-4 h-4 text-amber-300" />
+            <span>Catalogue & PDF Studio</span>
+          </button>
+
           <button
             onClick={handleExportAllExcel}
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-md border border-emerald-500"
@@ -334,7 +395,7 @@ export const AdminDashboard: React.FC = () => {
               setPromptReason('Custom Print Payment Prompt');
               setShowPaymentPromptModal(true);
             }}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs border border-blue-500 flex items-center gap-1.5 transition-colors cursor-pointer shadow-md"
+            className="bg-slate-800 hover:bg-slate-700 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer shadow-md"
           >
             <Smartphone className="w-4 h-4 text-white" />
             <span>Prompt M-Pesa Payment</span>
@@ -379,11 +440,19 @@ export const AdminDashboard: React.FC = () => {
           <span className="text-[11px] font-semibold text-slate-500">Across 9 Print Categories</span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">WhatsApp Inquiries</span>
-          <div className="text-2xl font-extrabold text-emerald-600">42 Today</div>
-          <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
-            <Smartphone className="w-3 h-3" /> Auto Lead Capture Active
+        <div 
+          onClick={() => setActiveTab('notifications')}
+          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1 cursor-pointer hover:border-amber-300 transition-colors group"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Live Alerts & Leads</span>
+            <span className="bg-amber-50 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-amber-200 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors">
+              Accept Alerts ➔
+            </span>
+          </div>
+          <div className="text-2xl font-extrabold text-amber-500">{adminNotifications.length} Total Alerts</div>
+          <span className="text-[11px] font-semibold text-amber-700 flex items-center gap-1">
+            <BellRing className="w-3 h-3 text-amber-600 animate-pulse" /> {unreadNotificationsCount} Pending Admin Action
           </span>
         </div>
       </div>
@@ -391,8 +460,79 @@ export const AdminDashboard: React.FC = () => {
       {/* Admin Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-1 scrollbar-none">
         <button
+          onClick={() => setActiveTab('notifications')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+            activeTab === 'notifications'
+              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <BellRing className={`w-4 h-4 ${unreadNotificationsCount > 0 ? 'text-amber-700 animate-pulse' : 'text-slate-500'}`} />
+          <span>Live Alerts & Inquiries</span>
+          {unreadNotificationsCount > 0 ? (
+            <span className="bg-red-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full animate-bounce">
+              {unreadNotificationsCount} Action
+            </span>
+          ) : (
+            <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-1.5 py-0.2 rounded-full">
+              {adminNotifications.length}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('whatsapp')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+            activeTab === 'whatsapp'
+              ? 'bg-emerald-600 text-white shadow-xs'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <MessageCircle className="w-4 h-4 text-emerald-400" />
+          <span>WhatsApp & WhatBot</span>
+          <span className="bg-emerald-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
+            0797939199
+          </span>
+          {whatsappThreads.reduce((sum, t) => sum + t.unreadCount, 0) > 0 && (
+            <span className="bg-amber-400 text-slate-900 text-[10px] font-black px-1.5 py-0.2 rounded-full">
+              {whatsappThreads.reduce((sum, t) => sum + t.unreadCount, 0)} new
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('zoho')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+            activeTab === 'zoho'
+              ? 'bg-blue-700 text-white shadow-md shadow-blue-700/30 ring-2 ring-blue-400'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <FileText className="w-4 h-4 text-blue-400" />
+          <span>Zoho Quotations & Pricing</span>
+          <span className="bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
+            {zohoQuotations.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('bulk')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+            activeTab === 'bulk'
+              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Send className="w-4 h-4 text-amber-600" />
+          <span>Bulk SMS & Email Studio</span>
+          <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded-full">
+            Broadcast
+          </span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('orders')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
             activeTab === 'orders'
               ? 'bg-blue-600 text-white shadow-xs'
               : 'bg-white text-slate-600 hover:bg-slate-100'
@@ -402,8 +542,25 @@ export const AdminDashboard: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setActiveTab('catalogue')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+            activeTab === 'catalogue'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Printer className="w-4 h-4 text-amber-300" /> 
+          <span>Catalogue & PDF Studio</span>
+          {inquiries.filter(i => i.status === 'New').length > 0 && (
+            <span className="bg-amber-400 text-slate-900 text-[10px] font-black px-1.5 py-0.2 rounded-full">
+              {inquiries.filter(i => i.status === 'New').length} New
+            </span>
+          )}
+        </button>
+
+        <button
           onClick={() => setActiveTab('kpis')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
             activeTab === 'kpis'
               ? 'bg-emerald-600 text-white shadow-xs'
               : 'bg-white text-slate-600 hover:bg-slate-100'
@@ -414,7 +571,7 @@ export const AdminDashboard: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('products')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
             activeTab === 'products'
               ? 'bg-blue-600 text-white shadow-xs'
               : 'bg-white text-slate-600 hover:bg-slate-100'
@@ -425,7 +582,7 @@ export const AdminDashboard: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('wordpress')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
             activeTab === 'wordpress'
               ? 'bg-slate-900 text-blue-400 shadow-xs'
               : 'bg-white text-slate-600 hover:bg-slate-100'
@@ -434,6 +591,31 @@ export const AdminDashboard: React.FC = () => {
           <Globe className="w-4 h-4 text-blue-400" /> WordPress CMS Customizer
         </button>
       </div>
+
+      {/* TAB: LIVE NOTIFICATIONS & INQUIRY ACCEPTANCE PANEL */}
+      {activeTab === 'notifications' && (
+        <AdminNotificationPanel onNavigateTab={(tab) => setActiveTab(tab)} />
+      )}
+
+      {/* TAB: ZOHO QUOTATIONS & ESTIMATES STUDIO */}
+      {activeTab === 'zoho' && (
+        <AdminZohoQuotesStudio />
+      )}
+
+      {/* TAB: WHATSAPP & WHATBOT HUB */}
+      {activeTab === 'whatsapp' && (
+        <AdminWhatsAppBotHub />
+      )}
+
+      {/* TAB: BULK SMS & EMAIL BROADCAST STUDIO */}
+      {activeTab === 'bulk' && (
+        <AdminBulkBroadcastStudio />
+      )}
+
+      {/* TAB 0: CATALOGUE & PDF STUDIO */}
+      {activeTab === 'catalogue' && (
+        <AdminCatalogueStudio />
+      )}
 
       {/* TAB 1: ORDER MANAGEMENT */}
       {activeTab === 'orders' && (

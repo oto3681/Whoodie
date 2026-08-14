@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { ProductCategory, Product } from '../types';
 import { getProductFallbackImage } from '../data/initialData';
+import { generateCataloguePdf, openPrintableCatalogueWindow } from '../utils/cataloguePdfGenerator';
 import { 
   X, 
   Search, 
   FileText, 
   Printer, 
+  Download,
   MessageCircle, 
   Zap, 
   CheckCircle2, 
@@ -24,7 +26,8 @@ export const PriceCatalogueModal: React.FC = () => {
     activeModal, 
     setActiveModal, 
     setSelectedProductForDetail, 
-    wpSettings 
+    wpSettings,
+    showToast
   } = useApp();
 
   const [catalogueSearch, setCatalogueSearch] = useState('');
@@ -57,7 +60,29 @@ export const PriceCatalogueModal: React.FC = () => {
   ];
 
   const handlePrint = () => {
-    window.print();
+    openPrintableCatalogueWindow(filteredCatalogue, {
+      title: 'Woodynat Designers Limited - Official Product Catalogue & Rates 2026',
+      layoutStyle: 'table',
+      showPrices: true,
+      showImages: true,
+      showFeatures: true,
+      showPaybillInfo: true,
+      showTerms: true
+    }, wpSettings);
+  };
+
+  const handleDownloadPdf = () => {
+    generateCataloguePdf(filteredCatalogue, {
+      title: 'Woodynat Designers Limited - Official Rate Card & Product Catalogue 2026',
+      subtitle: selectedCat !== 'All' ? `Category: ${selectedCat}` : 'Complete Commercial Printing & Branding Rate Card',
+      layoutStyle: 'table',
+      showPrices: true,
+      showImages: true,
+      showFeatures: true,
+      showPaybillInfo: true,
+      showTerms: true
+    }, wpSettings);
+    showToast('PDF Catalogue Downloaded 📄', `Downloaded Woodynat catalogue with ${filteredCatalogue.length} items.`);
   };
 
   return (
@@ -88,12 +113,20 @@ export const PriceCatalogueModal: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <button
+              onClick={handleDownloadPdf}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+              title="Download PDF Rate Card"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download PDF</span>
+            </button>
+            <button
               onClick={handlePrint}
               className="hidden sm:flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer"
               title="Print Price Catalogue"
             >
               <Printer className="w-4 h-4 text-blue-400" />
-              <span>Print Catalogue</span>
+              <span>Print</span>
             </button>
             <button
               onClick={() => setActiveModal(null)}
