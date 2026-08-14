@@ -12,6 +12,7 @@ import { AdminWhatsAppBotHub } from './AdminWhatsAppBotHub';
 import { AdminBulkBroadcastStudio } from './AdminBulkBroadcastStudio';
 import { AdminNotificationPanel } from './AdminNotificationPanel';
 import { AdminZohoQuotesStudio } from './AdminZohoQuotesStudio';
+import { AdminMpesaStudio } from './AdminMpesaStudio';
 import { 
   BarChart3, 
   Package, 
@@ -77,7 +78,7 @@ export const AdminDashboard: React.FC = () => {
     showToast
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'notifications' | 'zoho' | 'kpis' | 'orders' | 'whatsapp' | 'bulk' | 'catalogue' | 'products' | 'wordpress'>('orders');
+  const [activeTab, setActiveTab] = useState<'notifications' | 'mpesa' | 'zoho' | 'kpis' | 'orders' | 'whatsapp' | 'bulk' | 'catalogue' | 'products' | 'wordpress'>('orders');
 
   // Product Editing state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -501,6 +502,21 @@ export const AdminDashboard: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setActiveTab('mpesa')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+            activeTab === 'mpesa'
+              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 ring-2 ring-emerald-400'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Smartphone className="w-4 h-4 text-emerald-500" />
+          <span>M-Pesa Daraja Hub</span>
+          <span className="bg-emerald-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
+            STK Prompt
+          </span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('zoho')}
           className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
             activeTab === 'zoho'
@@ -595,6 +611,11 @@ export const AdminDashboard: React.FC = () => {
       {/* TAB: LIVE NOTIFICATIONS & INQUIRY ACCEPTANCE PANEL */}
       {activeTab === 'notifications' && (
         <AdminNotificationPanel onNavigateTab={(tab) => setActiveTab(tab)} />
+      )}
+
+      {/* TAB: M-PESA DARAJA COMMAND CENTER */}
+      {activeTab === 'mpesa' && (
+        <AdminMpesaStudio />
       )}
 
       {/* TAB: ZOHO QUOTATIONS & ESTIMATES STUDIO */}
