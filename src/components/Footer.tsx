@@ -153,7 +153,7 @@ export const Footer: React.FC = () => {
             <div className="space-y-3 text-xs text-slate-400">
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                <span>{wpSettings.companyAddress || 'Temple Road Gatkim complex building fourth floor wing B Room 4B1'}, {wpSettings.companyCity || 'Nairobi'}, Kenya</span>
+                <span>{wpSettings.companyAddress || 'Temple Road Gatkim Complex Building fourth floor Wing B Room 4B1'}, {wpSettings.companyCity || 'Nairobi'}, Kenya</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-emerald-400 shrink-0" />

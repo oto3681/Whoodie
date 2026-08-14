@@ -98,7 +98,7 @@ export const AdminDashboard: React.FC = () => {
   const [companyEmail, setCompanyEmail] = useState(wpSettings.companyEmail);
   const [paybillNumber, setPaybillNumber] = useState(wpSettings.paybillNumber || '247247');
   const [paybillAccount, setPaybillAccount] = useState(wpSettings.paybillAccount || '0797939199');
-  const [companyAddress, setCompanyAddress] = useState(wpSettings.companyAddress || 'Temple Road Gatkim complex building fourth floor wing B Room 4B1');
+  const [companyAddress, setCompanyAddress] = useState(wpSettings.companyAddress || 'Temple Road Gatkim Complex Building fourth floor Wing B Room 4B1');
   const [companyCity, setCompanyCity] = useState(wpSettings.companyCity || 'Nairobi');
   const [topBannerText, setTopBannerText] = useState(wpSettings.topBannerText);
   const [facebookUrl, setFacebookUrl] = useState(wpSettings.facebookUrl);

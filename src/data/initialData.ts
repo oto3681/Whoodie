@@ -813,7 +813,7 @@ export const DEFAULT_WORDPRESS_SETTINGS: WordPressSettings = {
   companyEmail: 'woodynatdesigners12@gmail.com',
   paybillNumber: '247247',
   paybillAccount: '0797939199',
-  companyAddress: 'Temple Road Gatkim complex building fourth floor wing B Room 4B1',
+  companyAddress: 'Temple Road Gatkim Complex Building fourth floor Wing B Room 4B1',
   companyCity: 'Nairobi',
   topBannerText: '⚡ MEGA FLASH SALE: Up to 30% OFF Custom Hoodies, T-Shirts & Banners! | M-PESA Paybill: 247247 Acc: 0797939199',
   facebookUrl: 'https://facebook.com/WoodynatDesignersLimited',

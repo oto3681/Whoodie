@@ -275,8 +275,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const saved = localStorage.getItem('pixelprint_wp_settings');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed.companyAddress && parsed.companyAddress.includes('Ronald Ngala')) {
-        parsed.companyAddress = 'Temple Road Gatkim complex building fourth floor wing B Room 4B1';
+      if (parsed.companyAddress && (parsed.companyAddress.includes('Ronald Ngala') || parsed.companyAddress.includes('complex building'))) {
+        parsed.companyAddress = 'Temple Road Gatkim Complex Building fourth floor Wing B Room 4B1';
       }
       return parsed;
     }

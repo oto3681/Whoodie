@@ -167,7 +167,7 @@ export const exportAllSystemDataToExcel = (
     { Configuration: 'WhatsApp Business Number', Setting: wpSettings.whatsappNumber || '254797939199' },
     { Configuration: 'Support Phone Line', Setting: wpSettings.supportPhone || '+254 797 939 199' },
     { Configuration: 'Official Business Email', Setting: wpSettings.companyEmail || 'info@woodynat.co.ke' },
-    { Configuration: 'Physical Address', Setting: wpSettings.companyAddress || 'Temple Road Gatkim complex building fourth floor wing B Room 4B1' },
+    { Configuration: 'Physical Address', Setting: wpSettings.companyAddress || 'Temple Road Gatkim Complex Building fourth floor Wing B Room 4B1' },
     { Configuration: 'City & Location', Setting: wpSettings.companyCity || 'Nairobi' },
     { Configuration: 'Export Generated At', Setting: timestamp },
     { Configuration: 'System Version', Setting: 'Woodynat M-Pesa ERP v3.8.2 Live' },
