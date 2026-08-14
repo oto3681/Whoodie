@@ -1183,7 +1183,7 @@ export const INITIAL_WHATSAPP_THREADS: WhatsAppChatThread[] = [
       {
         id: 'msg-13',
         sender: 'agent',
-        text: 'Hi David! I have attached our formal quotation for 80 hoodies and 50 executive polo shirts. Free delivery to your school in Nairobi is included.',
+        text: 'Hi David! I have attached our formal quotation for 80 hoodies and 50 executive polo shirts. Note that delivery fee depends on the type of the product and the distance.',
         timestamp: '09:05 AM',
         status: 'read',
         attachmentType: 'quote',

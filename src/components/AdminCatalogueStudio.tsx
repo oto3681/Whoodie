@@ -70,7 +70,7 @@ export const AdminCatalogueStudio: React.FC = () => {
   const [showTerms, setShowTerms] = useState<boolean>(true);
   const [discountPercentage, setDiscountPercentage] = useState<number>(0);
   const [customNotes, setCustomNotes] = useState<string>(
-    'Free delivery within Nairobi CBD for bulk orders above KSh 15,000. 24h-48h turnaround upon design proof approval.'
+    'Delivery fee depends on the type of the product and the distance. 24h-48h turnaround upon design proof approval.'
   );
 
   // Customer / Target Inquiry State

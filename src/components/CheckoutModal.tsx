@@ -318,6 +318,14 @@ export const CheckoutModal: React.FC = () => {
                   />
                 </div>
 
+                {/* Delivery Policy Note */}
+                <div className="bg-blue-50 border border-blue-200/80 rounded-xl p-3 text-xs flex items-center gap-2 text-slate-800">
+                  <Truck className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span className="font-semibold text-[11px] text-slate-700 leading-tight">
+                    Delivery fee depends on the type of the product and the distance
+                  </span>
+                </div>
+
                 {/* Delivery Type Option */}
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <label 
@@ -331,7 +339,7 @@ export const CheckoutModal: React.FC = () => {
                     <Truck className="w-5 h-5 text-blue-600 shrink-0" />
                     <div>
                       <div className="text-xs">Express Door Delivery</div>
-                      <div className="text-[10px] text-slate-500 font-normal">KSh 300 Courier Fee</div>
+                      <div className="text-[10px] text-slate-500 font-normal">Courier rate based on distance & weight</div>
                     </div>
                   </label>
 
@@ -346,7 +354,7 @@ export const CheckoutModal: React.FC = () => {
                     <Building2 className="w-5 h-5 text-blue-600 shrink-0" />
                     <div>
                       <div className="text-xs">Woodynat Pickup Station</div>
-                      <div className="text-[10px] text-emerald-600 font-bold">FREE Collection</div>
+                      <div className="text-[10px] text-slate-600 font-semibold">Gatkim Complex CBD Workshop</div>
                     </div>
                   </label>
                 </div>
@@ -445,8 +453,8 @@ export const CheckoutModal: React.FC = () => {
                   <span>KSh {subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-xs text-slate-300">
-                  <span>Shipping & Delivery Fee:</span>
-                  <span>{shippingFee === 0 ? 'FREE' : `KSh ${shippingFee}`}</span>
+                  <span>Shipping & Delivery:</span>
+                  <span>{deliveryType === 'Pickup Station' ? 'Pickup Station (Gatkim Complex)' : `Estimated KSh ${shippingFee}`}</span>
                 </div>
                 <div className="flex justify-between text-base font-extrabold text-amber-400 pt-2 border-t border-slate-800">
                   <span>Total Payable:</span>

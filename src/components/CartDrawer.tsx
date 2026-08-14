@@ -18,8 +18,6 @@ export const CartDrawer: React.FC = () => {
   if (activeModal !== 'cart') return null;
 
   const subtotal = cart.reduce((sum, item) => sum + item.calculatedPrice, 0);
-  const freeShippingThreshold = 10000;
-  const progressToFreeShipping = Math.min(100, (subtotal / freeShippingThreshold) * 100);
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex justify-end">
@@ -39,21 +37,13 @@ export const CartDrawer: React.FC = () => {
           </button>
         </div>
 
-        {/* Free Delivery Meter */}
-        <div className="bg-slate-50 border-b border-slate-200 p-3 text-xs">
-          <div className="flex justify-between font-bold text-slate-700 mb-1">
-            <span className="flex items-center gap-1 text-slate-800">
-              <Truck className="w-4 h-4 text-emerald-600" /> 
-              {subtotal >= freeShippingThreshold 
-                ? '🎉 You qualify for FREE Nationwide Delivery!' 
-                : `Add KSh ${(freeShippingThreshold - subtotal).toLocaleString()} for Free Delivery`}
+        {/* Delivery Policy Banner */}
+        <div className="bg-blue-50 border-b border-blue-200/80 px-3.5 py-2.5 text-xs">
+          <div className="flex items-center gap-2 text-slate-800">
+            <Truck className="w-4 h-4 text-blue-600 shrink-0" />
+            <span className="font-semibold text-[11px] text-slate-700 leading-tight">
+              Delivery fee depends on the type of the product and the distance
             </span>
-          </div>
-          <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-            <div 
-              className="bg-emerald-500 h-full rounded-full transition-all duration-300"
-              style={{ width: `${progressToFreeShipping}%` }}
-            ></div>
           </div>
         </div>
 
@@ -163,13 +153,18 @@ export const CartDrawer: React.FC = () => {
                 <span>Subtotal ({cart.length} items):</span>
                 <span>KSh {subtotal.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Estimated Delivery Fee:</span>
-                <span>{subtotal >= freeShippingThreshold ? 'FREE' : 'KSh 300'}</span>
+              <div className="flex flex-col gap-0.5 text-slate-400">
+                <div className="flex justify-between">
+                  <span>Delivery Logistics:</span>
+                  <span className="text-slate-300 font-semibold">Calculated at Checkout</span>
+                </div>
+                <span className="text-[10px] text-slate-400 italic">
+                  Delivery fee depends on the type of the product and the distance
+                </span>
               </div>
               <div className="flex justify-between text-sm font-black text-blue-400 pt-1 border-t border-slate-800">
-                <span>Total Payable:</span>
-                <span>KSh {(subtotal + (subtotal >= freeShippingThreshold ? 0 : 300)).toLocaleString()}</span>
+                <span>Items Subtotal:</span>
+                <span>KSh {subtotal.toLocaleString()}</span>
               </div>
             </div>
 
