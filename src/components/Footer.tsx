@@ -30,8 +30,8 @@ export const Footer: React.FC = () => {
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white">Quality Guaranteed</h4>
-              <p className="text-xs text-slate-400">300DPI HD Precision Print</p>
+              <h4 className="text-sm font-bold text-white">{wpSettings.footerTrustBadge1Title || 'Quality Guaranteed'}</h4>
+              <p className="text-xs text-slate-400">{wpSettings.footerTrustBadge1Desc || '300DPI HD Precision Print'}</p>
             </div>
           </div>
 
@@ -40,8 +40,8 @@ export const Footer: React.FC = () => {
               <Smartphone className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white">Instant Payment</h4>
-              <p className="text-xs text-slate-400">M-PESA Express STK & Paybill</p>
+              <h4 className="text-sm font-bold text-white">{wpSettings.footerTrustBadge2Title || 'Instant Payment'}</h4>
+              <p className="text-xs text-slate-400">{wpSettings.footerTrustBadge2Desc || 'M-PESA Express STK & Paybill'}</p>
             </div>
           </div>
 
@@ -50,8 +50,8 @@ export const Footer: React.FC = () => {
               <Clock className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white">Fast Print Service</h4>
-              <p className="text-xs text-slate-400">Eulogies & Event Banners</p>
+              <h4 className="text-sm font-bold text-white">{wpSettings.footerTrustBadge3Title || 'Fast Print Service'}</h4>
+              <p className="text-xs text-slate-400">{wpSettings.footerTrustBadge3Desc || 'Eulogies & Event Banners'}</p>
             </div>
           </div>
 
@@ -60,8 +60,8 @@ export const Footer: React.FC = () => {
               <CreditCard className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white">Real-Time Tracking</h4>
-              <p className="text-xs text-slate-400">Live Delivery Updates</p>
+              <h4 className="text-sm font-bold text-white">{wpSettings.footerTrustBadge4Title || 'Real-Time Tracking'}</h4>
+              <p className="text-xs text-slate-400">{wpSettings.footerTrustBadge4Desc || 'Live Delivery Updates'}</p>
             </div>
           </div>
         </div>
@@ -75,7 +75,7 @@ export const Footer: React.FC = () => {
               <Logo variant="white" size="md" />
             </div>
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm font-medium">
-              {wpSettings.tagline}. Commercial graphics, printing, custom apparel branding, corporate video production, and memorial publication studio.
+              {wpSettings.footerAboutText || `${wpSettings.tagline}. Commercial graphics, printing, custom apparel branding, corporate video production, and memorial publication studio.`}
             </p>
 
             {/* Social Media Handles */}
@@ -83,36 +83,66 @@ export const Footer: React.FC = () => {
               <h5 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-3">
                 Follow Us On Social Media
               </h5>
-              <div className="flex items-center gap-3">
-                <a 
-                  href={wpSettings.facebookUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700"
-                >
-                  <span>Facebook (Woodynat Designers Limited)</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+              <div className="flex flex-wrap items-center gap-2.5">
+                {wpSettings.facebookUrl && (
+                  <a 
+                    href={wpSettings.facebookUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700"
+                  >
+                    <span>Facebook</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
 
-                <a 
-                  href={wpSettings.instagramUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="bg-slate-800 hover:bg-pink-600 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700"
-                >
-                  <span>Instagram (@woodynatdesigners_14)</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+                {wpSettings.instagramUrl && (
+                  <a 
+                    href={wpSettings.instagramUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="bg-slate-800 hover:bg-pink-600 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700"
+                  >
+                    <span>Instagram</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
 
-                <a 
-                  href={wpSettings.tiktokUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="bg-slate-800 hover:bg-slate-950 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700"
-                >
-                  <span>TikTok (@woodynatdesigners_14)</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+                {wpSettings.tiktokUrl && (
+                  <a 
+                    href={wpSettings.tiktokUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="bg-slate-800 hover:bg-slate-950 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700"
+                  >
+                    <span>TikTok</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+
+                {wpSettings.twitterUrl && (
+                  <a 
+                    href={wpSettings.twitterUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="bg-slate-800 hover:bg-sky-500 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700"
+                  >
+                    <span>X / Twitter</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+
+                {wpSettings.youtubeUrl && (
+                  <a 
+                    href={wpSettings.youtubeUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="bg-slate-800 hover:bg-red-600 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700"
+                  >
+                    <span>YouTube</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
               </div>
             </div>
           </div>
@@ -163,6 +193,12 @@ export const Footer: React.FC = () => {
                 <Mail className="w-4 h-4 text-blue-400 shrink-0" />
                 <a href={`mailto:${wpSettings.companyEmail}`} className="hover:text-blue-400 transition-colors">{wpSettings.companyEmail}</a>
               </div>
+              {wpSettings.footerOfficeHours && (
+                <div className="flex items-start gap-2 pt-1 border-t border-slate-800/80">
+                  <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <span className="text-[11px] text-slate-300">{wpSettings.footerOfficeHours}</span>
+                </div>
+              )}
               <a
                 href={`https://wa.me/${cleanPhone}`}
                 target="_blank"
@@ -189,9 +225,9 @@ export const Footer: React.FC = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-right">
-            <span className="text-slate-400">© 2026 {wpSettings.siteTitle}. All rights reserved.</span>
+            <span className="text-slate-400">{wpSettings.footerCopyrightText || `© 2026 ${wpSettings.siteTitle || 'Woodynat Designers Limited'}. All rights reserved.`}</span>
             <span className="text-slate-400 font-medium text-[11px] flex items-center gap-1">
-              • A craft designed and developed by <strong className="text-blue-400 font-bold">DaveTech Solutions</strong>
+              {wpSettings.footerDeveloperCredit || '• A craft designed and developed by DaveTech Solutions'}
             </span>
             <span className="bg-slate-800 text-orange-400 px-2 py-0.5 rounded text-[10px] font-mono flex items-center gap-1 border border-slate-700">
               <Sparkles className="w-3 h-3" /> WordPress WooCommerce Sync

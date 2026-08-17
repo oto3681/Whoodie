@@ -54,7 +54,10 @@ import {
   ShieldCheck,
   Printer,
   Bell,
-  BellRing
+  BellRing,
+  MapPin,
+  CreditCard,
+  Megaphone
 } from 'lucide-react';
 import { Product, OrderStatus, ProductCategory } from '../types';
 
@@ -104,9 +107,33 @@ export const AdminDashboard: React.FC = () => {
   const [facebookUrl, setFacebookUrl] = useState(wpSettings.facebookUrl);
   const [instagramUrl, setInstagramUrl] = useState(wpSettings.instagramUrl);
   const [tiktokUrl, setTiktokUrl] = useState(wpSettings.tiktokUrl);
+  const [twitterUrl, setTwitterUrl] = useState(wpSettings.twitterUrl || '');
+  const [youtubeUrl, setYoutubeUrl] = useState(wpSettings.youtubeUrl || '');
   const [heroHeadline, setHeroHeadline] = useState(wpSettings.heroHeadline);
   const [heroSubheadline, setHeroSubheadline] = useState(wpSettings.heroSubheadline);
   const [wpRestEndpoint, setWpRestEndpoint] = useState(wpSettings.wpRestEndpoint);
+
+  // Footer customization state
+  const [footerAboutText, setFooterAboutText] = useState(
+    wpSettings.footerAboutText || 'Commercial graphics, printing, custom apparel branding, corporate video production, and memorial publication studio based in Nairobi, Kenya.'
+  );
+  const [footerOfficeHours, setFooterOfficeHours] = useState(
+    wpSettings.footerOfficeHours || 'Mon - Sat: 8:00 AM - 7:00 PM | Sun: On-Call / Urgent Proofing'
+  );
+  const [footerCopyrightText, setFooterCopyrightText] = useState(
+    wpSettings.footerCopyrightText || `© 2026 ${wpSettings.siteTitle || 'Woodynat Designers Limited'}. All rights reserved.`
+  );
+  const [footerDeveloperCredit, setFooterDeveloperCredit] = useState(
+    wpSettings.footerDeveloperCredit || 'A craft designed and developed by DaveTech Solutions'
+  );
+  const [footerTrustBadge1Title, setFooterTrustBadge1Title] = useState(wpSettings.footerTrustBadge1Title || 'Quality Guaranteed');
+  const [footerTrustBadge1Desc, setFooterTrustBadge1Desc] = useState(wpSettings.footerTrustBadge1Desc || '300DPI HD Precision Print');
+  const [footerTrustBadge2Title, setFooterTrustBadge2Title] = useState(wpSettings.footerTrustBadge2Title || 'Instant Payment');
+  const [footerTrustBadge2Desc, setFooterTrustBadge2Desc] = useState(wpSettings.footerTrustBadge2Desc || 'M-PESA Express STK & Paybill');
+  const [footerTrustBadge3Title, setFooterTrustBadge3Title] = useState(wpSettings.footerTrustBadge3Title || 'Fast Print Service');
+  const [footerTrustBadge3Desc, setFooterTrustBadge3Desc] = useState(wpSettings.footerTrustBadge3Desc || 'Eulogies & Event Banners');
+  const [footerTrustBadge4Title, setFooterTrustBadge4Title] = useState(wpSettings.footerTrustBadge4Title || 'Real-Time Tracking');
+  const [footerTrustBadge4Desc, setFooterTrustBadge4Desc] = useState(wpSettings.footerTrustBadge4Desc || 'Live Delivery Updates');
 
   // M-Pesa API state
   const [mpesaEnvironment, setMpesaEnvironment] = useState<'sandbox' | 'production'>(wpSettings.mpesaEnvironment || 'production');
@@ -264,6 +291,8 @@ export const AdminDashboard: React.FC = () => {
       facebookUrl,
       instagramUrl,
       tiktokUrl,
+      twitterUrl,
+      youtubeUrl,
       heroHeadline,
       heroSubheadline,
       wpRestEndpoint,
@@ -271,8 +300,20 @@ export const AdminDashboard: React.FC = () => {
       mpesaConsumerKey,
       mpesaConsumerSecret,
       mpesaPasskey,
+      footerAboutText,
+      footerOfficeHours,
+      footerCopyrightText,
+      footerDeveloperCredit,
+      footerTrustBadge1Title,
+      footerTrustBadge1Desc,
+      footerTrustBadge2Title,
+      footerTrustBadge2Desc,
+      footerTrustBadge3Title,
+      footerTrustBadge3Desc,
+      footerTrustBadge4Title,
+      footerTrustBadge4Desc,
     });
-    showToast('Settings & Active Logo Saved 💾', 'Site logo and WordPress customizer settings updated successfully live!');
+    showToast('Settings & Footer Information Saved 💾', 'Site branding, contact details, and footer configuration updated live!');
   };
 
   const handleExportWpJson = () => {
@@ -604,7 +645,7 @@ export const AdminDashboard: React.FC = () => {
               : 'bg-white text-slate-600 hover:bg-slate-100'
           }`}
         >
-          <Globe className="w-4 h-4 text-blue-400" /> WordPress CMS Customizer
+          <Globe className="w-4 h-4 text-blue-400" /> CMS & Footer Customizer
         </button>
       </div>
 
@@ -1503,28 +1544,45 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 3: WORDPRESS CMS CUSTOMIZER */}
+      {/* TAB 3: CMS, BRANDING & FOOTER CUSTOMIZER */}
       {activeTab === 'wordpress' && (
-        <form onSubmit={handleSaveWpSettings} className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-xs">
-          <div className="flex items-center justify-between border-b pb-3">
+        <form onSubmit={handleSaveWpSettings} className="bg-white border border-slate-200 rounded-2xl p-6 space-y-8 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
             <div>
               <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                <Globe className="w-5 h-5 text-blue-600" /> Live WordPress Theme & Site Content Customizer
+                <Globe className="w-5 h-5 text-blue-600" /> Live CMS, Branding & Footer Information Customizer
               </h3>
-              <p className="text-xs text-slate-500">Edit company phone numbers, WhatsApp handles, hero banners, and WooCommerce REST API endpoint.</p>
+              <p className="text-xs text-slate-500">
+                Manage your site logo, company office location, contact hotlines, footer content, social links, and live payment gateways.
+              </p>
             </div>
 
-            <button
-              type="submit"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-colors cursor-pointer"
-            >
-              <Save className="w-4 h-4" /> Save WordPress Changes
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleExportWpJson}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-300"
+              >
+                <Download className="w-4 h-4 text-slate-500" /> Export JSON
+              </button>
+              <button
+                type="submit"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-colors cursor-pointer"
+              >
+                <Save className="w-4 h-4" /> Save All Changes Live
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+          {/* Section: Official Logo & Brand Visuals */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+              <Sparkles className="w-4 h-4 text-blue-600" />
+              <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">1. Brand Visuals & Active Logo</h4>
+            </div>
+
             {/* Site Logo Upload & Live Activation Card */}
-            <div className="col-span-1 sm:col-span-2 md:col-span-3 bg-slate-900 text-white p-5 rounded-2xl border border-blue-900/80 shadow-md space-y-4">
+            <div className="bg-slate-900 text-white p-5 rounded-2xl border border-blue-900/80 shadow-md space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
                 <div>
                   <h4 className="text-sm font-black text-white flex items-center gap-2">
@@ -1616,223 +1674,457 @@ export const AdminDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Site Title:</label>
-              <input
-                type="text"
-                value={siteTitle}
-                onChange={(e) => setSiteTitle(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-bold focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">WhatsApp Inquiry Number:</label>
-              <input
-                type="text"
-                value={whatsappNumber}
-                onChange={(e) => setWhatsappNumber(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-bold focus:ring-2 focus:ring-blue-500 font-mono"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Support Phone Hotline:</label>
-              <input
-                type="text"
-                value={supportPhone}
-                onChange={(e) => setSupportPhone(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Facebook Handle URL:</label>
-              <input
-                type="text"
-                value={facebookUrl}
-                onChange={(e) => setFacebookUrl(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Instagram Handle URL:</label>
-              <input
-                type="text"
-                value={instagramUrl}
-                onChange={(e) => setInstagramUrl(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">M-PESA Paybill Number:</label>
-              <input
-                type="text"
-                value={paybillNumber}
-                onChange={(e) => setPaybillNumber(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-extrabold focus:ring-2 focus:ring-emerald-500 font-mono"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">M-PESA Account Number:</label>
-              <input
-                type="text"
-                value={paybillAccount}
-                onChange={(e) => setPaybillAccount(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-extrabold focus:ring-2 focus:ring-emerald-500 font-mono"
-              />
-            </div>
-
-            {/* M-Pesa Live API Keys & Gateway Config */}
-            <div className="col-span-1 md:col-span-2 bg-emerald-950 text-white p-5 rounded-2xl border border-emerald-800/80 space-y-4">
-              <div className="flex justify-between items-center border-b border-emerald-800 pb-2">
-                <h5 className="font-extrabold text-xs text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Smartphone className="w-4 h-4 text-emerald-400" /> Safaricom Daraja M-PESA Live Payment Gateway Config
-                </h5>
-                <span className="bg-emerald-600 text-white text-[10px] font-black px-2 py-0.5 rounded uppercase">
-                  Live API Integrated
-                </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Website / Business Title:</label>
+                <input
+                  type="text"
+                  value={siteTitle}
+                  onChange={(e) => setSiteTitle(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-bold focus:ring-2 focus:ring-blue-500"
+                />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div>
-                  <label className="text-[11px] font-bold text-emerald-200 block mb-1">M-Pesa Gateway Mode:</label>
-                  <select
-                    value={mpesaEnvironment}
-                    onChange={(e) => setMpesaEnvironment(e.target.value as 'sandbox' | 'production')}
-                    className="w-full bg-slate-900 border border-emerald-800 text-white rounded-xl p-2.5 font-bold focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value="production">Production (Live Safaricom Paybill / Till)</option>
-                    <option value="sandbox">Sandbox (Safaricom Developer Testing)</option>
-                  </select>
-                </div>
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Main Business Tagline:</label>
+                <input
+                  type="text"
+                  value={tagline}
+                  onChange={(e) => setTagline(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
 
-                <div>
-                  <label className="text-[11px] font-bold text-emerald-200 block mb-1">Passkey (Online Passkey):</label>
-                  <div className="relative">
-                    <input
-                      type={showPasskey ? 'text' : 'password'}
-                      placeholder="Safaricom Online Passkey"
-                      value={mpesaPasskey}
-                      onChange={(e) => setMpesaPasskey(e.target.value)}
-                      className="w-full bg-slate-900 border border-emerald-800 text-white rounded-xl p-2.5 pr-10 font-mono text-xs focus:ring-2 focus:ring-emerald-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPasskey(!showPasskey)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-400 hover:text-emerald-200 transition-colors p-1 cursor-pointer"
-                      title={showPasskey ? 'Hide passkey' : 'Show passkey'}
-                    >
-                      {showPasskey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
+          {/* Section: Official Contact & Physical Office Location */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+              <MapPin className="w-4 h-4 text-emerald-600" />
+              <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">2. Contact Numbers & Workshop Office Address</h4>
+            </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+              <div className="sm:col-span-2 md:col-span-2">
+                <label className="text-xs font-bold text-slate-700 block mb-1">Physical Company Location / Address:</label>
+                <input
+                  type="text"
+                  value={companyAddress}
+                  onChange={(e) => setCompanyAddress(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">City / Region:</label>
+                <input
+                  type="text"
+                  value={companyCity}
+                  onChange={(e) => setCompanyCity(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-medium focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">WhatsApp Inquiry Number:</label>
+                <input
+                  type="text"
+                  value={whatsappNumber}
+                  onChange={(e) => setWhatsappNumber(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-bold focus:ring-2 focus:ring-blue-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Support Phone Hotline:</label>
+                <input
+                  type="text"
+                  value={supportPhone}
+                  onChange={(e) => setSupportPhone(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-bold focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Official Company Email:</label>
+                <input
+                  type="email"
+                  value={companyEmail}
+                  onChange={(e) => setCompanyEmail(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-medium focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">M-PESA Paybill Number:</label>
+                <input
+                  type="text"
+                  value={paybillNumber}
+                  onChange={(e) => setPaybillNumber(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-extrabold focus:ring-2 focus:ring-emerald-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">M-PESA Account Number:</label>
+                <input
+                  type="text"
+                  value={paybillAccount}
+                  onChange={(e) => setPaybillAccount(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-extrabold focus:ring-2 focus:ring-emerald-500 font-mono"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Dedicated Footer Information & Trust Badges Customizer */}
+          <div className="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-blue-600" />
+                <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">3. Footer Information, Hours & Social Links</h4>
+              </div>
+              <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                Live Footer Display
+              </span>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Footer "About Studio" Description Text:</label>
+                <textarea
+                  rows={2}
+                  value={footerAboutText}
+                  onChange={(e) => setFooterAboutText(e.target.value)}
+                  placeholder="Commercial graphics, printing, custom apparel branding..."
+                  className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-[10px] text-slate-500 mt-0.5">Displayed directly under the brand logo in the footer.</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[11px] font-bold text-emerald-200 block mb-1">Consumer Key:</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Office Hours & Working Times:</label>
                   <input
                     type="text"
-                    placeholder="Safaricom Consumer Key"
-                    value={mpesaConsumerKey}
-                    onChange={(e) => setMpesaConsumerKey(e.target.value)}
-                    className="w-full bg-slate-900 border border-emerald-800 text-white rounded-xl p-2.5 font-mono text-xs focus:ring-2 focus:ring-emerald-500"
+                    value={footerOfficeHours}
+                    onChange={(e) => setFooterOfficeHours(e.target.value)}
+                    placeholder="Mon - Sat: 8:00 AM - 7:00 PM | Sun: On-Call / Urgent Proofing"
+                    className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-bold text-emerald-200 block mb-1">Consumer Secret:</label>
-                  <div className="relative">
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Footer Copyright Text:</label>
+                  <input
+                    type="text"
+                    value={footerCopyrightText}
+                    onChange={(e) => setFooterCopyrightText(e.target.value)}
+                    placeholder="© 2026 Woodynat Designers Limited. All rights reserved."
+                    className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Developer / Craft Credit Line:</label>
+                <input
+                  type="text"
+                  value={footerDeveloperCredit}
+                  onChange={(e) => setFooterDeveloperCredit(e.target.value)}
+                  placeholder="• A craft designed and developed by DaveTech Solutions"
+                  className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Social Media Links */}
+              <div className="pt-2">
+                <label className="text-xs font-black text-slate-800 block mb-2 uppercase tracking-wide">
+                  Social Media Profile Links:
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-600 block mb-1">Facebook URL:</span>
                     <input
-                      type={showConsumerSecret ? 'text' : 'password'}
-                      placeholder="Safaricom Consumer Secret"
-                      value={mpesaConsumerSecret}
-                      onChange={(e) => setMpesaConsumerSecret(e.target.value)}
-                      className="w-full bg-slate-900 border border-emerald-800 text-white rounded-xl p-2.5 pr-10 font-mono text-xs focus:ring-2 focus:ring-emerald-500"
+                      type="text"
+                      value={facebookUrl}
+                      onChange={(e) => setFacebookUrl(e.target.value)}
+                      placeholder="https://facebook.com/..."
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2 text-slate-900 text-xs focus:ring-2 focus:ring-blue-500"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowConsumerSecret(!showConsumerSecret)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-400 hover:text-emerald-200 transition-colors p-1 cursor-pointer"
-                      title={showConsumerSecret ? 'Hide consumer secret' : 'Show consumer secret'}
-                    >
-                      {showConsumerSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-600 block mb-1">Instagram URL:</span>
+                    <input
+                      type="text"
+                      value={instagramUrl}
+                      onChange={(e) => setInstagramUrl(e.target.value)}
+                      placeholder="https://instagram.com/..."
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2 text-slate-900 text-xs focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-600 block mb-1">TikTok URL:</span>
+                    <input
+                      type="text"
+                      value={tiktokUrl}
+                      onChange={(e) => setTiktokUrl(e.target.value)}
+                      placeholder="https://tiktok.com/@..."
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2 text-slate-900 text-xs focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-600 block mb-1">X / Twitter URL (Optional):</span>
+                    <input
+                      type="text"
+                      value={twitterUrl}
+                      onChange={(e) => setTwitterUrl(e.target.value)}
+                      placeholder="https://x.com/..."
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2 text-slate-900 text-xs focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-600 block mb-1">YouTube Channel URL (Optional):</span>
+                    <input
+                      type="text"
+                      value={youtubeUrl}
+                      onChange={(e) => setYoutubeUrl(e.target.value)}
+                      placeholder="https://youtube.com/@..."
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2 text-slate-900 text-xs focus:ring-2 focus:ring-blue-500"
+                    />
                   </div>
                 </div>
               </div>
 
-              <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-t border-emerald-900/80">
-                <p className="text-[10px] text-emerald-300 leading-normal">
-                  💡 Credentials can also be supplied via server environment variables: <code className="text-amber-300">MPESA_CONSUMER_KEY</code>, <code className="text-amber-300">MPESA_CONSUMER_SECRET</code>, <code className="text-amber-300">MPESA_PASSKEY</code>.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleRegisterC2bUrls}
-                  disabled={isRegisteringC2b}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl border border-emerald-400/50 flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs transition-colors disabled:opacity-50"
+              {/* 4 Trust Badges Customizer */}
+              <div className="pt-3 border-t border-slate-200">
+                <label className="text-xs font-black text-slate-800 block mb-2 uppercase tracking-wide">
+                  Footer Trust Badges (4 Top Guarantee Cards):
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+                    <span className="text-[11px] font-extrabold text-blue-700 flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5" /> Badge 1: Quality Guarantee
+                    </span>
+                    <input
+                      type="text"
+                      value={footerTrustBadge1Title}
+                      onChange={(e) => setFooterTrustBadge1Title(e.target.value)}
+                      placeholder="Badge 1 Title"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs font-bold"
+                    />
+                    <input
+                      type="text"
+                      value={footerTrustBadge1Desc}
+                      onChange={(e) => setFooterTrustBadge1Desc(e.target.value)}
+                      placeholder="Badge 1 Subtitle / Description"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs"
+                    />
+                  </div>
+
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+                    <span className="text-[11px] font-extrabold text-emerald-700 flex items-center gap-1">
+                      <Smartphone className="w-3.5 h-3.5" /> Badge 2: Payment Gateway
+                    </span>
+                    <input
+                      type="text"
+                      value={footerTrustBadge2Title}
+                      onChange={(e) => setFooterTrustBadge2Title(e.target.value)}
+                      placeholder="Badge 2 Title"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs font-bold"
+                    />
+                    <input
+                      type="text"
+                      value={footerTrustBadge2Desc}
+                      onChange={(e) => setFooterTrustBadge2Desc(e.target.value)}
+                      placeholder="Badge 2 Subtitle / Description"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs"
+                    />
+                  </div>
+
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+                    <span className="text-[11px] font-extrabold text-amber-700 flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" /> Badge 3: Turnaround / Service
+                    </span>
+                    <input
+                      type="text"
+                      value={footerTrustBadge3Title}
+                      onChange={(e) => setFooterTrustBadge3Title(e.target.value)}
+                      placeholder="Badge 3 Title"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs font-bold"
+                    />
+                    <input
+                      type="text"
+                      value={footerTrustBadge3Desc}
+                      onChange={(e) => setFooterTrustBadge3Desc(e.target.value)}
+                      placeholder="Badge 3 Subtitle / Description"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs"
+                    />
+                  </div>
+
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+                    <span className="text-[11px] font-extrabold text-violet-700 flex items-center gap-1">
+                      <CreditCard className="w-3.5 h-3.5" /> Badge 4: Logistics & Tracking
+                    </span>
+                    <input
+                      type="text"
+                      value={footerTrustBadge4Title}
+                      onChange={(e) => setFooterTrustBadge4Title(e.target.value)}
+                      placeholder="Badge 4 Title"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs font-bold"
+                    />
+                    <input
+                      type="text"
+                      value={footerTrustBadge4Desc}
+                      onChange={(e) => setFooterTrustBadge4Desc(e.target.value)}
+                      placeholder="Badge 4 Subtitle / Description"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Homepage Hero & Banner Controls */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+              <Megaphone className="w-4 h-4 text-amber-600" />
+              <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">4. Top Flash Banner & Homepage Hero Content</h4>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Top Flash Sale Banner Notice Bar:</label>
+                <input
+                  type="text"
+                  value={topBannerText}
+                  onChange={(e) => setTopBannerText(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-medium focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Hero Main Title Headline:</label>
+                <input
+                  type="text"
+                  value={heroHeadline}
+                  onChange={(e) => setHeroHeadline(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-extrabold focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Hero Subheadline Text:</label>
+                <textarea
+                  rows={2}
+                  value={heroSubheadline}
+                  onChange={(e) => setHeroSubheadline(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section: M-Pesa Live API Keys & Gateway Config */}
+          <div className="bg-emerald-950 text-white p-5 rounded-2xl border border-emerald-800/80 space-y-4">
+            <div className="flex justify-between items-center border-b border-emerald-800 pb-2">
+              <h5 className="font-extrabold text-xs text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Smartphone className="w-4 h-4 text-emerald-400" /> Safaricom Daraja M-PESA Live Payment Gateway Config
+              </h5>
+              <span className="bg-emerald-600 text-white text-[10px] font-black px-2 py-0.5 rounded uppercase">
+                Live API Integrated
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <label className="text-[11px] font-bold text-emerald-200 block mb-1">M-Pesa Gateway Mode:</label>
+                <select
+                  value={mpesaEnvironment}
+                  onChange={(e) => setMpesaEnvironment(e.target.value as 'sandbox' | 'production')}
+                  className="w-full bg-slate-900 border border-emerald-800 text-white rounded-xl p-2.5 font-bold focus:ring-2 focus:ring-emerald-500"
                 >
-                  <Radio className="w-3.5 h-3.5 text-emerald-200" />
-                  <span>{isRegisteringC2b ? 'Registering C2B...' : 'Register C2B Webhook URLs'}</span>
-                </button>
+                  <option value="production">Production (Live Safaricom Paybill / Till)</option>
+                  <option value="sandbox">Sandbox (Safaricom Developer Testing)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-emerald-200 block mb-1">Passkey (Online Passkey):</label>
+                <div className="relative">
+                  <input
+                    type={showPasskey ? 'text' : 'password'}
+                    placeholder="Safaricom Online Passkey"
+                    value={mpesaPasskey}
+                    onChange={(e) => setMpesaPasskey(e.target.value)}
+                    className="w-full bg-slate-900 border border-emerald-800 text-white rounded-xl p-2.5 pr-10 font-mono text-xs focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasskey(!showPasskey)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-400 hover:text-emerald-200 transition-colors p-1 cursor-pointer"
+                    title={showPasskey ? 'Hide passkey' : 'Show passkey'}
+                  >
+                    {showPasskey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-emerald-200 block mb-1">Consumer Key:</label>
+                <input
+                  type="text"
+                  placeholder="Safaricom Consumer Key"
+                  value={mpesaConsumerKey}
+                  onChange={(e) => setMpesaConsumerKey(e.target.value)}
+                  className="w-full bg-slate-900 border border-emerald-800 text-white rounded-xl p-2.5 font-mono text-xs focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-emerald-200 block mb-1">Consumer Secret:</label>
+                <div className="relative">
+                  <input
+                    type={showConsumerSecret ? 'text' : 'password'}
+                    placeholder="Safaricom Consumer Secret"
+                    value={mpesaConsumerSecret}
+                    onChange={(e) => setMpesaConsumerSecret(e.target.value)}
+                    className="w-full bg-slate-900 border border-emerald-800 text-white rounded-xl p-2.5 pr-10 font-mono text-xs focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConsumerSecret(!showConsumerSecret)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-400 hover:text-emerald-200 transition-colors p-1 cursor-pointer"
+                    title={showConsumerSecret ? 'Hide consumer secret' : 'Show consumer secret'}
+                  >
+                    {showConsumerSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="col-span-1 md:col-span-2">
-              <label className="text-xs font-bold text-slate-700 block mb-1">Physical Company Location / Address:</label>
-              <input
-                type="text"
-                value={companyAddress}
-                onChange={(e) => setCompanyAddress(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-medium focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">City / Region:</label>
-              <input
-                type="text"
-                value={companyCity}
-                onChange={(e) => setCompanyCity(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-medium focus:ring-2 focus:ring-blue-500"
-              />
+            <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-t border-emerald-900/80">
+              <p className="text-[10px] text-emerald-300 leading-normal">
+                💡 Credentials can also be supplied via server environment variables: <code className="text-amber-300">MPESA_CONSUMER_KEY</code>, <code className="text-amber-300">MPESA_CONSUMER_SECRET</code>, <code className="text-amber-300">MPESA_PASSKEY</code>.
+              </p>
+              <button
+                type="button"
+                onClick={handleRegisterC2bUrls}
+                disabled={isRegisteringC2b}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl border border-emerald-400/50 flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs transition-colors disabled:opacity-50"
+              >
+                <Radio className="w-3.5 h-3.5 text-emerald-200" />
+                <span>{isRegisteringC2b ? 'Registering C2B...' : 'Register C2B Webhook URLs'}</span>
+              </button>
             </div>
           </div>
 
-          <div className="space-y-3 pt-2 border-t">
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Top Flash Sale Banner Notice Bar:</label>
-              <input
-                type="text"
-                value={topBannerText}
-                onChange={(e) => setTopBannerText(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-medium focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Hero Main Title Headline:</label>
-              <input
-                type="text"
-                value={heroHeadline}
-                onChange={(e) => setHeroHeadline(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-extrabold focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Hero Subheadline Text:</label>
-              <textarea
-                rows={2}
-                value={heroSubheadline}
-                onChange={(e) => setHeroSubheadline(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
+          {/* Section: WooCommerce / WordPress REST API */}
           <div className="bg-slate-900 text-white p-4 rounded-xl space-y-2">
             <h5 className="font-bold text-xs text-amber-400 flex items-center gap-1">
               <FileCode className="w-4 h-4" /> WooCommerce / WordPress REST API Bridge Settings:
@@ -1848,6 +2140,15 @@ export const AdminDashboard: React.FC = () => {
             </p>
           </div>
 
+          {/* Bottom Save Action */}
+          <div className="pt-4 border-t flex justify-end">
+            <button
+              type="submit"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-6 py-3 rounded-xl text-sm flex items-center gap-2 shadow-lg transition-colors cursor-pointer"
+            >
+              <Save className="w-4 h-4" /> Save All CMS & Footer Changes Live
+            </button>
+          </div>
         </form>
       )}
 
