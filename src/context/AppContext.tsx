@@ -218,12 +218,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       try {
         const parsed: Product[] = JSON.parse(saved);
         return parsed.map((p) => {
+          // If the product already has an image (custom uploaded base64, URL, or asset), PRESERVE IT!
+          if (p.image && p.image.trim() !== '') {
+            if (p.image.startsWith('/src/assets/')) {
+              return { ...p, image: p.image.replace('/src/assets/', '/assets/') };
+            }
+            return p;
+          }
+          // Only fallback to default match if image is completely missing or empty
           const match = INITIAL_PRODUCTS.find((initP) => initP.id === p.id);
           if (match && match.image) {
             return { ...p, image: match.image };
-          }
-          if (p.image && p.image.startsWith('/src/assets/')) {
-            return { ...p, image: p.image.replace('/src/assets/', '/assets/') };
           }
           return p;
         });
@@ -732,16 +737,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Product Admin
   const addProduct = (product: Product) => {
+    setProducts((prev) => {
+      const exists = prev.some((p) => p.id === product.id);
+      const next = exists ? prev.map((p) => (p.id === product.id ? product : p)) : [...prev, product];
+      localStorage.setItem('pixelprint_products', JSON.stringify(next));
+      return next;
+    });
     saveProductToFirestore(product);
     showToast('Product Created ✨', `${product.name} added to live catalog.`);
   };
 
   const updateProduct = (updated: Product) => {
+    setProducts((prev) => {
+      const next = prev.map((p) => (p.id === updated.id ? updated : p));
+      localStorage.setItem('pixelprint_products', JSON.stringify(next));
+      return next;
+    });
     saveProductToFirestore(updated);
     showToast('Product Saved 💾', `${updated.name} details updated.`);
   };
 
   const deleteProduct = (id: string) => {
+    setProducts((prev) => {
+      const next = prev.filter((p) => p.id !== id);
+      localStorage.setItem('pixelprint_products', JSON.stringify(next));
+      return next;
+    });
     deleteProductFromFirestore(id);
     showToast('Product Deleted', 'Item removed from catalog.', 'warning');
   };
@@ -768,6 +789,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // WP Settings
   const updateWpSettings = (newSettings: Partial<WordPressSettings>) => {
+    setWpSettings((prev) => {
+      const updated = { ...prev, ...newSettings };
+      localStorage.setItem('pixelprint_wp_settings', JSON.stringify(updated));
+      return updated;
+    });
     const updated = { ...wpSettings, ...newSettings };
     saveWpSettingsToFirestore(updated);
     showToast('WordPress Settings Saved ⚡', 'Live site branding & config synchronized.');

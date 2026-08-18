@@ -1342,6 +1342,172 @@ app.post('/api/mpesa/verify-code', (req, res) => {
   }
 });
 
+// ==========================================
+// WHATSAPP LIVE BOT ENGINE & WEBHOOK APIS
+// Official Number: 0797939199 / +254797939199
+// ==========================================
+
+const OFFICIAL_WHATSAPP_NUMBER = '0797939199';
+const OFFICIAL_WHATSAPP_INTL = '254797939199';
+
+// 1. Live WhatsApp Bot Status Endpoint
+app.get('/api/whatsapp/status', (req, res) => {
+  res.json({
+    success: true,
+    whatsappNumber: OFFICIAL_WHATSAPP_NUMBER,
+    formattedPhone: '+254797939199',
+    waMeLink: `https://wa.me/${OFFICIAL_WHATSAPP_INTL}`,
+    botStatus: 'ONLINE',
+    botEngine: 'WhatBot 24/7 Automated Assistant & Quote Engine',
+    businessName: 'Woodynat Designers Limited',
+    paybill: {
+      number: '247247',
+      account: '0797939199'
+    },
+    location: 'Temple Road Gatkim Complex Building fourth floor Wing B Room 4B1, Nairobi CBD',
+    supportHours: 'Mon - Sat: 8:00 AM - 7:00 PM | Sun: On-Call / Urgent Proofing',
+    serverTimestamp: new Date().toISOString()
+  });
+});
+
+// 2. WhatBot Smart Reply Engine Endpoint (accessible directly by any client without frontend state)
+app.post('/api/whatsapp/bot-reply', (req, res) => {
+  try {
+    const { message, customerName, customerPhone } = req.body;
+    const raw = String(message || '').trim();
+    const lower = raw.toLowerCase();
+
+    const name = customerName ? String(customerName).trim() : 'valued customer';
+
+    // Rule 1: Greetings & Main Menu
+    if (/^(hi|hello|hey|habari|mambo|start|menu|quote|help|info)$/i.test(lower) || lower.includes('hello') || lower.includes('habari')) {
+      return res.json({
+        success: true,
+        matchedRule: 'welcome',
+        reply: `👋 Hello ${name}! Welcome to Woodynat Designers Limited (Official WhatsApp: ${OFFICIAL_WHATSAPP_NUMBER}).\nHow can we assist your printing & branding project today?\n\nReply with a number or keyword:\n1️⃣ Round Neck T-Shirts & Polo Rates\n2️⃣ Custom Hoodies & Fleeces\n3️⃣ Roll-Up & Teardrop Banners\n4️⃣ M-Pesa Paybill & Payment Info\n5️⃣ Shop Location & Directions (Nairobi CBD)\n6️⃣ Urgent 24h Memorial Booklets\n7️⃣ Speak with a Live Production Specialist`,
+        category: 'General'
+      });
+    }
+
+    // Rule 2: T-Shirts & Polos
+    if (lower === '1' || lower.includes('tshirt') || lower.includes('t-shirt') || lower.includes('t shirt') || lower.includes('polo') || lower.includes('round neck')) {
+      return res.json({
+        success: true,
+        matchedRule: 'tshirts',
+        reply: `👕 Woodynat T-Shirt & Polo Rate Card:\n• Round Neck 100% Combed Cotton (180GSM): KSh 550 per piece (includes front print)\n• Executive Pique Polo Shirts: KSh 850 per piece\n• Heavy V-Neck T-Shirts: KSh 650\n• Sizes: Small to 3XL | Colors: White, Black, Navy, Red, Royal Blue, Green.\n📦 Bulk discounts available for orders over 50 pieces! Need a formal PDF quote?`,
+        category: 'Apparel',
+        quickQuote: {
+          productName: 'Custom Round Neck T-Shirt',
+          price: 550
+        }
+      });
+    }
+
+    // Rule 3: Hoodies
+    if (lower === '2' || lower.includes('hoodie') || lower.includes('hoodies') || lower.includes('fleece') || lower.includes('sweater')) {
+      return res.json({
+        success: true,
+        matchedRule: 'hoodies',
+        reply: `🧥 Woodynat Custom Hoodies & Fleeces:\n• Heavyweight Brushed Cotton Fleece Pullover (280GSM): KSh 1,800\n• Heavyweight Custom Hoodies (320GSM Plush): KSh 2,500\n• Zip-Up Heavy Hoodie: KSh 2,200\n• Custom Class / Corporate Embroidery or Full-Color DTF Print included!\nTurnaround: 2-3 business days.`,
+        category: 'Apparel',
+        quickQuote: {
+          productName: 'Heavyweight Custom Hoodie',
+          price: 2500
+        }
+      });
+    }
+
+    // Rule 4: Banners & Signage
+    if (lower === '3' || lower.includes('banner') || lower.includes('banners') || lower.includes('rollup') || lower.includes('roll up') || lower.includes('teardrop') || lower.includes('flag')) {
+      return res.json({
+        success: true,
+        matchedRule: 'banners',
+        reply: `🏁 Display & Exhibition Banners:\n• Roll-Up Banner (Light Base 85x200cm): KSh 6,500\n• Roll-Up Banner (Large Heavy-Duty Base): KSh 8,500\n• Teardrop Promotional Flag (3.4m + Cross Base): KSh 7,500\nPrinted on waterproof anti-curl satin film with padded carry bag included!`,
+        category: 'Banners & Stickers',
+        quickQuote: {
+          productName: 'Roll-Up Banner (Light Base)',
+          price: 6500
+        }
+      });
+    }
+
+    // Rule 5: M-Pesa Paybill & Payments
+    if (lower === '4' || lower.includes('paybill') || lower.includes('mpesa') || lower.includes('m-pesa') || lower.includes('payment') || lower.includes('account') || lower.includes('lipa')) {
+      return res.json({
+        success: true,
+        matchedRule: 'payment',
+        reply: `💳 Official M-Pesa Payment Details:\n1. Go to Lipa na M-Pesa > Paybill\n2. Business Number: 247247\n3. Account Number: 0797939199\n4. Business Name: Woodynat Designers Limited\nPlease share your M-Pesa transaction reference or screenshot once completed for immediate job scheduling!`,
+        category: 'Payments'
+      });
+    }
+
+    // Rule 6: Location & Directions
+    if (lower === '5' || lower.includes('location') || lower.includes('address') || lower.includes('where') || lower.includes('wapi') || lower.includes('gatkim') || lower.includes('cbd')) {
+      return res.json({
+        success: true,
+        matchedRule: 'location',
+        reply: `📍 Woodynat Designers Limited Workshop & Office:\nTemple Road Gatkim complex building fourth floor wing B Room 4B1, Nairobi CBD.\n⏰ Operating Hours: Mon – Sat: 7:30 AM – 6:30 PM (Sun: On-Call / Urgent Proofing).\n📞 Hotline / WhatsApp: 0797939199. Walk-ins and sample reviews welcome!`,
+        category: 'General'
+      });
+    }
+
+    // Rule 7: Memorials & Eulogy Booklets
+    if (lower === '6' || lower.includes('eulogy') || lower.includes('memorial') || lower.includes('funeral') || lower.includes('program') || lower.includes('burial')) {
+      return res.json({
+        success: true,
+        matchedRule: 'memorials',
+        reply: `🕊️ Funeral & Memorial Programs (Express 24-Hour Delivery):\n• 4-Page Folded Glossy (A4 folded to A5): KSh 50 - 65/pc\n• 8-Page Glossy Booklet with Full-Color Portrait: KSh 90 - 120/pc\n• Express same-day courier dispatch to Nakuru, Kisumu, Eldoret, Nyeri, Mombasa available.\nSend photos and text via WhatsApp to 0797939199 for fast typesetting.`,
+        category: 'Stationery'
+      });
+    }
+
+    // Rule 8: Live Agent Transfer
+    if (lower === '7' || lower.includes('human') || lower.includes('agent') || lower.includes('specialist') || lower.includes('call') || lower.includes('person') || lower.includes('talk')) {
+      return res.json({
+        success: true,
+        matchedRule: 'agent_transfer',
+        reply: `👨‍💼 Connecting you to a live Woodynat Senior Designer & Production Specialist.\nA team member is reviewing your chat and will respond shortly. You can also reach our direct desk at 0797939199.`,
+        category: 'Support',
+        liveAgentRequested: true
+      });
+    }
+
+    // Fallback automated response with interactive options
+    return res.json({
+      success: true,
+      matchedRule: 'fallback',
+      reply: `👋 Thank you for messaging Woodynat Designers (WhatsApp: ${OFFICIAL_WHATSAPP_NUMBER}).\n\nTo help you faster, reply:\n1️⃣ T-Shirts & Polos\n2️⃣ Hoodies & Fleeces\n3️⃣ Banners & Signage\n4️⃣ M-Pesa Paybill (247247 / Acc: 0797939199)\n5️⃣ Shop Location (Gatkim Complex, Nairobi CBD)\n6️⃣ 24h Memorial Booklets\n7️⃣ Speak with a live designer\n\nOr click here to open official WhatsApp: https://wa.me/${OFFICIAL_WHATSAPP_INTL}?text=${encodeURIComponent(raw)}`,
+      category: 'General'
+    });
+
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 3. WhatsApp Webhook Verification (Meta WhatsApp Cloud API / Twilio)
+app.get('/api/whatsapp/webhook', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  if (mode === 'subscribe' && token === (process.env.WHATSAPP_VERIFY_TOKEN || 'woodynat_whatsapp_token_2026')) {
+    console.log('WhatsApp Webhook Verified Successfully!');
+    return res.status(200).send(challenge);
+  }
+  return res.sendStatus(403);
+});
+
+// 4. Inbound WhatsApp Message Webhook Receiver
+app.post('/api/whatsapp/webhook', (req, res) => {
+  try {
+    console.log('Incoming WhatsApp Webhook Payload:', JSON.stringify(req.body, null, 2));
+    res.status(200).json({ status: 'success', received: true, officialPhone: OFFICIAL_WHATSAPP_NUMBER });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 async function startServer() {
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {

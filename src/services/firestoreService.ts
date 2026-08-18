@@ -51,9 +51,12 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void) => {
           data.category = CATEGORY_MAPPINGS[data.category];
         }
 
-        // Preserve uploaded photos (base64, external links, assets) or fallback if missing/invalid
+        // Preserve custom changed photos (base64, external links, uploaded files, assets)
         const initMatch = INITIAL_PRODUCTS.find(p => p.id === data.id);
-        if (!data.image || data.image.trim() === '' || data.image.startsWith('/src/assets/') || data.image.startsWith('src/assets/')) {
+        if (data.image && (data.image.startsWith('/src/assets/') || data.image.startsWith('src/assets/'))) {
+          data.image = data.image.replace(/^\/?src\/assets\//, '/assets/');
+          saveProductToFirestore(data);
+        } else if (!data.image || data.image.trim() === '') {
           data.image = initMatch?.image || getProductFallbackImage(data.name, data.category);
           saveProductToFirestore(data);
         }

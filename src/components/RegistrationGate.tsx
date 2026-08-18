@@ -290,6 +290,22 @@ export const RegistrationGate: React.FC = () => {
             </button>
           </form>
 
+          {/* Direct WhatsApp Live Chat Option (No Login Needed) */}
+          <div className="mt-4 pt-4 border-t border-slate-200">
+            <a
+              href="https://wa.me/254797939199?text=Hi%20Woodynat%20Designers%20Limited!%20I%20need%20instant%20print%20quotes%20and%20rates%20for%20my%20order."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-extrabold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all group"
+            >
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600"></span>
+              </span>
+              <span>Direct WhatsApp Inquiry: <strong>0797939199</strong> (Live 24/7)</span>
+            </a>
+          </div>
+
         </div>
       </div>
 

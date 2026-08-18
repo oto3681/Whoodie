@@ -34,6 +34,11 @@ export const Logo: React.FC<LogoProps> = ({
   const [imgIndex, setImgIndex] = useState(0);
   const [allImagesFailed, setAllImagesFailed] = useState(false);
 
+  React.useEffect(() => {
+    setImgIndex(0);
+    setAllImagesFailed(false);
+  }, [customLogo]);
+
   const handleImageError = () => {
     if (imgIndex < sources.length - 1) {
       setImgIndex(prev => prev + 1);

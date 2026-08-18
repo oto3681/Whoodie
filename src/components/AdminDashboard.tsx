@@ -958,17 +958,20 @@ export const AdminDashboard: React.FC = () => {
             <div className="flex flex-wrap items-center gap-2 shrink-0">
               <button
                 onClick={async () => {
+                  if (!window.confirm('Reset all catalog product photos to official stock defaults? Warning: This will overwrite any custom photos you have uploaded.')) {
+                    return;
+                  }
                   setIsSyncingImages(true);
                   await restoreAllProductImages();
                   setIsSyncingImages(false);
-                  showToast('All product catalog photos refreshed and updated across Firestore!');
+                  showToast('Catalog photos reset to default stock photos.', 'All products updated.');
                 }}
                 disabled={isSyncingImages}
-                className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer"
-                title="Restore official product photos for all items in database"
+                className="bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-300 hover:text-white font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2 border border-slate-700 transition-all cursor-pointer"
+                title="Reset all product photos to default stock photos"
               >
                 <RefreshCw className={`w-4 h-4 ${isSyncingImages ? 'animate-spin' : ''}`} />
-                {isSyncingImages ? 'Updating Photos...' : 'Update All Product Photos'}
+                {isSyncingImages ? 'Resetting Photos...' : 'Reset Default Photos'}
               </button>
               <button
                 onClick={() => {
