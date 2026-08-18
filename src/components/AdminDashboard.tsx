@@ -13,6 +13,7 @@ import { AdminBulkBroadcastStudio } from './AdminBulkBroadcastStudio';
 import { AdminNotificationPanel } from './AdminNotificationPanel';
 import { AdminZohoQuotesStudio } from './AdminZohoQuotesStudio';
 import { AdminMpesaStudio } from './AdminMpesaStudio';
+import { AdminLogoManagerModal } from './AdminLogoManagerModal';
 import { 
   BarChart3, 
   Package, 
@@ -82,6 +83,7 @@ export const AdminDashboard: React.FC = () => {
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'notifications' | 'mpesa' | 'zoho' | 'kpis' | 'orders' | 'whatsapp' | 'bulk' | 'catalogue' | 'products' | 'wordpress'>('orders');
+  const [showLogoModal, setShowLogoModal] = useState(false);
 
   // Product Editing state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -398,6 +400,15 @@ export const AdminDashboard: React.FC = () => {
                 {adminNotifications.length}
               </span>
             )}
+          </button>
+
+          <button
+            onClick={() => setShowLogoModal(true)}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md border border-blue-400/40"
+            title="Upload or change the official site logo across all screens"
+          >
+            <Sparkles className="w-4 h-4 text-amber-300" />
+            <span>Change / Insert Logo</span>
           </button>
 
           <button
@@ -1596,19 +1607,30 @@ export const AdminDashboard: React.FC = () => {
                   </p>
                 </div>
 
-                {siteLogo && (
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      setSiteLogo('');
-                      updateWpSettings({ siteLogo: '' });
-                      showToast('Logo Reset 🔄', 'Restored official default WoodyNat Designers logo.');
-                    }}
-                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-bold transition-colors self-start sm:self-auto cursor-pointer"
+                    onClick={() => setShowLogoModal(true)}
+                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
-                    Reset to Default Logo
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Open Full Logo Studio</span>
                   </button>
-                )}
+
+                  {siteLogo && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSiteLogo('');
+                        updateWpSettings({ siteLogo: '' });
+                        showToast('Logo Reset 🔄', 'Restored official default WoodyNat Designers logo.');
+                      }}
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-bold transition-colors self-start sm:self-auto cursor-pointer"
+                    >
+                      Reset to Default Logo
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
@@ -2270,6 +2292,12 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Admin Logo Manager Studio Modal */}
+      <AdminLogoManagerModal
+        isOpen={showLogoModal}
+        onClose={() => setShowLogoModal(false)}
+      />
 
     </div>
   );
