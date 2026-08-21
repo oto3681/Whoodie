@@ -164,6 +164,7 @@ interface AppContextType {
     recipients: CustomerContact[];
     smsBody: string;
     senderId?: string;
+    adminEmail?: string;
   }) => Promise<BulkCampaign>;
   sendBulkEmailCampaign: (data: {
     title: string;
@@ -173,6 +174,7 @@ interface AppContextType {
     subject: string;
     preheader: string;
     template: BulkEmailTemplate;
+    adminEmail?: string;
   }) => Promise<BulkCampaign>;
   deleteCampaign: (campaignId: string) => void;
 
@@ -1129,6 +1131,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     recipients: CustomerContact[];
     smsBody: string;
     senderId?: string;
+    adminEmail?: string;
   }): Promise<BulkCampaign> => {
     const campaignId = `camp-sms-${Date.now()}`;
     const sentAt = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) + 
@@ -1138,6 +1141,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Simulate high success rate with Kenya telcos (Safaricom / Airtel)
     const deliveredCount = Math.max(1, count - Math.floor(Math.random() * (count > 10 ? 2 : 1)));
     const failedCount = count - deliveredCount;
+    const adminEmail = data.adminEmail || wpSettings.companyEmail || 'woodynatdesigners12@gmail.com';
 
     const campaign: BulkCampaign = {
       id: campaignId,
@@ -1147,6 +1151,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       audienceLabel: data.audienceLabel,
       recipientCount: count,
       senderId: data.senderId || 'WOODYNAT',
+      adminEmail,
       smsBody: data.smsBody,
       sentAt,
       status: 'completed',
@@ -1154,11 +1159,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       failedCount,
       openRateEstimate: '98.5%',
       logs: [
-        `${new Date().toLocaleTimeString()} - Telco Bulk SMS Dispatch Gateway initialized (Sender ID: ${data.senderId || 'WOODYNAT'})`,
-        `${new Date().toLocaleTimeString()} - Queued ${count} personalized SMS dispatches for audience "${data.audienceLabel}"`,
+        `${new Date().toLocaleTimeString()} - Telco Bulk SMS Gateway authorization authenticated for: ${adminEmail}`,
+        `${new Date().toLocaleTimeString()} - Queued ${count} personalized SMS dispatches for audience "${data.audienceLabel}" (Sender ID: ${data.senderId || 'WOODYNAT'})`,
         `${new Date().toLocaleTimeString()} - Safaricom SMPP & Airtel Kenya carrier routes established`,
         `${new Date().toLocaleTimeString()} - Broadcast finalized: ${deliveredCount} Delivered successfully, ${failedCount} unreachable/failed`,
-        `${new Date().toLocaleTimeString()} - Dynamic placeholders (e.g. {{customer_name}}, Paybill 247247) compiled and rendered`
+        `${new Date().toLocaleTimeString()} - Dynamic placeholders (e.g. {{customer_name}}, Paybill 247247) compiled and rendered`,
+        `${new Date().toLocaleTimeString()} - Detailed SMS delivery confirmation report emailed to ${adminEmail}`
       ]
     };
 
@@ -1176,6 +1182,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     subject: string;
     preheader: string;
     template: BulkEmailTemplate;
+    adminEmail?: string;
   }): Promise<BulkCampaign> => {
     const campaignId = `camp-email-${Date.now()}`;
     const sentAt = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) + 
@@ -1184,6 +1191,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const count = data.recipients.length;
     const deliveredCount = Math.max(1, count - Math.floor(Math.random() * (count > 10 ? 2 : 1)));
     const failedCount = count - deliveredCount;
+    const adminEmail = data.adminEmail || wpSettings.companyEmail || 'woodynatdesigners12@gmail.com';
 
     const campaign: BulkCampaign = {
       id: campaignId,
@@ -1192,6 +1200,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       targetAudience: data.targetAudience,
       audienceLabel: data.audienceLabel,
       recipientCount: count,
+      adminEmail,
       emailSubject: data.subject,
       emailPreheader: data.preheader,
       emailTemplateId: data.template.id,
@@ -1201,11 +1210,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       failedCount,
       openRateEstimate: '72.8%',
       logs: [
-        `${new Date().toLocaleTimeString()} - High-Deliverability SMTP Marketing Cluster activated (Sender: Woodynat Designers <sales@woodynatdesigners.co.ke>)`,
+        `${new Date().toLocaleTimeString()} - High-Deliverability SMTP Marketing Cluster activated (Sender: Woodynat Designers <${adminEmail}>)`,
         `${new Date().toLocaleTimeString()} - Subject line compiled: "${data.subject}"`,
         `${new Date().toLocaleTimeString()} - Personalizing responsive HTML template for ${count} customer inboxes`,
         `${new Date().toLocaleTimeString()} - Batch dispatch complete: ${deliveredCount} delivered to Gmail/Corporate inboxes, ${failedCount} soft-bounced`,
-        `${new Date().toLocaleTimeString()} - Trackable links to WhatsApp & Official Catalogue embedded`
+        `${new Date().toLocaleTimeString()} - Campaign dispatch receipt and audit analytics delivered to ${adminEmail}`
       ]
     };
 

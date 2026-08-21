@@ -268,6 +268,7 @@ export interface BulkCampaign {
   audienceLabel: string;
   recipientCount: number;
   senderId?: string;
+  adminEmail?: string;
   smsBody?: string;
   emailSubject?: string;
   emailPreheader?: string;

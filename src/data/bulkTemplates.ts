@@ -271,6 +271,7 @@ export const INITIAL_CAMPAIGNS: BulkCampaign[] = [
     targetAudience: 'corporate',
     audienceLabel: 'Corporate & Institutional Clients (148 Contacts)',
     recipientCount: 148,
+    adminEmail: 'woodynatdesigners12@gmail.com',
     emailSubject: '✨ Exclusive: 2026 Corporate Print & Apparel Price Guide | Woodynat Designers',
     emailPreheader: 'Discover new bulk pricing for custom T-Shirts, Hoodies, Roll-Up Banners & Signage.',
     emailTemplateId: 'email-catalog-2026',
@@ -283,7 +284,7 @@ export const INITIAL_CAMPAIGNS: BulkCampaign[] = [
       '09:30:00 - Initialized SMTP batch dispatcher with sender Woodynat <woodynatdesigners12@gmail.com>',
       '09:30:04 - Segment Corporate (148 recipients) queued for dynamic personalization',
       '09:30:18 - Dispatched 148 emails: 146 Delivered, 2 Soft-Bounced',
-      '09:30:20 - Campaign concluded successfully. 42 direct link clicks to PDF catalogue recorded.'
+      '09:30:20 - Campaign concluded successfully. Confirmation audit delivered to woodynatdesigners12@gmail.com.'
     ]
   },
   {
@@ -294,6 +295,7 @@ export const INITIAL_CAMPAIGNS: BulkCampaign[] = [
     audienceLabel: 'All Registered & Order Customers (285 Contacts)',
     recipientCount: 285,
     senderId: 'WOODYNAT',
+    adminEmail: 'woodynatdesigners12@gmail.com',
     smsBody: 'Habari {{customer_name}}! Woodynat Designers has a 15% FLASH SALE on custom T-Shirts (@KSh 550) & Heavyweight Fleece Hoodies (@KSh 1,800). Order today via WhatsApp: 0797939199. Paybill: 247247 Acc: 0797939199.',
     sentAt: 'August 08, 2026 • 11:15 AM',
     status: 'completed',
@@ -301,10 +303,11 @@ export const INITIAL_CAMPAIGNS: BulkCampaign[] = [
     failedCount: 4,
     openRateEstimate: '98.2%',
     logs: [
-      '11:15:00 - Telco Gateway Safaricom / Airtel bulk route initiated',
-      '11:15:02 - Sender ID WOODYNAT verified with Kenya Telco Registry',
+      '11:15:00 - Telco Gateway Safaricom / Airtel bulk route initiated (Admin: woodynatdesigners12@gmail.com)',
+      '11:15:02 - Sender ID WOODYNAT verified with Kenya Telco Registry & authorized by woodynatdesigners12@gmail.com',
       '11:15:12 - 285 SMS units sent via High-Priority Alpha Gateway',
-      '11:15:15 - 281 Delivered (98.6% delivery rate), 4 Phone switched off / invalid'
+      '11:15:15 - 281 Delivered (98.6% delivery rate), 4 Phone switched off / invalid',
+      '11:15:18 - Delivery completion summary and balance statement sent to woodynatdesigners12@gmail.com'
     ]
   }
 ];

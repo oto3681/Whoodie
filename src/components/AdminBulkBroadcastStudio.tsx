@@ -64,6 +64,7 @@ export const AdminBulkBroadcastStudio: React.FC = () => {
   // --- 1. BULK SMS BROADCAST STATE ---
   // ==========================================
   const [smsSenderId, setSmsSenderId] = useState<'WOODYNAT' | 'WOODYNAT_HQ' | 'PROMOTIONS'>('WOODYNAT');
+  const [adminSmsEmail, setAdminSmsEmail] = useState<string>(wpSettings.companyEmail || 'woodynatdesigners12@gmail.com');
   const [smsCampaignTitle, setSmsCampaignTitle] = useState('Flash Sale: Custom T-Shirts & Hoodies 15% OFF');
   const [smsAudienceTarget, setSmsAudienceTarget] = useState<BulkCampaign['targetAudience']>('all');
   const [smsCustomSelectedIds, setSmsCustomSelectedIds] = useState<string[]>([]);
@@ -87,7 +88,7 @@ export const AdminBulkBroadcastStudio: React.FC = () => {
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [emailSendProgress, setEmailSendProgress] = useState(0);
   const [emailSendModalOpen, setEmailSendModalOpen] = useState(false);
-  const [testEmailAddress, setTestEmailAddress] = useState('oto36810@gmail.com');
+  const [testEmailAddress, setTestEmailAddress] = useState('woodynatdesigners12@gmail.com');
 
   // Custom Email Editor state (when editing current template)
   const currentEmailTemplate = useMemo(() => {
@@ -294,7 +295,8 @@ export const AdminBulkBroadcastStudio: React.FC = () => {
         audienceLabel: targetLabel,
         recipients: currentSmsRecipients,
         smsBody,
-        senderId: smsSenderId
+        senderId: smsSenderId,
+        adminEmail: adminSmsEmail || 'woodynatdesigners12@gmail.com'
       });
 
       setIsSendingSms(false);
@@ -349,7 +351,8 @@ export const AdminBulkBroadcastStudio: React.FC = () => {
         recipients: currentEmailRecipients,
         subject: emailSubject,
         preheader: emailPreheader,
-        template: currentEmailTemplate
+        template: currentEmailTemplate,
+        adminEmail: adminSmsEmail || 'woodynatdesigners12@gmail.com'
       });
 
       setIsSendingEmail(false);
@@ -596,6 +599,42 @@ export const AdminBulkBroadcastStudio: React.FC = () => {
                   placeholder="e.g. August Flash Sale 15% OFF Hoodies"
                   className="w-full text-sm font-medium border border-slate-200 rounded-xl px-3.5 py-2.5 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none"
                 />
+              </div>
+
+              {/* Admin Dispatch & Carrier Authorization Email */}
+              <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                    <Mail className="w-4 h-4 text-amber-600" />
+                    Admin Email for Sending Bulk SMS & Gateway Authorization:
+                  </label>
+                  <span className="text-[10px] font-extrabold bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-md font-mono">
+                    Official Admin
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="email"
+                    value={adminSmsEmail}
+                    onChange={(e) => setAdminSmsEmail(e.target.value)}
+                    placeholder="woodynatdesigners12@gmail.com"
+                    className="w-full text-xs font-mono font-bold text-slate-800 bg-white border border-amber-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 outline-none shadow-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAdminSmsEmail('woodynatdesigners12@gmail.com');
+                      showToast('Admin Email Set 📧', 'Reset to woodynatdesigners12@gmail.com');
+                    }}
+                    className="px-3 py-2 bg-amber-200/80 hover:bg-amber-300 text-amber-950 text-xs font-bold rounded-lg transition-colors shrink-0 cursor-pointer"
+                    title="Set to official admin email"
+                  >
+                    Reset
+                  </button>
+                </div>
+                <p className="text-[11px] text-amber-800/90 leading-tight">
+                  Telco gateway tokens, broadcast dispatch reports, and carrier balance statements are authorized and sent to <span className="font-bold text-slate-900 font-mono">{adminSmsEmail}</span>.
+                </p>
               </div>
 
               {/* Audience Target Selector */}
@@ -881,7 +920,7 @@ export const AdminBulkBroadcastStudio: React.FC = () => {
                   <Mail className="w-5 h-5 text-indigo-600" />
                   Email Newsletter & Campaign Setup
                 </h2>
-                <p className="text-xs text-slate-500">Sender: Woodynat Designers &lt;sales@woodynatdesigners.co.ke&gt;</p>
+                <p className="text-xs text-slate-500">Sender: Woodynat Designers &lt;woodynatdesigners12@gmail.com&gt;</p>
               </div>
 
               {/* Template Selection */}
@@ -1053,7 +1092,7 @@ export const AdminBulkBroadcastStudio: React.FC = () => {
                 <div className="bg-slate-900 text-slate-300 px-5 py-3 text-xs border-b border-slate-800 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-white">Woodynat Designers Limited</span>
-                    <span className="text-[10px] text-slate-400">sales@woodynatdesigners.co.ke</span>
+                    <span className="text-[10px] text-slate-400 font-mono">woodynatdesigners12@gmail.com</span>
                   </div>
                   <div className="text-slate-200 font-medium truncate">
                     Subject: {emailSubject.replace(/{{customer_name}}/g, 'Jane Wambui').replace(/{{company_name}}/g, 'Apex Logistics')}
