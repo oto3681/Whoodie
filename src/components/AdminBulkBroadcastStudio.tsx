@@ -78,6 +78,7 @@ export const AdminBulkBroadcastStudio: React.FC = () => {
   // ==========================================
   // --- 2. BULK EMAIL MARKETING STATE ---
   // ==========================================
+  const [adminEmailAddress, setAdminEmailAddress] = useState<string>(wpSettings.companyEmail || 'woodynatdesigners12@gmail.com');
   const [emailCampaignTitle, setEmailCampaignTitle] = useState('2026 Commercial Printing & Branding Catalogue Release');
   const [emailAudienceTarget, setEmailAudienceTarget] = useState<BulkCampaign['targetAudience']>('all');
   const [emailCustomSelectedIds, setEmailCustomSelectedIds] = useState<string[]>([]);
@@ -352,7 +353,7 @@ export const AdminBulkBroadcastStudio: React.FC = () => {
         subject: emailSubject,
         preheader: emailPreheader,
         template: currentEmailTemplate,
-        adminEmail: adminSmsEmail || 'woodynatdesigners12@gmail.com'
+        adminEmail: adminEmailAddress || 'woodynatdesigners12@gmail.com'
       });
 
       setIsSendingEmail(false);
@@ -920,7 +921,43 @@ export const AdminBulkBroadcastStudio: React.FC = () => {
                   <Mail className="w-5 h-5 text-indigo-600" />
                   Email Newsletter & Campaign Setup
                 </h2>
-                <p className="text-xs text-slate-500">Sender: Woodynat Designers &lt;woodynatdesigners12@gmail.com&gt;</p>
+                <p className="text-xs text-slate-500">Official Sender: Woodynat Designers &lt;{adminEmailAddress || 'woodynatdesigners12@gmail.com'}&gt;</p>
+              </div>
+
+              {/* Sender & Dispatch Email Configuration */}
+              <div className="bg-indigo-50/70 border border-indigo-200/80 rounded-xl p-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                    <Mail className="w-4 h-4 text-indigo-600" />
+                    Sender & Campaign Dispatch Email Address:
+                  </label>
+                  <span className="text-[10px] font-extrabold bg-indigo-200/80 text-indigo-900 px-2 py-0.5 rounded-md font-mono">
+                    Verified Sender
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="email"
+                    value={adminEmailAddress}
+                    onChange={(e) => setAdminEmailAddress(e.target.value)}
+                    placeholder="woodynatdesigners12@gmail.com"
+                    className="w-full text-xs font-mono font-bold text-slate-800 bg-white border border-indigo-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none shadow-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAdminEmailAddress('woodynatdesigners12@gmail.com');
+                      showToast('Sender Email Set 📧', 'Configured to woodynatdesigners12@gmail.com');
+                    }}
+                    className="px-3 py-2 bg-indigo-200/80 hover:bg-indigo-300 text-indigo-950 text-xs font-bold rounded-lg transition-colors shrink-0 cursor-pointer"
+                    title="Reset to official admin email"
+                  >
+                    Reset
+                  </button>
+                </div>
+                <p className="text-[11px] text-indigo-800/90 leading-tight">
+                  All outgoing newsletter campaigns, promotional digests, and delivery reports will be dispatched via <span className="font-bold text-slate-900 font-mono">{adminEmailAddress}</span>.
+                </p>
               </div>
 
               {/* Template Selection */}
@@ -1092,7 +1129,7 @@ export const AdminBulkBroadcastStudio: React.FC = () => {
                 <div className="bg-slate-900 text-slate-300 px-5 py-3 text-xs border-b border-slate-800 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-white">Woodynat Designers Limited</span>
-                    <span className="text-[10px] text-slate-400 font-mono">woodynatdesigners12@gmail.com</span>
+                    <span className="text-[10px] text-slate-400 font-mono">{adminEmailAddress || 'woodynatdesigners12@gmail.com'}</span>
                   </div>
                   <div className="text-slate-200 font-medium truncate">
                     Subject: {emailSubject.replace(/{{customer_name}}/g, 'Jane Wambui').replace(/{{company_name}}/g, 'Apex Logistics')}
