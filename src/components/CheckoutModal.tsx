@@ -227,6 +227,7 @@ export const CheckoutModal: React.FC = () => {
       shippingFee,
       totalAmount,
       paymentMethod,
+      estimatedDelivery: 'Within 24-48 Hours',
       paymentReference: mpesaReceipt || `QGH${Math.floor(100000 + Math.random() * 900000)}`,
     });
   };

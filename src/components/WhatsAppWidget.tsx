@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { safeGetSessionStorage, safeSetSessionStorage } from '../utils/storage';
 import { 
   MessageCircle, 
   X, 
@@ -58,12 +59,11 @@ export const WhatsAppWidget: React.FC = () => {
   ];
 
   const [messages, setMessages] = useState<WidgetMessage[]>(() => {
-    const saved = sessionStorage.getItem('woodynat_widget_chat');
-    return saved ? JSON.parse(saved) : defaultInitialMessages;
+    return safeGetSessionStorage<WidgetMessage[]>('woodynat_widget_chat', defaultInitialMessages);
   });
 
   useEffect(() => {
-    sessionStorage.setItem('woodynat_widget_chat', JSON.stringify(messages));
+    safeSetSessionStorage('woodynat_widget_chat', messages);
   }, [messages]);
 
   useEffect(() => {

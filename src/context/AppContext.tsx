@@ -43,6 +43,10 @@ import {
   INITIAL_CAMPAIGNS
 } from '../data/bulkTemplates';
 import {
+  safeGetLocalStorage,
+  safeSetLocalStorage
+} from '../utils/storage';
+import {
   subscribeProducts,
   saveProductToFirestore,
   deleteProductFromFirestore,
@@ -198,9 +202,9 @@ interface AppContextType {
   createZohoQuotation: (quoteData: Partial<ZohoQuotation>) => ZohoQuotation;
   updateZohoQuotation: (id: string, updates: Partial<ZohoQuotation>) => void;
   deleteZohoQuotation: (id: string) => void;
-  duplicateZohoQuotation: (id: string) => ZohoQuotation;
+  duplicateZohoQuotation: (id: string) => ZohoQuotation | null;
   updateZohoQuoteStatus: (id: string, status: ZohoQuoteStatus) => void;
-  convertZohoQuoteToOrder: (quoteId: string) => Order;
+  convertZohoQuoteToOrder: (quoteId: string) => Order | null;
   updateZohoSettings: (newSettings: Partial<ZohoSettings>) => void;
   syncQuoteToZoho: (quoteId: string) => Promise<boolean>;
 
@@ -216,56 +220,44 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('pixelprint_products');
-    if (saved) {
-      try {
-        const parsed: Product[] = JSON.parse(saved);
-        return parsed.map((p) => {
-          // If the product already has an image (custom uploaded base64, URL, or asset), PRESERVE IT!
-          if (p.image && p.image.trim() !== '') {
-            if (p.image.startsWith('/src/assets/')) {
-              return { ...p, image: p.image.replace('/src/assets/', '/assets/') };
-            }
-            return p;
-          }
-          // Only fallback to default match if image is completely missing or empty
-          const match = INITIAL_PRODUCTS.find((initP) => initP.id === p.id);
-          if (match && match.image) {
-            return { ...p, image: match.image };
+    const parsed = safeGetLocalStorage<Product[] | null>('pixelprint_products', null);
+    if (parsed && Array.isArray(parsed)) {
+      return parsed.map((p) => {
+        if (p.image && p.image.trim() !== '') {
+          if (p.image.startsWith('/src/assets/')) {
+            return { ...p, image: p.image.replace('/src/assets/', '/assets/') };
           }
           return p;
-        });
-      } catch (e) {
-        console.error('Error parsing saved products from localStorage:', e);
-      }
+        }
+        const match = INITIAL_PRODUCTS.find((initP) => initP.id === p.id);
+        if (match && match.image) {
+          return { ...p, image: match.image };
+        }
+        return p;
+      });
     }
     return INITIAL_PRODUCTS;
   });
 
   const [cart, setCart] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem('pixelprint_cart');
-    return saved ? JSON.parse(saved) : [];
+    return safeGetLocalStorage<CartItem[]>('pixelprint_cart', []);
   });
 
   const [orders, setOrders] = useState<Order[]>(() => {
-    const saved = localStorage.getItem('pixelprint_orders');
-    return saved ? JSON.parse(saved) : MOCK_ORDERS;
+    return safeGetLocalStorage<Order[]>('pixelprint_orders', MOCK_ORDERS);
   });
 
   const [inquiries, setInquiries] = useState<CustomerInquiry[]>(() => {
-    const saved = localStorage.getItem('pixelprint_inquiries');
-    return saved ? JSON.parse(saved) : INITIAL_INQUIRIES;
+    return safeGetLocalStorage<CustomerInquiry[]>('pixelprint_inquiries', INITIAL_INQUIRIES);
   });
 
   // WhatsApp Threads & Bot Rules
   const [whatsappThreads, setWhatsappThreads] = useState<WhatsAppChatThread[]>(() => {
-    const saved = localStorage.getItem('pixelprint_whatsapp_threads');
-    return saved ? JSON.parse(saved) : INITIAL_WHATSAPP_THREADS;
+    return safeGetLocalStorage<WhatsAppChatThread[]>('pixelprint_whatsapp_threads', INITIAL_WHATSAPP_THREADS);
   });
 
   const [botRules, setBotRules] = useState<BotRule[]>(() => {
-    const saved = localStorage.getItem('pixelprint_bot_rules');
-    return saved ? JSON.parse(saved) : INITIAL_BOT_RULES;
+    return safeGetLocalStorage<BotRule[]>('pixelprint_bot_rules', INITIAL_BOT_RULES);
   });
 
   const [activeThreadId, setActiveThreadId] = useState<string | null>(() => {
@@ -275,14 +267,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [isWhatBotGlobalActive, setIsWhatBotGlobalActive] = useState<boolean>(true);
 
   const [reviews, setReviews] = useState<CustomerReview[]>(() => {
-    const saved = localStorage.getItem('pixelprint_reviews');
-    return saved ? JSON.parse(saved) : INITIAL_REVIEWS;
+    return safeGetLocalStorage<CustomerReview[]>('pixelprint_reviews', INITIAL_REVIEWS);
   });
 
   const [wpSettings, setWpSettings] = useState<WordPressSettings>(() => {
-    const saved = localStorage.getItem('pixelprint_wp_settings');
-    if (saved) {
-      const parsed = JSON.parse(saved);
+    const parsed = safeGetLocalStorage<WordPressSettings | null>('pixelprint_wp_settings', null);
+    if (parsed) {
       if (parsed.companyAddress && (parsed.companyAddress.includes('Ronald Ngala') || parsed.companyAddress.includes('complex building'))) {
         parsed.companyAddress = 'Temple Road Gatkim Complex Building fourth floor Wing B Room 4B1';
       }
@@ -292,58 +282,46 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   });
 
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
-    const saved = localStorage.getItem('pixelprint_user');
-    return saved ? JSON.parse(saved) : null;
+    return safeGetLocalStorage<UserProfile | null>('pixelprint_user', null);
   });
 
   // Bulk SMS & Email Campaign Studio State
   const [customerContacts, setCustomerContacts] = useState<CustomerContact[]>(() => {
-    const saved = localStorage.getItem('pixelprint_customer_contacts');
-    return saved ? JSON.parse(saved) : INITIAL_CUSTOM_CONTACTS;
+    return safeGetLocalStorage<CustomerContact[]>('pixelprint_customer_contacts', INITIAL_CUSTOM_CONTACTS);
   });
 
   const [smsTemplates, setSmsTemplates] = useState<BulkSmsTemplate[]>(() => {
-    const saved = localStorage.getItem('pixelprint_sms_templates');
-    return saved ? JSON.parse(saved) : INITIAL_SMS_TEMPLATES;
+    return safeGetLocalStorage<BulkSmsTemplate[]>('pixelprint_sms_templates', INITIAL_SMS_TEMPLATES);
   });
 
   const [emailTemplates, setEmailTemplates] = useState<BulkEmailTemplate[]>(() => {
-    const saved = localStorage.getItem('pixelprint_email_templates');
-    return saved ? JSON.parse(saved) : INITIAL_EMAIL_TEMPLATES;
+    return safeGetLocalStorage<BulkEmailTemplate[]>('pixelprint_email_templates', INITIAL_EMAIL_TEMPLATES);
   });
 
   const [bulkCampaigns, setBulkCampaigns] = useState<BulkCampaign[]>(() => {
-    const saved = localStorage.getItem('pixelprint_bulk_campaigns');
-    return saved ? JSON.parse(saved) : INITIAL_CAMPAIGNS;
+    return safeGetLocalStorage<BulkCampaign[]>('pixelprint_bulk_campaigns', INITIAL_CAMPAIGNS);
   });
 
   // Admin Notification Center State
   const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>(() => {
-    const saved = localStorage.getItem('pixelprint_admin_notifications');
-    return saved ? JSON.parse(saved) : INITIAL_ADMIN_NOTIFICATIONS;
+    return safeGetLocalStorage<AdminNotification[]>('pixelprint_admin_notifications', INITIAL_ADMIN_NOTIFICATIONS);
   });
 
   // Zoho Quotations & Invoice Engine State
   const [zohoQuotations, setZohoQuotations] = useState<ZohoQuotation[]>(() => {
-    const saved = localStorage.getItem('pixelprint_zoho_quotations');
-    return saved ? JSON.parse(saved) : INITIAL_ZOHO_QUOTATIONS;
+    return safeGetLocalStorage<ZohoQuotation[]>('pixelprint_zoho_quotations', INITIAL_ZOHO_QUOTATIONS);
   });
 
   const [zohoSettings, setZohoSettings] = useState<ZohoSettings>(() => {
-    const saved = localStorage.getItem('pixelprint_zoho_settings');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return {
-          ...DEFAULT_ZOHO_SETTINGS,
-          ...parsed,
-          accountEmail: parsed.accountEmail || 'woodynatdesigners12@gmail.com',
-          notificationEmail: parsed.notificationEmail || 'woodynatdesigners12@gmail.com',
-          senderName: parsed.senderName || 'Woodynat Designers Limited'
-        };
-      } catch (e) {
-        console.error('Error parsing zohoSettings:', e);
-      }
+    const parsed = safeGetLocalStorage<Partial<ZohoSettings> | null>('pixelprint_zoho_settings', null);
+    if (parsed) {
+      return {
+        ...DEFAULT_ZOHO_SETTINGS,
+        ...parsed,
+        accountEmail: parsed.accountEmail || 'woodynatdesigners12@gmail.com',
+        notificationEmail: parsed.notificationEmail || 'woodynatdesigners12@gmail.com',
+        senderName: parsed.senderName || 'Woodynat Designers Limited'
+      };
     }
     return DEFAULT_ZOHO_SETTINGS;
   });
@@ -399,72 +377,76 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Save to localStorage as backup
   useEffect(() => {
-    localStorage.setItem('pixelprint_products', JSON.stringify(products));
+    safeSetLocalStorage('pixelprint_products', products);
   }, [products]);
 
   useEffect(() => {
-    localStorage.setItem('pixelprint_cart', JSON.stringify(cart));
+    safeSetLocalStorage('pixelprint_cart', cart);
   }, [cart]);
 
   useEffect(() => {
-    localStorage.setItem('pixelprint_orders', JSON.stringify(orders));
+    safeSetLocalStorage('pixelprint_orders', orders);
   }, [orders]);
 
   useEffect(() => {
-    localStorage.setItem('pixelprint_inquiries', JSON.stringify(inquiries));
+    safeSetLocalStorage('pixelprint_inquiries', inquiries);
   }, [inquiries]);
 
   useEffect(() => {
-    localStorage.setItem('pixelprint_whatsapp_threads', JSON.stringify(whatsappThreads));
+    safeSetLocalStorage('pixelprint_whatsapp_threads', whatsappThreads);
   }, [whatsappThreads]);
 
   useEffect(() => {
-    localStorage.setItem('pixelprint_bot_rules', JSON.stringify(botRules));
+    safeSetLocalStorage('pixelprint_bot_rules', botRules);
   }, [botRules]);
 
   useEffect(() => {
-    localStorage.setItem('pixelprint_reviews', JSON.stringify(reviews));
+    safeSetLocalStorage('pixelprint_reviews', reviews);
   }, [reviews]);
 
   useEffect(() => {
-    localStorage.setItem('pixelprint_wp_settings', JSON.stringify(wpSettings));
+    safeSetLocalStorage('pixelprint_wp_settings', wpSettings);
   }, [wpSettings]);
 
   useEffect(() => {
-    localStorage.setItem('pixelprint_customer_contacts', JSON.stringify(customerContacts));
+    safeSetLocalStorage('pixelprint_customer_contacts', customerContacts);
   }, [customerContacts]);
 
   useEffect(() => {
-    localStorage.setItem('pixelprint_sms_templates', JSON.stringify(smsTemplates));
+    safeSetLocalStorage('pixelprint_sms_templates', smsTemplates);
   }, [smsTemplates]);
 
   useEffect(() => {
-    localStorage.setItem('pixelprint_email_templates', JSON.stringify(emailTemplates));
+    safeSetLocalStorage('pixelprint_email_templates', emailTemplates);
   }, [emailTemplates]);
 
   useEffect(() => {
-    localStorage.setItem('pixelprint_bulk_campaigns', JSON.stringify(bulkCampaigns));
+    safeSetLocalStorage('pixelprint_bulk_campaigns', bulkCampaigns);
   }, [bulkCampaigns]);
 
   useEffect(() => {
-    localStorage.setItem('pixelprint_admin_notifications', JSON.stringify(adminNotifications));
+    safeSetLocalStorage('pixelprint_admin_notifications', adminNotifications);
   }, [adminNotifications]);
 
   useEffect(() => {
-    localStorage.setItem('pixelprint_zoho_quotations', JSON.stringify(zohoQuotations));
+    safeSetLocalStorage('pixelprint_zoho_quotations', zohoQuotations);
   }, [zohoQuotations]);
 
   useEffect(() => {
-    localStorage.setItem('pixelprint_zoho_settings', JSON.stringify(zohoSettings));
+    safeSetLocalStorage('pixelprint_zoho_settings', zohoSettings);
   }, [zohoSettings]);
 
   const unreadNotificationsCount = adminNotifications.filter((n) => !n.read || n.status === 'pending').length;
 
   useEffect(() => {
     if (currentUser) {
-      localStorage.setItem('pixelprint_user', JSON.stringify(currentUser));
+      safeSetLocalStorage('pixelprint_user', currentUser);
     } else {
-      localStorage.removeItem('pixelprint_user');
+      try {
+        localStorage.removeItem('pixelprint_user');
+      } catch (e) {
+        console.warn('Failed to remove user from localStorage', e);
+      }
     }
   }, [currentUser]);
 
@@ -1632,9 +1614,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     showToast('Quotation Deleted', 'Zoho quotation record was removed.', 'info');
   };
 
-  const duplicateZohoQuotation = (id: string): ZohoQuotation => {
+  const duplicateZohoQuotation = (id: string): ZohoQuotation | null => {
     const original = zohoQuotations.find((q) => q.id === id);
-    if (!original) throw new Error('Quotation not found');
+    if (!original) {
+      showToast('Error', 'Quotation record could not be found.', 'error');
+      return null;
+    }
     const newQuote = createZohoQuotation({
       ...original,
       quoteNumber: `${zohoSettings.defaultQuotePrefix || 'ZOHO-QT-2026'}-${String(zohoQuotations.length + 1).padStart(4, '0')}`,
@@ -1651,9 +1636,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     updateZohoQuotation(id, { status });
   };
 
-  const convertZohoQuoteToOrder = (quoteId: string): Order => {
+  const convertZohoQuoteToOrder = (quoteId: string): Order | null => {
     const quote = zohoQuotations.find((q) => q.id === quoteId);
-    if (!quote) throw new Error('Quotation not found');
+    if (!quote) {
+      showToast('Error', 'Quotation record could not be found.', 'error');
+      return null;
+    }
 
     const newOrderId = `PX-${Math.floor(10000 + Math.random() * 90000)}`;
     const now = new Date().toISOString();

@@ -35,8 +35,8 @@ export const AdminMpesaStudio: React.FC = () => {
   >('stk_prompt');
 
   // Global Config Settings
-  const [mpesaEnv, setMpesaEnv] = useState<'sandbox' | 'live'>(
-    (wpSettings.mpesaEnvironment as any) || 'sandbox'
+  const [mpesaEnv, setMpesaEnv] = useState<'sandbox' | 'production'>(
+    wpSettings.mpesaEnvironment || 'production'
   );
   const [consumerKey, setConsumerKey] = useState(wpSettings.mpesaConsumerKey || '');
   const [consumerSecret, setConsumerSecret] = useState(wpSettings.mpesaConsumerSecret || '');
@@ -576,11 +576,11 @@ export const AdminMpesaStudio: React.FC = () => {
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-black tracking-tight text-white">Safaricom Daraja M-Pesa Command Center</h2>
               <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${
-                mpesaEnv === 'live'
+                mpesaEnv === 'production'
                   ? 'bg-red-500/20 text-red-400 border-red-500/30'
                   : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
               }`}>
-                {mpesaEnv === 'live' ? 'Live Production' : 'Daraja Sandbox'}
+                {mpesaEnv === 'production' ? 'Live Production' : 'Daraja Sandbox'}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -1420,9 +1420,9 @@ export const AdminMpesaStudio: React.FC = () => {
                       <input
                         type="radio"
                         name="env"
-                        value="live"
-                        checked={mpesaEnv === 'live'}
-                        onChange={() => setMpesaEnv('live')}
+                        value="production"
+                        checked={mpesaEnv === 'production'}
+                        onChange={() => setMpesaEnv('production')}
                         className="text-red-600 focus:ring-red-500"
                       />
                       <span>Live Production (api.safaricom.co.ke)</span>
