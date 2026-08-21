@@ -92,6 +92,23 @@ export interface Order {
   acceptanceNotes?: string;
   estimatedDelivery: string;
   trackingHistory: TrackingStep[];
+  emailConfirmationSent?: boolean;
+  emailConfirmationSentAt?: string;
+  emailConfirmationRecipient?: string;
+  emailConfirmationMessageId?: string;
+}
+
+export interface EmailDispatchLog {
+  id: string;
+  orderId?: string;
+  type: 'order_confirmation' | 'status_update' | 'custom_broadcast' | 'test';
+  sender: string;
+  recipient: string;
+  subject: string;
+  status: 'sent' | 'simulated' | 'failed';
+  timestamp: string;
+  messageId?: string;
+  error?: string;
 }
 
 export interface CustomerReview {

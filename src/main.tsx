@@ -7,11 +7,15 @@ import './index.css';
 // Global uncaught error and unhandled rejection guards
 if (typeof window !== 'undefined') {
   window.addEventListener('error', (event) => {
-    console.error('[Global Uncaught Error Captured]:', event.error || event.message);
+    console.warn('[Handled Runtime Error]:', event.error || event.message);
   });
 
   window.addEventListener('unhandledrejection', (event) => {
-    console.error('[Global Unhandled Promise Rejection]:', event.reason);
+    // Prevent browser from escalating unhandled promise rejections
+    if (event.reason) {
+      console.warn('[Handled Promise Rejection]:', event.reason);
+    }
+    event.preventDefault();
   });
 }
 

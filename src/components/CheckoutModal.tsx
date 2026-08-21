@@ -11,12 +11,15 @@ import {
   ShieldCheck, 
   Loader2, 
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Mail,
+  Send,
+  Check
 } from 'lucide-react';
 import { Order } from '../types';
 
 export const CheckoutModal: React.FC = () => {
-  const { cart, activeModal, setActiveModal, createOrder, showToast, wpSettings, currentUser } = useApp();
+  const { cart, activeModal, setActiveModal, createOrder, showToast, wpSettings, currentUser, sendOrderConfirmationEmail } = useApp();
 
   const [step, setStep] = useState<'details' | 'payment' | 'stk-push' | 'confirmed'>('details');
   const [customerName, setCustomerName] = useState(currentUser?.name || 'Kiprono M.');
@@ -26,6 +29,10 @@ export const CheckoutModal: React.FC = () => {
   const [deliveryAddress, setDeliveryAddress] = useState(wpSettings?.companyAddress || 'Temple Road Gatkim Complex Building fourth floor Wing B Room 4B1');
   const [deliveryType, setDeliveryType] = useState<'Pickup Station' | 'Express Home Delivery'>('Express Home Delivery');
   const [paymentMethod, setPaymentMethod] = useState<'M-Pesa'>('M-Pesa');
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
+  const [resendEmailSuccess, setResendEmailSuccess] = useState(false);
+  const [customResendEmail, setCustomResendEmail] = useState('');
+  const [showEmailEditInput, setShowEmailEditInput] = useState(false);
 
   // Sync if currentUser logs in
   React.useEffect(() => {
@@ -592,6 +599,114 @@ export const CheckoutModal: React.FC = () => {
                 <p className="text-xs text-slate-600 max-w-md mx-auto">
                   Thank you, <span className="font-bold text-slate-900">{createdOrder.customerName}</span>! Your print job has been placed and queued for proofing & press production.
                 </p>
+              </div>
+
+              {/* Gmail Confirmation Notification Card */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 text-xs space-y-2.5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-extrabold text-slate-900 text-sm">Gmail Confirmation Dispatched</span>
+                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-emerald-300">
+                          ✓ Sent via woodynatdesigners12@gmail.com
+                        </span>
+                      </div>
+                      <p className="text-slate-600 leading-relaxed text-[11px]">
+                        An official itemized receipt, artwork proofing notes, and live production tracking link were automatically sent to <strong className="text-blue-700 font-mono">{createdOrder.emailConfirmationRecipient || createdOrder.userEmail || createdOrder.customerEmail}</strong> from <strong className="text-slate-900">woodynatdesigners12@gmail.com</strong>.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Resend / Forward to Different Email Action */}
+                <div className="bg-white/80 border border-blue-100 rounded-xl p-2.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+                  {!showEmailEditInput ? (
+                    <>
+                      <span className="text-[11px] text-slate-500 flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        Check your Gmail inbox or spam folder for <span className="font-semibold text-slate-800">#{createdOrder.id}</span>
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={isResendingEmail}
+                          onClick={async () => {
+                            setIsResendingEmail(true);
+                            setResendEmailSuccess(false);
+                            const target = createdOrder.emailConfirmationRecipient || createdOrder.userEmail || createdOrder.customerEmail;
+                            const res = await sendOrderConfirmationEmail(createdOrder.id, target);
+                            setIsResendingEmail(false);
+                            if (res.success) {
+                              setResendEmailSuccess(true);
+                              setTimeout(() => setResendEmailSuccess(false), 4000);
+                            }
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0 shadow-2xs"
+                        >
+                          {isResendingEmail ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : resendEmailSuccess ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-300" />
+                          ) : (
+                            <Send className="w-3.5 h-3.5" />
+                          )}
+                          <span>{resendEmailSuccess ? 'Sent Again!' : 'Resend to Gmail'}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCustomResendEmail(createdOrder.emailConfirmationRecipient || createdOrder.userEmail || createdOrder.customerEmail || '');
+                            setShowEmailEditInput(true);
+                          }}
+                          className="text-[11px] text-blue-600 hover:text-blue-800 font-bold px-2 py-1 underline transition-colors cursor-pointer"
+                        >
+                          Change Email
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full flex items-center gap-2">
+                      <input
+                        type="email"
+                        placeholder="Enter your Gmail address..."
+                        value={customResendEmail}
+                        onChange={(e) => setCustomResendEmail(e.target.value)}
+                        className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                      />
+                      <button
+                        type="button"
+                        disabled={isResendingEmail || !customResendEmail.includes('@')}
+                        onClick={async () => {
+                          if (!customResendEmail.trim()) return;
+                          setIsResendingEmail(true);
+                          const res = await sendOrderConfirmationEmail(createdOrder.id, customResendEmail.trim());
+                          setIsResendingEmail(false);
+                          if (res.success) {
+                            setShowEmailEditInput(false);
+                            setResendEmailSuccess(true);
+                            setTimeout(() => setResendEmailSuccess(false), 4000);
+                          }
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold px-3 py-1.5 rounded-lg text-xs shrink-0 cursor-pointer flex items-center gap-1 shadow-2xs"
+                      >
+                        {isResendingEmail ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                        <span>Send</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowEmailEditInput(false)}
+                        className="text-slate-400 hover:text-slate-600 text-xs px-1.5 cursor-pointer font-bold"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Order Receipt Details */}

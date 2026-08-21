@@ -57,6 +57,11 @@ import {
   subscribeWpSettings,
   saveWpSettingsToFirestore,
 } from '../services/firestoreService';
+import {
+  sendOrderConfirmationToGmail,
+  sendOrderStatusUpdateToGmail,
+  ADMIN_OFFICIAL_GMAIL
+} from '../services/emailService';
 
 interface ToastMessage {
   id: string;
@@ -207,6 +212,10 @@ interface AppContextType {
   convertZohoQuoteToOrder: (quoteId: string) => Order | null;
   updateZohoSettings: (newSettings: Partial<ZohoSettings>) => void;
   syncQuoteToZoho: (quoteId: string) => Promise<boolean>;
+
+  // Gmail Order Confirmation & Notification Engine (from woodynatdesigners12@gmail.com)
+  sendOrderConfirmationEmail: (orderId: string, customRecipient?: string, customNote?: string) => Promise<{ success: boolean; message?: string }>;
+  sendOrderStatusUpdateEmail: (orderId: string, stage: OrderStatus, customRecipient?: string, customNote?: string) => Promise<{ success: boolean; message?: string }>;
 
   // Navigation & Modals
   setActiveModal: (modal: AppContextType['activeModal']) => void;
@@ -643,10 +652,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       paymentStatus: 'Paid',
       createdAt: nowStr,
       estimatedDelivery: 'Tomorrow, 02:00 PM',
-      trackingHistory
+      trackingHistory,
+      emailConfirmationSent: false,
+      emailConfirmationRecipient: resolvedUserEmail
     };
 
     saveOrderToFirestore(newOrder);
+
+    // Auto-dispatch confirmation receipt to Customer's Gmail from woodynatdesigners12@gmail.com
+    if (resolvedUserEmail && resolvedUserEmail.includes('@')) {
+      sendOrderConfirmationToGmail(newOrder, resolvedUserEmail).then((res) => {
+        if (res.success) {
+          const sentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ', Today';
+          const orderWithEmail: Order = {
+            ...newOrder,
+            emailConfirmationSent: true,
+            emailConfirmationSentAt: sentTime,
+            emailConfirmationRecipient: resolvedUserEmail,
+            emailConfirmationMessageId: res.messageId
+          };
+          setOrders((prev) => prev.map((o) => (o.id === id ? orderWithEmail : o)));
+          saveOrderToFirestore(orderWithEmail);
+          showToast('Order Receipt Emailed ✉️', `Confirmation sent to ${resolvedUserEmail} from woodynatdesigners12@gmail.com`);
+        }
+      }).catch((err) => {
+        console.warn('Auto confirmation email notice:', err);
+      });
+    }
 
     // Auto-generate Admin Notification for Incoming Order
     const notifId = `notif-ord-${Date.now()}`;
@@ -733,6 +765,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       };
 
       saveOrderToFirestore(updatedOrder);
+
+      // Auto-notify customer Gmail of stage update from woodynatdesigners12@gmail.com
+      const userEmail = targetOrder.userEmail || targetOrder.customerEmail;
+      if (userEmail && userEmail.includes('@')) {
+        sendOrderStatusUpdateToGmail(updatedOrder, status, userEmail).catch(() => {});
+      }
+
       showToast('Order Status Updated 🚚', `Order ${orderId} progressed to "${status}".`);
     }
   };
@@ -1291,6 +1330,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       saveOrderToFirestore(updatedOrder);
       setOrders((prev) => prev.map((o) => (o.id === orderId ? updatedOrder : o)));
+
+      // Auto-notify customer Gmail that Admin Accepted their order
+      const userEmail = targetOrder.userEmail || targetOrder.customerEmail;
+      if (userEmail && userEmail.includes('@')) {
+        sendOrderStatusUpdateToGmail(updatedOrder, 'Order Received by Admin', userEmail, customNote).catch(() => {});
+      }
     }
 
     setAdminNotifications((prev) =>
@@ -1369,6 +1414,53 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const clearAllNotifications = () => {
     setAdminNotifications([]);
     showToast('Notifications Cleared', 'Notification panel emptied.', 'info');
+  };
+
+  // Gmail Order Confirmation & Notification Actions
+  const sendOrderConfirmationEmail = async (orderId: string, customRecipient?: string, customNote?: string): Promise<{ success: boolean; message?: string }> => {
+    const targetOrder = orders.find((o) => o.id === orderId);
+    if (!targetOrder) {
+      return { success: false, message: `Order #${orderId} not found.` };
+    }
+
+    const recipient = (customRecipient || targetOrder.userEmail || targetOrder.customerEmail || '').trim();
+    if (!recipient || !recipient.includes('@')) {
+      showToast('Valid Email Required ⚠️', 'Please provide a valid recipient email (e.g. your Gmail address).', 'warning');
+      return { success: false, message: 'Valid recipient email required.' };
+    }
+
+    const result = await sendOrderConfirmationToGmail(targetOrder, recipient, customNote);
+    if (result.success) {
+      const nowFormatted = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ', Today';
+      const updatedOrder: Order = {
+        ...targetOrder,
+        emailConfirmationSent: true,
+        emailConfirmationSentAt: nowFormatted,
+        emailConfirmationRecipient: recipient,
+        emailConfirmationMessageId: result.messageId
+      };
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? updatedOrder : o)));
+      saveOrderToFirestore(updatedOrder);
+      showToast('Confirmation Emailed! ✉️', `Official receipt sent to ${recipient} from woodynatdesigners12@gmail.com`);
+      return { success: true, message: `Dispatched to ${recipient}` };
+    } else {
+      showToast('Email Dispatch 📧', result.error || 'Failed to dispatch email.', 'info');
+      return { success: false, message: result.error };
+    }
+  };
+
+  const sendOrderStatusUpdateEmail = async (orderId: string, stage: OrderStatus, customRecipient?: string, customNote?: string): Promise<{ success: boolean; message?: string }> => {
+    const targetOrder = orders.find((o) => o.id === orderId);
+    if (!targetOrder) return { success: false, message: 'Order not found' };
+
+    const recipient = (customRecipient || targetOrder.userEmail || targetOrder.customerEmail || '').trim();
+    if (!recipient || !recipient.includes('@')) return { success: false, message: 'No recipient email' };
+
+    const result = await sendOrderStatusUpdateToGmail(targetOrder, stage, recipient, customNote);
+    if (result.success) {
+      showToast('Status Update Emailed! 📧', `Progress notification delivered to ${recipient} from woodynatdesigners12@gmail.com`);
+    }
+    return { success: result.success, message: result.error };
   };
 
   const simulateIncomingOrderNotification = () => {
@@ -1867,6 +1959,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         convertZohoQuoteToOrder,
         updateZohoSettings,
         syncQuoteToZoho,
+        sendOrderConfirmationEmail,
+        sendOrderStatusUpdateEmail,
         setActiveModal,
         setSelectedProductForDetail,
         setActiveView,

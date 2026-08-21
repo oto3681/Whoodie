@@ -13,7 +13,11 @@ import {
   FileCheck,
   ArrowRight,
   Sparkles,
-  Clock
+  Clock,
+  Mail,
+  Send,
+  Check,
+  Loader2
 } from 'lucide-react';
 import { OrderStatus } from '../types';
 
@@ -78,10 +82,15 @@ export const OrderTracker: React.FC = () => {
     activeTrackingId, 
     setActiveTrackingId, 
     updateOrderStatus,
+    sendOrderConfirmationEmail,
     wpSettings 
   } = useApp();
 
   const [inputCode, setInputCode] = useState(activeTrackingId || '');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailSentSuccess, setEmailSentSuccess] = useState(false);
+  const [customEmail, setCustomEmail] = useState('');
+  const [showEmailInput, setShowEmailInput] = useState(false);
 
   const rawPhone = wpSettings.whatsappNumber.replace(/[^0-9]/g, '');
   const cleanPhone = rawPhone.startsWith('0') ? '254' + rawPhone.slice(1) : rawPhone;
@@ -232,6 +241,101 @@ export const OrderTracker: React.FC = () => {
                     <span className="text-slate-400 text-[11px] block">Payment Status:</span>
                     <span className="font-bold text-emerald-400">Paid (KSh {currentOrder.totalAmount.toLocaleString()})</span>
                   </div>
+                </div>
+
+                {/* Gmail Dispatch Notification Bar */}
+                <div className="pt-2 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                    <span className="text-slate-300">
+                      Gmail Confirmations: {currentOrder.emailConfirmationRecipient || currentOrder.userEmail || currentOrder.customerEmail ? (
+                        <span className="text-blue-300 font-semibold font-mono">
+                          {currentOrder.emailConfirmationRecipient || currentOrder.userEmail || currentOrder.customerEmail}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 italic">No email linked</span>
+                      )}
+                      <span className="text-slate-400 text-[10px] ml-1.5">(from woodynatdesigners12@gmail.com)</span>
+                    </span>
+                  </div>
+
+                  {!showEmailInput ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={isSendingEmail}
+                        onClick={async () => {
+                          const target = currentOrder.emailConfirmationRecipient || currentOrder.userEmail || currentOrder.customerEmail;
+                          if (!target) {
+                            setShowEmailInput(true);
+                            return;
+                          }
+                          setIsSendingEmail(true);
+                          const res = await sendOrderConfirmationEmail(currentOrder.id, target);
+                          setIsSendingEmail(false);
+                          if (res.success) {
+                            setEmailSentSuccess(true);
+                            setTimeout(() => setEmailSentSuccess(false), 4000);
+                          }
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold px-2.5 py-1 rounded-lg text-[10px] flex items-center gap-1.5 cursor-pointer transition-colors"
+                      >
+                        {isSendingEmail ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : emailSentSuccess ? (
+                          <Check className="w-3 h-3 text-emerald-300" />
+                        ) : (
+                          <Send className="w-3 h-3" />
+                        )}
+                        <span>{emailSentSuccess ? 'Sent to Gmail!' : 'Resend Receipt'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCustomEmail(currentOrder.emailConfirmationRecipient || currentOrder.userEmail || currentOrder.customerEmail || '');
+                          setShowEmailInput(true);
+                        }}
+                        className="text-[10px] text-blue-400 hover:text-blue-300 underline font-medium cursor-pointer"
+                      >
+                        Send to Different Email
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                      <input
+                        type="email"
+                        placeholder="Enter your Gmail address..."
+                        value={customEmail}
+                        onChange={(e) => setCustomEmail(e.target.value)}
+                        className="bg-slate-800 border border-slate-700 text-white text-[11px] rounded-md px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-400 font-mono w-44"
+                      />
+                      <button
+                        type="button"
+                        disabled={isSendingEmail || !customEmail.includes('@')}
+                        onClick={async () => {
+                          if (!customEmail.trim()) return;
+                          setIsSendingEmail(true);
+                          const res = await sendOrderConfirmationEmail(currentOrder.id, customEmail.trim());
+                          setIsSendingEmail(false);
+                          if (res.success) {
+                            setShowEmailInput(false);
+                            setEmailSentSuccess(true);
+                            setTimeout(() => setEmailSentSuccess(false), 4000);
+                          }
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold px-2 py-0.5 rounded text-[10px] cursor-pointer shrink-0"
+                      >
+                        {isSendingEmail ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Send'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowEmailInput(false)}
+                        className="text-slate-400 hover:text-white text-[10px] px-1"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

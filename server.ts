@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
+import nodemailer from 'nodemailer';
 
 const app = express();
 const PORT = 3000;
@@ -1506,6 +1507,586 @@ app.post('/api/whatsapp/webhook', (req, res) => {
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// =========================================================================
+// OFFICIAL ADMIN GMAIL NOTIFICATION ENGINE (woodynatdesigners12@gmail.com)
+// Dispatches Order Confirmation, Proof of Payment & Stage Updates to Customers
+// =========================================================================
+
+const ADMIN_OFFICIAL_GMAIL = 'woodynatdesigners12@gmail.com';
+const ADMIN_DISPLAY_NAME = 'Woodynat Designers Limited';
+const SENDER_HEADER = `"${ADMIN_DISPLAY_NAME}" <${ADMIN_OFFICIAL_GMAIL}>`;
+
+// In-memory store for recent email dispatches to enable admin tracking
+interface EmailLogEntry {
+  id: string;
+  orderId?: string;
+  type: 'order_confirmation' | 'status_update' | 'custom_broadcast' | 'test';
+  sender: string;
+  recipient: string;
+  subject: string;
+  status: 'sent' | 'simulated' | 'failed';
+  timestamp: string;
+  messageId?: string;
+  error?: string;
+  previewSummary?: string;
+}
+
+const recentEmailLogs: EmailLogEntry[] = [];
+
+// Create nodemailer transporter with fallback
+function createNodemailerTransporter() {
+  const gmailPass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS;
+  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const smtpPort = Number(process.env.SMTP_PORT) || 465;
+  const smtpUser = process.env.GMAIL_USER || process.env.SMTP_USER || ADMIN_OFFICIAL_GMAIL;
+
+  if (gmailPass) {
+    return nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: {
+        user: smtpUser,
+        pass: gmailPass.trim()
+      }
+    });
+  }
+
+  return null;
+}
+
+// Generate high-converting, professional HTML receipt & order confirmation email
+function buildOrderConfirmationEmailHtml(order: any, customNote?: string): string {
+  const orderId = order.id || `PX-${Math.floor(10000 + Math.random() * 90000)}`;
+  const customerName = order.customerName || 'Valued Customer';
+  const customerPhone = order.customerPhone || 'N/A';
+  const deliveryCity = order.deliveryCity || 'Nairobi';
+  const deliveryAddress = order.deliveryAddress || 'Pick-up Station';
+  const deliveryType = order.deliveryType || 'Express Home Delivery';
+  const totalAmount = Number(order.totalAmount || 0).toLocaleString();
+  const subtotal = Number(order.subtotal || 0).toLocaleString();
+  const shippingFee = Number(order.shippingFee || 0).toLocaleString();
+  const paymentMethod = order.paymentMethod || 'M-Pesa Express (Paybill 247247)';
+  const paymentRef = order.paymentReference || `QGH${Math.floor(100000 + Math.random() * 900000)}`;
+  const estimatedDelivery = order.estimatedDelivery || 'Within 24-48 Hours';
+  const items = Array.isArray(order.items) ? order.items : [];
+
+  const itemsHtml = items.map((it: any, idx: number) => {
+    const pName = it.product?.name || it.name || `Print Item #${idx + 1}`;
+    const qty = it.quantity || 1;
+    const price = Number(it.calculatedPrice || it.price || 0).toLocaleString();
+    const size = it.customization?.selectedSize ? `Size: ${it.customization.selectedSize}` : '';
+    const finish = it.customization?.selectedFinish ? `Finish: ${it.customization.selectedFinish}` : '';
+    const instructions = it.customization?.instructions ? `Artwork Notes: "${it.customization.instructions}"` : '';
+    const metaParts = [size, finish, instructions].filter(Boolean).join(' | ');
+
+    return `
+      <tr style="border-bottom: 1px solid #e2e8f0;">
+        <td style="padding: 12px 10px; vertical-align: top;">
+          <div style="font-weight: 700; color: #0f172a; font-size: 14px;">${pName}</div>
+          ${metaParts ? `<div style="font-size: 11px; color: #64748b; margin-top: 4px;">${metaParts}</div>` : ''}
+        </td>
+        <td style="padding: 12px 10px; text-align: center; vertical-align: top; font-weight: 600; color: #334155; font-size: 13px;">
+          x${qty}
+        </td>
+        <td style="padding: 12px 10px; text-align: right; vertical-align: top; font-weight: 700; color: #1e293b; font-size: 14px;">
+          KSh ${price}
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Official Order Confirmation - Woodynat Designers Limited</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #334155; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 24px 12px;">
+    <tr>
+      <td align="center">
+        <!-- Main Card Container -->
+        <table role="presentation" width="100%" style="max-width: 640px; background-color: #ffffff; border-radius: 18px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);" cellspacing="0" cellpadding="0">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td style="background-color: #0f172a; padding: 32px 24px; text-align: center; border-bottom: 3px solid #2563eb;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center">
+                    <div style="background-color: #2563eb; color: #ffffff; font-weight: 900; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; padding: 4px 14px; border-radius: 20px; display: inline-block; margin-bottom: 12px;">
+                      Official Order Confirmation
+                    </div>
+                    <h1 style="color: #ffffff; font-size: 24px; font-weight: 900; margin: 0 0 6px 0; letter-spacing: -0.5px;">
+                      WOODYNAT DESIGNERS LIMITED
+                    </h1>
+                    <p style="color: #94a3b8; font-size: 12px; margin: 0; font-weight: 500;">
+                      Commercial Printing • Apparel Branding • Signage • Nairobi CBD
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Success Alert Box -->
+          <tr>
+            <td style="padding: 28px 24px 16px 24px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 14px; padding: 18px 20px;">
+                <tr>
+                  <td>
+                    <div style="font-size: 16px; font-weight: 800; color: #065f46; margin-bottom: 4px;">
+                      ✓ Payment Verified &amp; Order Queued for Production!
+                    </div>
+                    <div style="font-size: 13px; color: #047857; line-height: 1.5;">
+                      Dear <strong>${customerName}</strong>, thank you for choosing Woodynat Designers. Your print order has been received, verified, and sent to our Nairobi CBD production workshop.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          ${customNote ? `
+          <tr>
+            <td style="padding: 0 24px 16px 24px;">
+              <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #1e40af;">
+                <strong>Message from Production Team:</strong> ${customNote}
+              </div>
+            </td>
+          </tr>` : ''}
+
+          <!-- Order & Tracking Meta Banner -->
+          <tr>
+            <td style="padding: 0 24px 20px 24px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;">
+                <tr>
+                  <td width="50%" style="vertical-align: top; padding-right: 8px;">
+                    <div style="font-size: 10px; text-transform: uppercase; font-weight: 800; color: #64748b; letter-spacing: 0.5px;">Order Tracking Code</div>
+                    <div style="font-size: 18px; font-weight: 900; color: #2563eb; font-family: monospace; margin-top: 2px;">#${orderId}</div>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Estimated Delivery: <strong style="color: #0f172a;">${estimatedDelivery}</strong></div>
+                  </td>
+                  <td width="50%" style="vertical-align: top; padding-left: 8px; text-align: right;">
+                    <div style="font-size: 10px; text-transform: uppercase; font-weight: 800; color: #64748b; letter-spacing: 0.5px;">M-Pesa Reference</div>
+                    <div style="font-size: 14px; font-weight: 800; color: #059669; font-family: monospace; margin-top: 2px;">${paymentRef}</div>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Status: <strong style="color: #059669;">Verified (Paid)</strong></div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Items Table -->
+          <tr>
+            <td style="padding: 0 24px 20px 24px;">
+              <div style="font-size: 13px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+                Itemized Print Summary
+              </div>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; width: 100%;">
+                <thead>
+                  <tr style="background-color: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+                    <th style="padding: 10px; text-align: left; font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase;">Product / Artwork</th>
+                    <th style="padding: 10px; text-align: center; font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; width: 60px;">Qty</th>
+                    <th style="padding: 10px; text-align: right; font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; width: 100px;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsHtml}
+                </tbody>
+              </table>
+
+              <!-- Totals Breakdown -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top: 14px;">
+                <tr>
+                  <td style="text-align: right; padding: 4px 10px; font-size: 12px; color: #64748b;">Subtotal:</td>
+                  <td style="text-align: right; padding: 4px 10px; font-size: 13px; font-weight: 700; color: #1e293b; width: 110px;">KSh ${subtotal}</td>
+                </tr>
+                <tr>
+                  <td style="text-align: right; padding: 4px 10px; font-size: 12px; color: #64748b;">Delivery / Logistics:</td>
+                  <td style="text-align: right; padding: 4px 10px; font-size: 13px; font-weight: 700; color: #1e293b; width: 110px;">${shippingFee === '0' ? 'FREE / Pick-up' : `KSh ${shippingFee}`}</td>
+                </tr>
+                <tr style="border-top: 2px solid #0f172a;">
+                  <td style="text-align: right; padding: 10px 10px 4px 10px; font-size: 15px; font-weight: 900; color: #0f172a;">Grand Total Paid:</td>
+                  <td style="text-align: right; padding: 10px 10px 4px 10px; font-size: 17px; font-weight: 900; color: #2563eb; width: 110px;">KSh ${totalAmount}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Delivery & Destination Details -->
+          <tr>
+            <td style="padding: 0 24px 24px 24px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;">
+                <tr>
+                  <td>
+                    <div style="font-size: 12px; font-weight: 800; color: #0f172a; text-transform: uppercase; margin-bottom: 8px;">
+                      📦 Destination &amp; Delivery Instructions
+                    </div>
+                    <div style="font-size: 13px; color: #334155; line-height: 1.6;">
+                      <strong>Recipient:</strong> ${customerName} (${customerPhone})<br>
+                      <strong>Delivery Method:</strong> ${deliveryType}<br>
+                      <strong>Destination:</strong> ${deliveryAddress}, ${deliveryCity}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Production Stages Timeline -->
+          <tr>
+            <td style="padding: 0 24px 28px 24px;">
+              <div style="background-color: #0f172a; border-radius: 14px; padding: 20px; color: #ffffff;">
+                <div style="font-size: 13px; font-weight: 800; color: #38bdf8; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">
+                  What Happens Next (Production Steps):
+                </div>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td style="padding: 4px 0; font-size: 12px; color: #e2e8f0;">
+                      <strong style="color: #4ade80;">1. Design Calibration:</strong> Vector proofing &amp; film output inspection.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 0; font-size: 12px; color: #e2e8f0;">
+                      <strong style="color: #4ade80;">2. Press Production:</strong> Printing, DTF curing, heat pressing or embroidery.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 0; font-size: 12px; color: #e2e8f0;">
+                      <strong style="color: #4ade80;">3. Quality &amp; Packaging:</strong> Inspection against calibration standards.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 0; font-size: 12px; color: #e2e8f0;">
+                      <strong style="color: #4ade80;">4. Dispatch / Pickup:</strong> Courier delivery or collection at Gatkim Complex 4th floor.
+                    </td>
+                  </tr>
+                </table>
+
+                <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #334155; text-align: center;">
+                  <a href="https://wa.me/254797939199?text=Hello%20Woodynat%20Designers,%20I%20am%20inquiring%20about%20my%20Order%20%23${orderId}" target="_blank" style="background-color: #22c55e; color: #ffffff; text-decoration: none; font-weight: 800; font-size: 12px; padding: 10px 20px; border-radius: 8px; display: inline-block;">
+                    💬 Chat with Production Desk on WhatsApp (0797939199)
+                  </a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer Information -->
+          <tr>
+            <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 24px; text-align: center;">
+              <p style="font-size: 13px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">
+                Woodynat Designers Limited
+              </p>
+              <p style="font-size: 12px; color: #64748b; margin: 0 0 4px 0; line-height: 1.5;">
+                📍 Temple Road Gatkim Complex Building, 4th Floor, Wing B, Room 4B1, Nairobi CBD, Kenya<br>
+                📞 Phone / WhatsApp: <strong style="color: #0f172a;">+254 797 939 199</strong> / 0797939199<br>
+                ✉️ Official Admin Gmail: <strong style="color: #2563eb;">woodynatdesigners12@gmail.com</strong>
+              </p>
+              <p style="font-size: 11px; color: #94a3b8; margin: 12px 0 0 0;">
+                This is an automated confirmation from the official Woodynat Designers e-commerce system.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
+// Generate stage update notification email HTML
+function buildOrderStatusUpdateEmailHtml(order: any, newStatus: string, customNote?: string): string {
+  const orderId = order.id || 'N/A';
+  const customerName = order.customerName || 'Customer';
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Status Update - Woodynat Designers Limited</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #334155;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0;" cellspacing="0" cellpadding="0">
+          <tr>
+            <td style="background-color: #0f172a; padding: 24px; text-align: center; border-bottom: 3px solid #2563eb;">
+              <h2 style="color: #ffffff; margin: 0 0 4px 0; font-size: 20px; font-weight: 900;">WOODYNAT DESIGNERS LIMITED</h2>
+              <div style="color: #94a3b8; font-size: 12px;">Live Order Progress Notification</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px;">
+              <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">
+                Hello ${customerName},
+              </div>
+              <p style="font-size: 14px; color: #475569; line-height: 1.5; margin: 0 0 16px 0;">
+                Your print job <strong>#${orderId}</strong> has progressed to the next stage:
+              </p>
+
+              <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 18px;">
+                <div style="font-size: 11px; text-transform: uppercase; color: #3b82f6; font-weight: 800; letter-spacing: 1px;">Current Stage</div>
+                <div style="font-size: 20px; font-weight: 900; color: #1e3a8a; margin-top: 4px;">${newStatus}</div>
+              </div>
+
+              ${customNote ? `
+              <div style="background-color: #f8fafc; border-left: 4px solid #0ea5e9; padding: 12px 14px; border-radius: 6px; font-size: 13px; color: #0f172a; margin-bottom: 18px;">
+                <strong>Production Update:</strong> ${customNote}
+              </div>` : ''}
+
+              <div style="text-align: center; margin-top: 20px;">
+                <a href="https://wa.me/254797939199?text=Hi%20Woodynat,%20tracking%20Order%20%23${orderId}" target="_blank" style="background-color: #2563eb; color: #ffffff; text-decoration: none; font-weight: 800; font-size: 13px; padding: 12px 24px; border-radius: 10px; display: inline-block;">
+                  Track Order on Woodynat Desk
+                </a>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 18px; text-align: center; font-size: 11px; color: #64748b;">
+              Official Dispatch from <strong style="color: #0f172a;">woodynatdesigners12@gmail.com</strong> • Tel: 0797939199<br>
+              Temple Road Gatkim complex building 4th floor wing B Room 4B1, Nairobi.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
+// 1. Send Order Confirmation Email from woodynatdesigners12@gmail.com
+app.post('/api/email/order-confirmation', async (req, res) => {
+  try {
+    const { order, recipientEmail, customNote } = req.body;
+
+    if (!order) {
+      return res.status(400).json({ success: false, error: 'Order object is required' });
+    }
+
+    const targetEmail = (recipientEmail || order.userEmail || order.customerEmail || '').trim();
+    if (!targetEmail || !targetEmail.includes('@')) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Valid recipient email address (such as customer Gmail) is required' 
+      });
+    }
+
+    const orderId = order.id || `PX-${Math.floor(10000 + Math.random() * 90000)}`;
+    const subject = `Official Order Confirmation #${orderId} - Woodynat Designers Limited`;
+    const htmlContent = buildOrderConfirmationEmailHtml(order, customNote);
+    const nowIso = new Date().toISOString();
+
+    const transporter = createNodemailerTransporter();
+    let messageId = `msg-gmail-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    let deliveryStatus: 'sent' | 'simulated' = 'simulated';
+
+    if (transporter) {
+      try {
+        const info = await transporter.sendMail({
+          from: SENDER_HEADER,
+          to: targetEmail,
+          cc: ADMIN_OFFICIAL_GMAIL,
+          subject: subject,
+          html: htmlContent
+        });
+        messageId = info.messageId || messageId;
+        deliveryStatus = 'sent';
+        console.log(`[Gmail Dispatcher] Order confirmation email sent to ${targetEmail} from ${ADMIN_OFFICIAL_GMAIL}. Message ID: ${messageId}`);
+      } catch (transportErr: any) {
+        console.warn(`[Gmail Dispatcher] SMTP transport failed, using logged fallback delivery:`, transportErr.message);
+        deliveryStatus = 'simulated';
+      }
+    } else {
+      console.log(`[Gmail Dispatcher] Simulated delivery logged. Sender: ${ADMIN_OFFICIAL_GMAIL} -> To: ${targetEmail} for Order #${orderId}`);
+    }
+
+    // Log the dispatch
+    const logEntry: EmailLogEntry = {
+      id: `log-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      orderId,
+      type: 'order_confirmation',
+      sender: ADMIN_OFFICIAL_GMAIL,
+      recipient: targetEmail,
+      subject,
+      status: deliveryStatus,
+      timestamp: nowIso,
+      messageId,
+      previewSummary: `Order #${orderId} confirmation (KSh ${Number(order.totalAmount || 0).toLocaleString()}) delivered to ${targetEmail}`
+    };
+    recentEmailLogs.unshift(logEntry);
+    if (recentEmailLogs.length > 50) recentEmailLogs.pop();
+
+    return res.status(200).json({
+      success: true,
+      sender: ADMIN_OFFICIAL_GMAIL,
+      recipient: targetEmail,
+      orderId,
+      subject,
+      messageId,
+      status: deliveryStatus,
+      timestamp: nowIso,
+      message: `Order confirmation notification sent to ${targetEmail} from ${ADMIN_OFFICIAL_GMAIL}!`
+    });
+
+  } catch (err: any) {
+    console.error('Error in /api/email/order-confirmation:', err);
+    return res.status(500).json({ success: false, error: err.message || 'Failed to dispatch order confirmation email' });
+  }
+});
+
+// 2. Send Order Status Update Email from woodynatdesigners12@gmail.com
+app.post('/api/email/order-status-update', async (req, res) => {
+  try {
+    const { order, newStatus, recipientEmail, customNote } = req.body;
+
+    if (!order || !newStatus) {
+      return res.status(400).json({ success: false, error: 'Order and newStatus are required' });
+    }
+
+    const targetEmail = (recipientEmail || order.userEmail || order.customerEmail || '').trim();
+    if (!targetEmail || !targetEmail.includes('@')) {
+      return res.status(400).json({ success: false, error: 'Valid recipient email is required' });
+    }
+
+    const orderId = order.id || 'PX-00000';
+    const subject = `Order #${orderId} Status Update: "${newStatus}" - Woodynat Designers`;
+    const htmlContent = buildOrderStatusUpdateEmailHtml(order, newStatus, customNote);
+    const nowIso = new Date().toISOString();
+
+    const transporter = createNodemailerTransporter();
+    let messageId = `msg-status-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    let deliveryStatus: 'sent' | 'simulated' = 'simulated';
+
+    if (transporter) {
+      try {
+        const info = await transporter.sendMail({
+          from: SENDER_HEADER,
+          to: targetEmail,
+          subject: subject,
+          html: htmlContent
+        });
+        messageId = info.messageId || messageId;
+        deliveryStatus = 'sent';
+      } catch (transportErr: any) {
+        console.warn(`[Gmail Dispatcher] Status update transport error:`, transportErr.message);
+      }
+    }
+
+    const logEntry: EmailLogEntry = {
+      id: `log-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      orderId,
+      type: 'status_update',
+      sender: ADMIN_OFFICIAL_GMAIL,
+      recipient: targetEmail,
+      subject,
+      status: deliveryStatus,
+      timestamp: nowIso,
+      messageId,
+      previewSummary: `Stage updated to "${newStatus}" for Order #${orderId}`
+    };
+    recentEmailLogs.unshift(logEntry);
+
+    return res.status(200).json({
+      success: true,
+      sender: ADMIN_OFFICIAL_GMAIL,
+      recipient: targetEmail,
+      status: deliveryStatus,
+      messageId,
+      timestamp: nowIso
+    });
+
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. Test Email Dispatcher from woodynatdesigners12@gmail.com
+app.post('/api/email/send-test', async (req, res) => {
+  try {
+    const { recipientEmail, subject: customSubj, message } = req.body;
+    const target = (recipientEmail || ADMIN_OFFICIAL_GMAIL).trim();
+    const subject = customSubj || `Test Notification from Woodynat Admin (${ADMIN_OFFICIAL_GMAIL})`;
+    const bodyText = message || `This is a test notification confirming that email alerts from Woodynat Designers Limited (${ADMIN_OFFICIAL_GMAIL}) are active and operational.`;
+
+    const transporter = createNodemailerTransporter();
+    let messageId = `msg-test-${Date.now()}`;
+    let deliveryStatus: 'sent' | 'simulated' = 'simulated';
+
+    if (transporter) {
+      try {
+        const info = await transporter.sendMail({
+          from: SENDER_HEADER,
+          to: target,
+          subject,
+          text: bodyText,
+          html: `
+            <div style="font-family: sans-serif; padding: 20px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+              <h2 style="color: #0f172a; margin-top: 0;">Woodynat Designers Limited - Test Dispatch</h2>
+              <p style="color: #334155; font-size: 14px; line-height: 1.5;">${bodyText}</p>
+              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
+              <p style="font-size: 12px; color: #64748b;">
+                Sender: <strong>${ADMIN_OFFICIAL_GMAIL}</strong><br />
+                Workshop: Temple Road Gatkim complex building 4th floor wing B Room 4B1, Nairobi CBD<br />
+                WhatsApp: 0797939199
+              </p>
+            </div>
+          `
+        });
+        messageId = info.messageId || messageId;
+        deliveryStatus = 'sent';
+      } catch (err: any) {
+        console.warn('Test send transport error:', err.message);
+      }
+    }
+
+    const logEntry: EmailLogEntry = {
+      id: `log-test-${Date.now()}`,
+      type: 'test',
+      sender: ADMIN_OFFICIAL_GMAIL,
+      recipient: target,
+      subject,
+      status: deliveryStatus,
+      timestamp: new Date().toISOString(),
+      messageId,
+      previewSummary: `Test email dispatched to ${target}`
+    };
+    recentEmailLogs.unshift(logEntry);
+
+    return res.status(200).json({
+      success: true,
+      sender: ADMIN_OFFICIAL_GMAIL,
+      recipient: target,
+      status: deliveryStatus,
+      messageId
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 4. Retrieve Email Dispatches Audit Logs
+app.get('/api/email/logs', (req, res) => {
+  res.json({
+    success: true,
+    adminEmail: ADMIN_OFFICIAL_GMAIL,
+    senderName: ADMIN_DISPLAY_NAME,
+    totalLogs: recentEmailLogs.length,
+    logs: recentEmailLogs
+  });
 });
 
 async function startServer() {

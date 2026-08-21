@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { OrderStatus } from '../types';
 import { getProductFallbackImage } from '../data/initialData';
@@ -13,11 +13,17 @@ import {
   Phone, 
   MapPin, 
   LogOut, 
-  Sparkles 
+  Sparkles,
+  Mail,
+  Send,
+  Check,
+  Loader2
 } from 'lucide-react';
 
 export const UserDashboard: React.FC = () => {
-  const { currentUser, orders, logout, setActiveModal, setActiveTrackingId } = useApp();
+  const { currentUser, orders, logout, setActiveModal, setActiveTrackingId, sendOrderConfirmationEmail } = useApp();
+  const [emailingOrderId, setEmailingOrderId] = useState<string | null>(null);
+  const [emailSuccessOrderId, setEmailSuccessOrderId] = useState<string | null>(null);
 
   if (!currentUser) return null;
 
@@ -204,6 +210,50 @@ export const UserDashboard: React.FC = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+
+                {/* Gmail Receipt & Notification Status Bar */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-blue-600 shrink-0" />
+                    <div>
+                      <span className="font-bold text-slate-800">Gmail Confirmation: </span>
+                      <span className="font-mono text-blue-700">
+                        {ord.emailConfirmationRecipient || ord.userEmail || currentUser.email}
+                      </span>
+                      <span className="text-[10px] text-slate-500 ml-1.5">(from woodynatdesigners12@gmail.com)</span>
+                      {ord.emailConfirmationSent && (
+                        <span className="ml-2 bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          ✓ Sent {ord.emailConfirmationSentAt ? `(${ord.emailConfirmationSentAt})` : ''}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={emailingOrderId === ord.id}
+                    onClick={async () => {
+                      const target = ord.emailConfirmationRecipient || ord.userEmail || currentUser.email;
+                      setEmailingOrderId(ord.id);
+                      const res = await sendOrderConfirmationEmail(ord.id, target);
+                      setEmailingOrderId(null);
+                      if (res.success) {
+                        setEmailSuccessOrderId(ord.id);
+                        setTimeout(() => setEmailSuccessOrderId(null), 4000);
+                      }
+                    }}
+                    className="bg-white hover:bg-blue-50 border border-blue-200 text-blue-700 font-bold px-3 py-1 rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs shrink-0 self-end sm:self-auto"
+                  >
+                    {emailingOrderId === ord.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : emailSuccessOrderId === ord.id ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5" />
+                    )}
+                    <span>{emailSuccessOrderId === ord.id ? 'Receipt Emailed!' : 'Email Receipt to Gmail'}</span>
+                  </button>
                 </div>
 
                 {/* Footer summary */}

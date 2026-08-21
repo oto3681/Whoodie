@@ -7,6 +7,7 @@ import {
   Product, 
   ProductCategory 
 } from '../types';
+import { safeCopyToClipboard } from '../utils/clipboard';
 import { 
   FileText, 
   Plus, 
@@ -1601,7 +1602,7 @@ export const AdminZohoQuotesStudio: React.FC = () => {
             <div className="flex items-center justify-between gap-3 pt-2">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(getWhatsAppMessageText(selectedQuote));
+                  safeCopyToClipboard(getWhatsAppMessageText(selectedQuote)).catch(() => {});
                   showToast('Copied to Clipboard', 'Quotation WhatsApp text copied.');
                 }}
                 className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer"

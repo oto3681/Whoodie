@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Product, ProductCategory, CustomerInquiry, CataloguePrintConfig } from '../types';
+import { safeCopyToClipboard } from '../utils/clipboard';
 import { 
   generateCataloguePdf, 
   openPrintableCatalogueWindow, 
@@ -282,7 +283,7 @@ export const AdminCatalogueStudio: React.FC = () => {
       { name: targetCustomerName, phone: targetCustomerPhone, companyName: targetCompanyName }
     );
 
-    navigator.clipboard.writeText(text);
+    safeCopyToClipboard(text).catch(() => {});
     setCopiedSuccess(true);
     setTimeout(() => setCopiedSuccess(false), 3000);
     showToast('Quotation Copied to Clipboard 📋', 'You can now paste it into WhatsApp, SMS, or Telegram!');
