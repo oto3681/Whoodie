@@ -58,7 +58,10 @@ import {
   BellRing,
   MapPin,
   CreditCard,
-  Megaphone
+  Megaphone,
+  UserCheck,
+  AlertCircle,
+  BadgeCheck
 } from 'lucide-react';
 import { Product, OrderStatus, ProductCategory } from '../types';
 
@@ -72,6 +75,8 @@ export const AdminDashboard: React.FC = () => {
     unreadNotificationsCount,
     logout, 
     updateOrderStatus, 
+    acceptOrderDirectly,
+    simulateIncomingOrderNotification,
     addProduct, 
     updateProduct, 
     deleteProduct, 
@@ -693,97 +698,224 @@ export const AdminDashboard: React.FC = () => {
       {/* TAB 1: ORDER MANAGEMENT */}
       {activeTab === 'orders' && (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
             <div>
-              <h3 className="text-base font-extrabold text-slate-900">Live Client Orders & Production Status</h3>
-              <p className="text-xs text-slate-500">Track incoming print orders, payment receipts, artwork instructions, and update production stages.</p>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-extrabold text-slate-900">Live Client Orders & Acceptance Control</h3>
+                <span className="bg-blue-100 text-blue-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border border-blue-200">
+                  {orders.length} Total Orders
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">Real-time order alerts from registered users and clients with instant acceptance and pre-press workflow dispatch.</p>
             </div>
-            <button
-              onClick={handleExportTransactionsExcel}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer shrink-0"
-            >
-              <FileSpreadsheet className="w-4 h-4" />
-              <span>Export Orders (Excel .xlsx)</span>
-            </button>
+            
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={simulateIncomingOrderNotification}
+                className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-extrabold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
+                title="Test incoming real-time order alert from registered customer"
+              >
+                <BellRing className="w-3.5 h-3.5 animate-bounce" />
+                <span>Simulate Live Order Alert</span>
+              </button>
+
+              <button
+                onClick={handleExportTransactionsExcel}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer shrink-0"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>Export Orders (Excel .xlsx)</span>
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-4">
-            {orders.map((ord) => (
-              <div key={ord.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
-                
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Order ID:</span>
-                    <span className="text-base font-mono font-extrabold text-blue-600">{ord.id}</span>
-                    <span className="text-xs text-slate-500 ml-2">• Customer: {ord.customerName} ({ord.customerPhone})</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-700">Change Status:</span>
-                    <select
-                      value={ord.orderStatus}
-                      onChange={(e) => updateOrderStatus(ord.id, e.target.value as OrderStatus)}
-                      className="bg-slate-100 text-slate-900 font-extrabold text-xs px-3 py-1.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="Order Placed">1. Order Placed</option>
-                      <option value="Order Received by Admin">2. Order Received by Admin</option>
-                      <option value="Design Approved">3. Design Approved</option>
-                      <option value="Quality Check">4. Quality Check</option>
-                      <option value="Out for Delivery">5. Out for Delivery</option>
-                      <option value="Delivered">6. Delivered</option>
-                    </select>
-                  </div>
+          {/* Pending Acceptance Alert Banner */}
+          {orders.filter(o => o.orderStatus === 'Order Placed').length > 0 && (
+            <div className="bg-amber-50 border-2 border-amber-300/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <AlertCircle className="w-5 h-5" />
                 </div>
+                <div>
+                  <h4 className="text-sm font-extrabold text-amber-900">
+                    {orders.filter(o => o.orderStatus === 'Order Placed').length} New Order(s) Awaiting Admin Acceptance!
+                  </h4>
+                  <p className="text-xs text-amber-700 font-medium">
+                    Review specifications and accept incoming client orders to notify the customer and queue artwork for printing.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  const pending = orders.filter(o => o.orderStatus === 'Order Placed');
+                  pending.forEach(p => acceptOrderDirectly(p.id));
+                  showToast('All Pending Accepted! ✅', `Accepted ${pending.length} order(s) for production.`);
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow-xs transition-all shrink-0 cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Accept All Pending ({orders.filter(o => o.orderStatus === 'Order Placed').length})</span>
+              </button>
+            </div>
+          )}
 
-                {/* Items & Custom Artwork */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                  {ord.items.map((it, idx) => (
-                    <div key={idx} className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
-                      <div className="font-bold text-slate-900">{it.product.name} (x{it.quantity})</div>
-                      {it.customization && (
-                        <div className="text-slate-600 space-y-0.5 text-[11px]">
-                          <div><span className="font-bold">Size:</span> {it.customization.selectedSize || 'Standard'} | <span className="font-bold">Finish:</span> {it.customization.selectedFinish || 'Standard'}</div>
-                          {it.customization.instructions && (
-                            <div className="text-slate-700 bg-white p-1.5 rounded border border-slate-200 font-mono text-[10px]">
-                              Instructions: {it.customization.instructions}
-                            </div>
-                          )}
-                        </div>
+          <div className="space-y-4">
+            {orders.map((ord) => {
+              const isPendingAcceptance = ord.orderStatus === 'Order Placed';
+              const isAccepted = ord.orderStatus !== 'Order Placed' || !!ord.acceptedAt;
+
+              return (
+                <div 
+                  key={ord.id} 
+                  className={`bg-white border rounded-2xl p-5 shadow-xs space-y-4 transition-all ${
+                    isPendingAcceptance ? 'border-amber-400 ring-2 ring-amber-400/20 bg-amber-50/20' : 'border-slate-200'
+                  }`}
+                >
+                  
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b pb-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Order ID:</span>
+                        <span className="text-base font-mono font-extrabold text-blue-600">{ord.id}</span>
+                        
+                        {/* Registered Client vs Guest Badge */}
+                        {ord.isRegisteredUser || (ord.userId && ord.userId !== 'guest') ? (
+                          <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-emerald-300">
+                            <UserCheck className="w-3 h-3 text-emerald-600" />
+                            <span>Registered Client ({ord.userProvider === 'google' ? 'Google Auth' : 'Verified'})</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-200">
+                            Guest Checkout
+                          </span>
+                        )}
+
+                        {isPendingAcceptance ? (
+                          <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-300 animate-pulse">
+                            <Clock className="w-3 h-3" />
+                            <span>Awaiting Acceptance</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-blue-200">
+                            <BadgeCheck className="w-3 h-3 text-blue-600" />
+                            <span>Accepted by Admin</span>
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="text-xs text-slate-600 flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-slate-800">Customer: {ord.customerName}</span>
+                        <span>• Phone: <span className="font-mono font-semibold">{ord.customerPhone}</span></span>
+                        {(ord.userEmail || ord.customerEmail) && (
+                          <span>• Email: <span className="font-semibold text-blue-600">{ord.userEmail || ord.customerEmail}</span></span>
+                        )}
+                        <span>• Placed: {ord.createdAt}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {isPendingAcceptance && (
+                        <button
+                          onClick={() => acceptOrderDirectly(ord.id)}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
+                          title="Accept order, notify client, and dispatch to production"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Accept Order Now</span>
+                        </button>
+                      )}
+
+                      <div className="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-xl border border-slate-200">
+                        <span className="text-[11px] font-extrabold text-slate-600">Stage:</span>
+                        <select
+                          value={ord.orderStatus}
+                          onChange={(e) => updateOrderStatus(ord.id, e.target.value as OrderStatus)}
+                          className="bg-white text-slate-900 font-extrabold text-xs px-2.5 py-1 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                        >
+                          <option value="Order Placed">1. Order Placed</option>
+                          <option value="Order Received by Admin">2. Order Received by Admin</option>
+                          <option value="Design Approved">3. Design Approved</option>
+                          <option value="Quality Check">4. Quality Check</option>
+                          <option value="Out for Delivery">5. Out for Delivery</option>
+                          <option value="Delivered">6. Delivered</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Acceptance Details Banner if Accepted */}
+                  {ord.acceptedAt && (
+                    <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-2.5 text-xs flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-emerald-900 font-semibold">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>Accepted by <strong className="font-black">{ord.acceptedBy || 'Admin (Woodynat Designers)'}</strong> on {ord.acceptedAt}</span>
+                      </div>
+                      {ord.acceptanceNotes && (
+                        <span className="text-[11px] text-emerald-700 italic truncate max-w-md">"{ord.acceptanceNotes}"</span>
                       )}
                     </div>
-                  ))}
-                </div>
+                  )}
 
-                {/* Contact Client & Prompt Payment Buttons */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 pt-2 border-t">
-                  <span className="font-semibold text-slate-700">Amount: KSh {ord.totalAmount.toLocaleString()} ({ord.paymentMethod})</span>
-                  
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                      onClick={() => {
-                        setPromptPhone(ord.customerPhone);
-                        setPromptAmount(ord.totalAmount);
-                        setPromptReason(`Order #${ord.id} Payment`);
-                        setShowPaymentPromptModal(true);
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                    >
-                      <Smartphone className="w-3.5 h-3.5" /> Prompt M-Pesa Payment
-                    </button>
-
-                    <a
-                      href={`https://wa.me/${ord.customerPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi ${ord.customerName}, regarding your PixelPrint order ${ord.id}: status updated to "${ord.orderStatus}".`)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 transition-colors"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
-                    </a>
+                  {/* Items & Custom Artwork */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    {ord.items.map((it, idx) => (
+                      <div key={idx} className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                        <div className="font-bold text-slate-900">{it.product.name} (x{it.quantity})</div>
+                        {it.customization && (
+                          <div className="text-slate-600 space-y-0.5 text-[11px]">
+                            <div><span className="font-bold">Size:</span> {it.customization.selectedSize || 'Standard'} | <span className="font-bold">Finish:</span> {it.customization.selectedFinish || 'Standard'}</div>
+                            {it.customization.instructions && (
+                              <div className="text-slate-700 bg-white p-1.5 rounded border border-slate-200 font-mono text-[10px]">
+                                Instructions: {it.customization.instructions}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                </div>
 
-              </div>
-            ))}
+                  {/* Contact Client & Prompt Payment Buttons */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 pt-2 border-t">
+                    <div className="flex items-center gap-3">
+                      <span className="font-extrabold text-slate-900 text-sm">Total: KSh {ord.totalAmount.toLocaleString()}</span>
+                      <span className="bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded-lg border border-slate-200 text-[11px]">
+                        {ord.paymentMethod} ({ord.paymentStatus})
+                      </span>
+                      {ord.deliveryCity && (
+                        <span className="text-[11px] text-slate-600 font-medium flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-slate-400" /> {ord.deliveryCity}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        onClick={() => {
+                          setPromptPhone(ord.customerPhone);
+                          setPromptAmount(ord.totalAmount);
+                          setPromptReason(`Order #${ord.id} Payment`);
+                          setShowPaymentPromptModal(true);
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                      >
+                        <Smartphone className="w-3.5 h-3.5" /> Prompt M-Pesa
+                      </button>
+
+                      <a
+                        href={`https://wa.me/${ord.customerPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello ${ord.customerName}, Woodynat Designers has received and updated your order #${ord.id}. Current Status: "${ord.orderStatus}". Total: KSh ${ord.totalAmount.toLocaleString()}. Our Nairobi CBD workshop is on it!`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 transition-colors"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" /> WhatsApp Client
+                      </a>
+                    </div>
+                  </div>
+
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

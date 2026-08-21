@@ -68,6 +68,10 @@ export interface TrackingStep {
 export interface Order {
   id: string; // e.g. PX-98241
   userId?: string;
+  isRegisteredUser?: boolean;
+  userEmail?: string;
+  userAvatar?: string;
+  userProvider?: 'email' | 'google' | 'facebook';
   customerName: string;
   customerPhone: string;
   customerEmail: string;
@@ -83,6 +87,9 @@ export interface Order {
   paymentStatus: 'Pending' | 'Paid' | 'Failed';
   orderStatus: OrderStatus;
   createdAt: string;
+  acceptedAt?: string;
+  acceptedBy?: string;
+  acceptanceNotes?: string;
   estimatedDelivery: string;
   trackingHistory: TrackingStep[];
 }
@@ -295,6 +302,10 @@ export interface AdminNotification {
     customerName: string;
     customerPhone: string;
     customerEmail?: string;
+    isRegisteredUser?: boolean;
+    userId?: string;
+    userProvider?: string;
+    userAvatar?: string;
     amount?: number;
     itemsSummary?: string;
     itemsCount?: number;

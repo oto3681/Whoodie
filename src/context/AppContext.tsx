@@ -183,6 +183,7 @@ interface AppContextType {
   unreadNotificationsCount: number;
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
+  acceptOrderDirectly: (orderId: string, customNote?: string) => void;
   acceptOrderFromNotification: (notificationId: string, orderId: string, customNote?: string) => void;
   acceptInquiryFromNotification: (notificationId: string, inquiryId: string, quoteNote?: string) => void;
   declineNotification: (notificationId: string, reason?: string) => void;
@@ -640,10 +641,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     ];
 
+    const isRegistered = orderData.isRegisteredUser !== undefined 
+      ? orderData.isRegisteredUser 
+      : (currentUser ? currentUser.role !== 'admin' : false);
+    const resolvedUserId = orderData.userId || currentUser?.id || (isRegistered ? 'user-reg-01' : 'guest');
+    const resolvedUserEmail = orderData.userEmail || currentUser?.email || orderData.customerEmail;
+    const resolvedUserAvatar = orderData.userAvatar || currentUser?.avatar;
+    const resolvedUserProvider = orderData.userProvider || currentUser?.provider;
+
     const newOrder: Order = {
       ...orderData,
       id,
-      userId: currentUser?.id || 'guest',
+      userId: resolvedUserId,
+      isRegisteredUser: isRegistered,
+      userEmail: resolvedUserEmail,
+      userAvatar: resolvedUserAvatar,
+      userProvider: resolvedUserProvider,
       orderStatus: 'Order Placed',
       paymentStatus: 'Paid',
       createdAt: nowStr,
@@ -658,8 +671,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const newNotif: AdminNotification = {
       id: notifId,
       type: 'order_placed',
-      title: `New Customer Order Placed (#${id})`,
-      message: `${newOrder.customerName} placed an order for ${newOrder.items.length} item(s) totaling KSh ${newOrder.totalAmount.toLocaleString()} via ${newOrder.paymentMethod}.`,
+      title: `New Order from ${isRegistered ? `Registered User (${newOrder.customerName})` : newOrder.customerName} (#${id})`,
+      message: `${isRegistered ? '👤 Registered User' : 'Customer'} ${newOrder.customerName} (${newOrder.customerPhone}${resolvedUserEmail ? ` • ${resolvedUserEmail}` : ''}) placed an order for ${newOrder.items.length} item(s) totaling KSh ${newOrder.totalAmount.toLocaleString()} via ${newOrder.paymentMethod}.`,
       timestamp: 'Just now',
       timeAgo: 'Just now',
       read: false,
@@ -668,7 +681,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       referenceData: {
         customerName: newOrder.customerName,
         customerPhone: newOrder.customerPhone,
-        customerEmail: newOrder.customerEmail,
+        customerEmail: resolvedUserEmail,
+        isRegisteredUser: isRegistered,
+        userId: resolvedUserId,
+        userProvider: resolvedUserProvider,
+        userAvatar: resolvedUserAvatar,
         amount: newOrder.totalAmount,
         itemsCount: newOrder.items.length,
         itemsSummary: newOrder.items.map((i) => `${i.product.name} (x${i.quantity})`).join(', '),
@@ -681,6 +698,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
     setAdminNotifications((prev) => [newNotif, ...prev]);
     playNotificationSound('order');
+    showToast('🔔 New Order Alert!', `Order #${id} received from ${newOrder.customerName}${isRegistered ? ' (Registered User)' : ''}. Total: KSh ${newOrder.totalAmount.toLocaleString()}`);
 
     clearCart();
     setActiveTrackingId(id);
@@ -1242,17 +1260,60 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     showToast('All Alerts Read 🔕', 'Marked all admin notifications as read.');
   };
 
-  const acceptOrderFromNotification = (notificationId: string, orderId: string, customNote?: string) => {
+  const acceptOrderDirectly = (orderId: string, customNote?: string) => {
     const targetOrder = orders.find((o) => o.id === orderId);
     const nowFormatted = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ', Today';
 
-    if (targetOrder && targetOrder.orderStatus === 'Order Placed') {
-      updateOrderStatus(orderId, 'Order Received by Admin');
+    if (targetOrder) {
+      const canonicalStepsDescriptions: Record<string, string> = {
+        'Order Placed': 'Order placed & M-Pesa payment authorized successfully.',
+        'Order Received by Admin': customNote ? `Admin Accepted: ${customNote}` : 'Order acknowledged & accepted by Woodynat production team. Pre-press print queue activated.',
+        'Design Approved': 'Design proofing & artwork vectorization approved.',
+        'Quality Check': 'Color inspection, print calibration & packaging check.',
+        'Out for Delivery': 'Package handed over to dispatch courier rider.',
+        'Delivered': 'Delivered to customer or designated pick-up station.'
+      };
+
+      const canonicalSteps: OrderStatus[] = [
+        'Order Placed',
+        'Order Received by Admin',
+        'Design Approved',
+        'Quality Check',
+        'Out for Delivery',
+        'Delivered'
+      ];
+
+      const targetIdx = 1; // 'Order Received by Admin'
+      const updatedHistory: Order['trackingHistory'] = canonicalSteps.map((stepName, idx) => {
+        const existingStep = targetOrder.trackingHistory?.find(s => s.status === stepName);
+        const isCompleted = idx <= targetIdx;
+
+        return {
+          status: stepName,
+          completed: isCompleted,
+          timestamp: isCompleted 
+            ? (idx === 1 ? nowFormatted : (existingStep?.timestamp && existingStep.timestamp !== 'Pending' && existingStep.timestamp !== 'Queued' ? existingStep.timestamp : nowFormatted))
+            : 'Pending',
+          description: idx === 1 && customNote ? `Admin Accepted: ${customNote}` : (existingStep?.description || canonicalStepsDescriptions[stepName] || 'Step processing')
+        };
+      });
+
+      const updatedOrder: Order = {
+        ...targetOrder,
+        orderStatus: 'Order Received by Admin',
+        acceptedAt: nowFormatted,
+        acceptedBy: 'Admin (Woodynat Designers)',
+        acceptanceNotes: customNote || 'Order verified and accepted by Admin. Production line activated at Woodynat CBD Workshop.',
+        trackingHistory: updatedHistory,
+      };
+
+      saveOrderToFirestore(updatedOrder);
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? updatedOrder : o)));
     }
 
     setAdminNotifications((prev) =>
       prev.map((n) => {
-        if (n.id === notificationId || n.referenceId === orderId) {
+        if (n.referenceId === orderId) {
           return {
             ...n,
             read: true,
@@ -1268,6 +1329,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     playNotificationSound('accept');
     showToast('Order Accepted! ✅', `Order #${orderId} accepted and assigned to production. Customer notified.`);
+  };
+
+  const acceptOrderFromNotification = (notificationId: string, orderId: string, customNote?: string) => {
+    acceptOrderDirectly(orderId, customNote);
+    setAdminNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, read: true, status: 'accepted' } : n))
+    );
   };
 
   const acceptInquiryFromNotification = (notificationId: string, inquiryId: string, quoteNote?: string) => {
@@ -1323,21 +1391,93 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const simulateIncomingOrderNotification = () => {
     const sampleCustomers = [
-      { name: 'Mercy Achieng', phone: '0711445566', email: 'm.achieng@gmail.com', city: 'Nairobi Westlands' },
-      { name: 'Peter Karanja', phone: '0728990011', email: 'peter.k@gmail.com', city: 'Nairobi CBD' },
-      { name: 'Eunice Wangari', phone: '0703887766', email: 'eunice.w@gmail.com', city: 'Upperhill Nairobi' },
-      { name: 'Collins Otieno', phone: '0799332211', email: 'collins.o@gmail.com', city: 'Kilimani Nairobi' }
+      { name: 'Mercy Achieng', phone: '0711445566', email: 'm.achieng@gmail.com', city: 'Nairobi Westlands', isReg: true, provider: 'google' as const },
+      { name: 'Peter Karanja', phone: '0728990011', email: 'peter.k@gmail.com', city: 'Nairobi CBD', isReg: true, provider: 'email' as const },
+      { name: 'Eunice Wangari', phone: '0703887766', email: 'eunice.w@gmail.com', city: 'Upperhill Nairobi', isReg: true, provider: 'google' as const },
+      { name: 'Collins Otieno', phone: '0799332211', email: 'collins.o@gmail.com', city: 'Kilimani Nairobi', isReg: false, provider: undefined }
     ];
     const customer = sampleCustomers[Math.floor(Math.random() * sampleCustomers.length)];
     const sampleAmounts = [4500, 8500, 14200, 26000, 39500];
     const amt = sampleAmounts[Math.floor(Math.random() * sampleAmounts.length)];
     const fakeOrderId = `PX-${Math.floor(10000 + Math.random() * 90000)}`;
+    const nowStr = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+
+    // Also add to orders array so admin can manage directly in Order Queue
+    const newSimulatedOrder: Order = {
+      id: fakeOrderId,
+      userId: customer.isReg ? `user-${Date.now().toString().slice(-4)}` : 'guest',
+      isRegisteredUser: customer.isReg,
+      userEmail: customer.email,
+      userProvider: customer.provider,
+      customerName: customer.name,
+      customerPhone: customer.phone,
+      customerEmail: customer.email,
+      deliveryCity: customer.city,
+      deliveryAddress: `${customer.city}, Commercial Center Plaza, 2nd Floor`,
+      deliveryType: 'Express Home Delivery',
+      items: [
+        {
+          product: products[0] || INITIAL_PRODUCTS[0],
+          quantity: 2,
+          calculatedPrice: amt
+        }
+      ],
+      subtotal: amt - 300,
+      shippingFee: 300,
+      totalAmount: amt,
+      paymentMethod: 'M-Pesa',
+      paymentReference: `QGH${Math.floor(100000 + Math.random() * 900000)}`,
+      paymentStatus: 'Paid',
+      orderStatus: 'Order Placed',
+      createdAt: nowStr,
+      estimatedDelivery: 'Tomorrow, 03:00 PM',
+      trackingHistory: [
+        {
+          status: 'Order Placed',
+          timestamp: nowStr,
+          completed: true,
+          description: 'Order placed & M-Pesa payment authorized successfully.'
+        },
+        {
+          status: 'Order Received by Admin',
+          timestamp: 'Processing',
+          completed: false,
+          description: 'Order acknowledged & assigned to Woodynat production team.'
+        },
+        {
+          status: 'Design Approved',
+          timestamp: 'Pending Review',
+          completed: false,
+          description: 'Design proofing & artwork vectorization approved.'
+        },
+        {
+          status: 'Quality Check',
+          timestamp: 'Queued',
+          completed: false,
+          description: 'Color inspection, print calibration & packaging check.'
+        },
+        {
+          status: 'Out for Delivery',
+          timestamp: 'Pending Dispatch',
+          completed: false,
+          description: 'Package handed over to dispatch courier rider.'
+        },
+        {
+          status: 'Delivered',
+          timestamp: 'Pending Arrival',
+          completed: false,
+          description: 'Delivered to customer or designated pick-up station.'
+        }
+      ]
+    };
+
+    saveOrderToFirestore(newSimulatedOrder);
 
     const notif: AdminNotification = {
       id: `notif-ord-${Date.now()}`,
       type: 'order_placed',
-      title: `New Customer Order Placed (#${fakeOrderId})`,
-      message: `${customer.name} just placed an order for custom print items totaling KSh ${amt.toLocaleString()} via M-Pesa.`,
+      title: `New Order from ${customer.isReg ? `Registered User (${customer.name})` : customer.name} (#${fakeOrderId})`,
+      message: `${customer.isReg ? '👤 Registered User' : 'Customer'} ${customer.name} placed an order for custom print items totaling KSh ${amt.toLocaleString()} via M-Pesa.`,
       timestamp: 'Just now',
       timeAgo: 'Just now',
       read: false,
@@ -1347,6 +1487,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         customerName: customer.name,
         customerPhone: customer.phone,
         customerEmail: customer.email,
+        isRegisteredUser: customer.isReg,
+        userId: newSimulatedOrder.userId,
+        userProvider: customer.provider,
         amount: amt,
         itemsCount: 2,
         itemsSummary: 'Roll-Up Banners (x2), Custom Embroidered Polo Shirts (x15)',
@@ -1360,7 +1503,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     setAdminNotifications((prev) => [notif, ...prev]);
     playNotificationSound('order');
-    showToast('🔔 Live Incoming Order Alert!', `${customer.name} placed order #${fakeOrderId} (KSh ${amt.toLocaleString()}). Accept in Notification Panel!`);
+    showToast('🔔 Live Incoming Order Alert!', `${customer.isReg ? '👤 [Registered Client] ' : ''}${customer.name} placed order #${fakeOrderId} (KSh ${amt.toLocaleString()}). Accept in Order Queue or Notification Panel!`);
   };
 
   const simulateIncomingInquiryNotification = () => {
@@ -1718,6 +1861,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         unreadNotificationsCount,
         markNotificationAsRead,
         markAllNotificationsAsRead,
+        acceptOrderDirectly,
         acceptOrderFromNotification,
         acceptInquiryFromNotification,
         declineNotification,

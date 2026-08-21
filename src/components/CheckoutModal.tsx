@@ -16,16 +16,25 @@ import {
 import { Order } from '../types';
 
 export const CheckoutModal: React.FC = () => {
-  const { cart, activeModal, setActiveModal, createOrder, showToast, wpSettings } = useApp();
+  const { cart, activeModal, setActiveModal, createOrder, showToast, wpSettings, currentUser } = useApp();
 
   const [step, setStep] = useState<'details' | 'payment' | 'stk-push' | 'confirmed'>('details');
-  const [customerName, setCustomerName] = useState('Kiprono M.');
-  const [customerPhone, setCustomerPhone] = useState(wpSettings?.paybillAccount || '0797939199');
-  const [customerEmail, setCustomerEmail] = useState('customer@gmail.com');
+  const [customerName, setCustomerName] = useState(currentUser?.name || 'Kiprono M.');
+  const [customerPhone, setCustomerPhone] = useState(currentUser?.phone || wpSettings?.paybillAccount || '0797939199');
+  const [customerEmail, setCustomerEmail] = useState(currentUser?.email || 'customer@gmail.com');
   const [deliveryCity, setDeliveryCity] = useState(wpSettings?.companyCity || 'Nairobi');
   const [deliveryAddress, setDeliveryAddress] = useState(wpSettings?.companyAddress || 'Temple Road Gatkim Complex Building fourth floor Wing B Room 4B1');
   const [deliveryType, setDeliveryType] = useState<'Pickup Station' | 'Express Home Delivery'>('Express Home Delivery');
   const [paymentMethod, setPaymentMethod] = useState<'M-Pesa'>('M-Pesa');
+
+  // Sync if currentUser logs in
+  React.useEffect(() => {
+    if (currentUser) {
+      if (currentUser.name) setCustomerName(currentUser.name);
+      if (currentUser.phone) setCustomerPhone(currentUser.phone);
+      if (currentUser.email) setCustomerEmail(currentUser.email);
+    }
+  }, [currentUser]);
 
   // M-Pesa STK push live state
   const [stkStatus, setStkStatus] = useState<'sending' | 'prompt' | 'success' | 'failed'>('sending');
@@ -202,6 +211,11 @@ export const CheckoutModal: React.FC = () => {
 
   const finalizeOrder = (mpesaReceipt?: string) => {
     return createOrder({
+      userId: currentUser?.id,
+      isRegisteredUser: !!currentUser,
+      userEmail: currentUser?.email || customerEmail,
+      userAvatar: currentUser?.avatar,
+      userProvider: currentUser?.provider,
       customerName,
       customerPhone,
       customerEmail,
@@ -243,6 +257,34 @@ export const CheckoutModal: React.FC = () => {
 
         {/* Modal Body */}
         <div className="p-6">
+
+          {/* Registered User Identity Pill if Logged In */}
+          {currentUser && (
+            <div className="mb-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <img
+                  src={currentUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+                  alt={currentUser.name}
+                  className="w-8 h-8 rounded-full border border-blue-400 object-cover"
+                />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-black text-slate-900">{currentUser.name}</span>
+                    <span className="bg-blue-600 text-white text-[9px] font-black uppercase px-1.5 py-0.2 rounded-full">
+                      ✓ Registered Client
+                    </span>
+                    {currentUser.provider === 'google' && (
+                      <span className="text-[9px] bg-red-100 text-red-700 font-bold px-1 rounded">Gmail</span>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-slate-500 font-mono">{currentUser.email} • {currentUser.phone}</span>
+                </div>
+              </div>
+              <span className="text-[10px] text-blue-700 font-extrabold bg-white px-2 py-1 rounded-lg border border-blue-200 shadow-2xs">
+                Auto-Synced to Account
+              </span>
+            </div>
+          )}
           
           {/* STEP 1 & 2: Details & Payment Method */}
           {(step === 'details' || step === 'payment') && (
