@@ -51,6 +51,7 @@ export const AdminNotificationPanel: React.FC<AdminNotificationPanelProps> = ({ 
     clearAllNotifications,
     simulateIncomingOrderNotification,
     simulateIncomingInquiryNotification,
+    sendOrderConfirmationEmail,
     wpSettings,
     showToast
   } = useApp();
@@ -61,6 +62,7 @@ export const AdminNotificationPanel: React.FC<AdminNotificationPanelProps> = ({ 
   const [selectedNotifForModal, setSelectedNotifForModal] = useState<AdminNotification | null>(null);
   const [customActionNote, setCustomActionNote] = useState('');
   const [isAcceptingId, setIsAcceptingId] = useState<string | null>(null);
+  const [isSendingEmailId, setIsSendingEmailId] = useState<string | null>(null);
 
   // Filter logic
   const filteredNotifications = adminNotifications.filter((n) => {
@@ -118,6 +120,44 @@ export const AdminNotificationPanel: React.FC<AdminNotificationPanelProps> = ({ 
       acceptInquiryFromNotification(selectedNotifForModal.id, selectedNotifForModal.referenceId, customActionNote);
     }
     setSelectedNotifForModal(null);
+  };
+
+  const handleQuickSendEmail = async (notif: AdminNotification) => {
+    const targetEmail = notif.referenceData?.customerEmail;
+    if (!targetEmail || !targetEmail.includes('@')) {
+      showToast('Missing Email ⚠️', 'No valid email address found for this customer.', 'warning');
+      return;
+    }
+
+    setIsSendingEmailId(notif.id);
+    try {
+      if (notif.type === 'order_placed' && notif.referenceId) {
+        const res = await sendOrderConfirmationEmail(notif.referenceId, targetEmail);
+        if (res.success) {
+          showToast('Official Receipt Emailed! ✉️', `Confirmation sent to ${targetEmail} from woodynatdesigners12@gmail.com`);
+        }
+      } else {
+        const res = await fetch('/api/email/send-test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recipientEmail: targetEmail,
+            subject: `Woodynat Designers - Follow-up on Inquiry regarding ${notif.referenceData.topic || 'Commercial Printing'}`,
+            message: `Dear ${notif.referenceData.customerName},\n\nThank you for reaching out to Woodynat Designers Limited. Our design and pre-press desk at Nairobi CBD (Gatkim Complex 4th Floor) has reviewed your inquiry. We have reserved production time for your project.\n\nPlease feel free to reply directly or WhatsApp 0797939199 to finalize dimensions and artwork.\n\nWarm regards,\nWoodynat Designers Limited`
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Gmail Follow-up Sent! ✉️', `Follow-up email delivered to ${targetEmail} from woodynatdesigners12@gmail.com`);
+        } else {
+          showToast('Email Dispatch', data.error || 'Follow-up email dispatched.', 'info');
+        }
+      }
+    } catch (err: any) {
+      showToast('Email Error', err.message || 'Failed to dispatch email.', 'error');
+    } finally {
+      setIsSendingEmailId(null);
+    }
   };
 
   return (
@@ -467,7 +507,7 @@ export const AdminNotificationPanel: React.FC<AdminNotificationPanelProps> = ({ 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white p-3.5 rounded-xl border border-slate-200 text-xs">
                   
                   {/* Customer Identity */}
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Customer Details</span>
                     <div className="font-extrabold text-slate-900 flex items-center gap-1">
                       <span>{notif.referenceData.customerName}</span>
@@ -477,17 +517,23 @@ export const AdminNotificationPanel: React.FC<AdminNotificationPanelProps> = ({ 
                         </span>
                       )}
                     </div>
-                    <div className="text-slate-600 flex items-center gap-1 text-[11px]">
-                      <Phone className="w-3 h-3 text-slate-400" />
-                      <a href={`tel:${notif.referenceData.customerPhone}`} className="hover:underline font-mono">
-                        {notif.referenceData.customerPhone}
-                      </a>
+                    <div className="text-slate-700 flex items-center gap-1 text-[11px]">
+                      <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-200 font-mono font-bold">
+                        <Smartphone className="w-3 h-3 text-emerald-600" />
+                        <a href={`tel:${notif.referenceData.customerPhone}`} className="hover:underline">
+                          {notif.referenceData.customerPhone}
+                        </a>
+                      </span>
                     </div>
-                    {notif.referenceData.customerEmail && (
-                      <div className="text-slate-500 flex items-center gap-1 text-[11px] truncate">
-                        <Mail className="w-3 h-3 text-slate-400 shrink-0" />
-                        <span className="truncate">{notif.referenceData.customerEmail}</span>
+                    {notif.referenceData.customerEmail ? (
+                      <div className="text-slate-700 flex items-center gap-1 text-[11px] truncate">
+                        <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-800 px-1.5 py-0.5 rounded border border-blue-200 font-medium truncate max-w-[200px]" title={notif.referenceData.customerEmail}>
+                          <Mail className="w-3 h-3 text-blue-600 shrink-0" />
+                          <span className="truncate">{notif.referenceData.customerEmail}</span>
+                        </span>
                       </div>
+                    ) : (
+                      <div className="text-slate-400 text-[10px] italic">No Gmail provided</div>
                     )}
                   </div>
 
@@ -612,7 +658,7 @@ export const AdminNotificationPanel: React.FC<AdminNotificationPanelProps> = ({ 
                     )}
                   </div>
 
-                  {/* Right Action Tools: WhatsApp & Direct Jump */}
+                  {/* Right Action Tools: WhatsApp, Send Gmail & Direct Jump */}
                   <div className="flex items-center gap-2 flex-wrap self-end sm:self-auto">
                     
                     {/* 1-Click WhatsApp Pre-Filled Reply */}
@@ -624,13 +670,33 @@ export const AdminNotificationPanel: React.FC<AdminNotificationPanelProps> = ({ 
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                       title="Send WhatsApp confirmation to client"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <MessageCircle className="w-3.5 h-3.5" />
                       <span>WhatsApp Client</span>
                     </a>
+
+                    {/* 1-Click Send Gmail */}
+                    {notif.referenceData.customerEmail && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleQuickSendEmail(notif);
+                        }}
+                        disabled={isSendingEmailId === notif.id}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                        title={`Send official confirmation from woodynatdesigners12@gmail.com to ${notif.referenceData.customerEmail}`}
+                      >
+                        {isSendingEmailId === notif.id ? (
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Mail className="w-3.5 h-3.5" />
+                        )}
+                        <span>Send Gmail</span>
+                      </button>
+                    )}
 
                     {/* Jump to specific section */}
                     {onNavigateTab && (

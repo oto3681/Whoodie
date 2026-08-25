@@ -102,8 +102,24 @@ export const CheckoutModal: React.FC = () => {
   const handleStartPayment = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!customerName || !customerPhone || !customerAddressValid()) {
-      showToast('Missing Details', 'Please complete name, phone, and delivery address.', 'error');
+    if (!customerName || customerName.trim().length < 2) {
+      showToast('Missing Name', 'Please enter your full name.', 'error');
+      return;
+    }
+
+    const cleanPhone = customerPhone.replace(/[^0-9]/g, '');
+    if (!customerPhone || cleanPhone.length < 9) {
+      showToast('Invalid Mobile Number', 'Please enter a valid 10-digit mobile number for M-Pesa and SMS dispatch alerts.', 'error');
+      return;
+    }
+
+    if (!customerEmail || !customerEmail.includes('@') || !customerEmail.includes('.')) {
+      showToast('Invalid Gmail / Email', 'Please provide a valid Gmail or email address to receive your official order receipt and artwork proofs.', 'error');
+      return;
+    }
+
+    if (!customerAddressValid()) {
+      showToast('Missing Address', 'Please provide your delivery address or pick-up location.', 'error');
       return;
     }
 
@@ -305,41 +321,71 @@ export const CheckoutModal: React.FC = () => {
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">Full Name:</label>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-bold text-slate-700 block mb-1">
+                      Full Name / Contact Person: <span className="text-red-500">*</span>
+                    </label>
                     <input
                       type="text"
                       required
+                      placeholder="e.g. Kiprono M. / Jane Doe"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     />
                   </div>
 
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">M-Pesa / Phone Number:</label>
+                  {/* Mobile Phone Number */}
+                  <div className="bg-emerald-50/50 border border-emerald-200/80 rounded-xl p-2.5 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-extrabold text-emerald-950 flex items-center gap-1.5">
+                        <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Mobile Phone (M-Pesa):</span>
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded">
+                        STK & SMS Alerts
+                      </span>
+                    </div>
                     <input
                       type="tel"
                       required
-                      placeholder="07XX XXX XXX"
+                      placeholder="07XX XXX XXX or 01XX XXX XXX"
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                      className="w-full bg-white border border-emerald-300 rounded-lg p-2 text-xs text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono font-bold"
                     />
+                    <p className="text-[10px] text-emerald-800 font-medium">
+                      Used for M-Pesa STK push PIN prompt & instant delivery dispatch updates.
+                    </p>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">Email Address:</label>
+                  {/* Gmail / Email Address */}
+                  <div className="bg-blue-50/50 border border-blue-200/80 rounded-xl p-2.5 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-extrabold text-blue-950 flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Gmail / Email Address:</span>
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded">
+                        e-Receipt & Proof
+                      </span>
+                    </div>
                     <input
                       type="email"
                       required
+                      placeholder="e.g. yourname@gmail.com"
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="w-full bg-white border border-blue-300 rounded-lg p-2 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium"
                     />
+                    <p className="text-[10px] text-blue-800 font-medium">
+                      Itemized e-receipt & artwork proof sent from <strong className="font-semibold">woodynatdesigners12@gmail.com</strong>.
+                    </p>
                   </div>
 
-                  <div>
+                  <div className="sm:col-span-2">
                     <label className="text-xs font-bold text-slate-700 block mb-1">County / Delivery City:</label>
                     <select
                       value={deliveryCity}

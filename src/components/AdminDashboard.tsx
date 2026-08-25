@@ -63,7 +63,7 @@ import {
   AlertCircle,
   BadgeCheck
 } from 'lucide-react';
-import { Product, OrderStatus, ProductCategory } from '../types';
+import { Product, Order, OrderStatus, ProductCategory } from '../types';
 
 export const AdminDashboard: React.FC = () => {
   const { 
@@ -84,11 +84,22 @@ export const AdminDashboard: React.FC = () => {
     updateWpSettings, 
     categories,
     zohoQuotations,
+    sendOrderConfirmationEmail,
+    sendOrderStatusUpdateEmail,
     showToast
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'notifications' | 'mpesa' | 'zoho' | 'kpis' | 'orders' | 'whatsapp' | 'bulk' | 'catalogue' | 'products' | 'wordpress'>('orders');
   const [showLogoModal, setShowLogoModal] = useState(false);
+
+  // Admin Email to Customer State
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailModalOrder, setEmailModalOrder] = useState<Order | null>(null);
+  const [emailRecipient, setEmailRecipient] = useState('');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailCustomNote, setEmailCustomNote] = useState('');
+  const [emailType, setEmailType] = useState<'confirmation' | 'status_update' | 'custom_message'>('confirmation');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   // Product Editing state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -273,6 +284,64 @@ export const AdminDashboard: React.FC = () => {
       setIsSendingPrompt(false);
       setShowPaymentPromptModal(false);
       showToast('Payment Prompt Sent 📲', `M-Pesa prompt of KSh ${promptAmount.toLocaleString()} sent to ${promptPhone}.`);
+    }
+  };
+
+  const handleOpenEmailModal = (ord: Order) => {
+    setEmailModalOrder(ord);
+    setEmailRecipient(ord.emailConfirmationRecipient || ord.userEmail || ord.customerEmail || '');
+    setEmailSubject(`Official Order Confirmation #${ord.id} - Woodynat Designers Limited`);
+    setEmailCustomNote(`Dear ${ord.customerName},\n\nWe have received and acknowledged your order #${ord.id}. Your order has been queued for production at our Nairobi CBD workshop (Gatkim Complex 4th Floor Room 4B1). Attached is your itemized digital order confirmation.\n\nBest regards,\nWoodynat Designers Limited\n0797939199 / woodynatdesigners12@gmail.com`);
+    setEmailType('confirmation');
+    setShowEmailModal(true);
+  };
+
+  const handleDispatchAdminEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailModalOrder) return;
+    if (!emailRecipient || !emailRecipient.includes('@')) {
+      showToast('Invalid Email', 'Please provide a valid recipient email address (e.g. customer Gmail).', 'error');
+      return;
+    }
+
+    setIsSendingEmail(true);
+    try {
+      if (emailType === 'confirmation') {
+        const res = await sendOrderConfirmationEmail(emailModalOrder.id, emailRecipient.trim(), emailCustomNote.trim());
+        setIsSendingEmail(false);
+        if (res.success) {
+          setShowEmailModal(false);
+        }
+      } else if (emailType === 'status_update') {
+        const res = await sendOrderStatusUpdateEmail(emailModalOrder.id, emailModalOrder.orderStatus, emailRecipient.trim(), emailCustomNote.trim());
+        setIsSendingEmail(false);
+        if (res.success) {
+          showToast('Status Update Emailed! ✉️', `Sent "${emailModalOrder.orderStatus}" notice to ${emailRecipient.trim()} from woodynatdesigners12@gmail.com`);
+          setShowEmailModal(false);
+        }
+      } else {
+        // Custom message
+        const res = await fetch('/api/email/send-test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recipientEmail: emailRecipient.trim(),
+            subject: emailSubject.trim() || `Notice regarding Order #${emailModalOrder.id} - Woodynat Designers`,
+            message: emailCustomNote.trim()
+          })
+        });
+        const data = await res.json();
+        setIsSendingEmail(false);
+        if (data.success) {
+          showToast('Gmail Dispatched! ✉️', `Message sent to ${emailRecipient.trim()} from woodynatdesigners12@gmail.com`);
+          setShowEmailModal(false);
+        } else {
+          showToast('Email Error', data.error || 'Failed to dispatch email.', 'error');
+        }
+      }
+    } catch (err: any) {
+      setIsSendingEmail(false);
+      showToast('Email Error', err.message || 'Failed to send email.', 'error');
     }
   };
 
@@ -805,9 +874,21 @@ export const AdminDashboard: React.FC = () => {
 
                       <div className="text-xs text-slate-600 flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-slate-800">Customer: {ord.customerName}</span>
-                        <span>• Phone: <span className="font-mono font-semibold">{ord.customerPhone}</span></span>
+                        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-lg border border-emerald-200 font-mono font-bold text-[11px]">
+                          <Smartphone className="w-3 h-3 text-emerald-600" />
+                          <span>{ord.customerPhone}</span>
+                        </span>
                         {(ord.userEmail || ord.customerEmail) && (
-                          <span>• Email: <span className="font-semibold text-blue-600">{ord.userEmail || ord.customerEmail}</span></span>
+                          <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-800 px-2 py-0.5 rounded-lg border border-blue-200 font-semibold text-[11px]">
+                            <Mail className="w-3 h-3 text-blue-600" />
+                            <span>{ord.userEmail || ord.customerEmail}</span>
+                          </span>
+                        )}
+                        {ord.emailConfirmationSent && (
+                          <span className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-indigo-200" title={`Receipt dispatched at ${ord.emailConfirmationSentAt || 'N/A'}`}>
+                            <Check className="w-2.5 h-2.5 text-indigo-600" />
+                            <span>Gmail Sent</span>
+                          </span>
                         )}
                         <span>• Placed: {ord.createdAt}</span>
                       </div>
@@ -900,6 +981,15 @@ export const AdminDashboard: React.FC = () => {
                         className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                       >
                         <Smartphone className="w-3.5 h-3.5" /> Prompt M-Pesa
+                      </button>
+
+                      <button
+                        onClick={() => handleOpenEmailModal(ord)}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                        title="Send official order confirmation or status alert to client's Gmail"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                        <span>Send Gmail</span>
                       </button>
 
                       <a
@@ -2415,6 +2505,186 @@ export const AdminDashboard: React.FC = () => {
                     <>
                       <Smartphone className="w-4 h-4" />
                       <span>Send STK Push Prompt</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* Admin Email to Customer Dispatcher Modal */}
+      {showEmailModal && emailModalOrder && (
+        <div className="fixed inset-0 bg-slate-900/75 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 border border-slate-200">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-start border-b border-slate-100 pb-3.5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-700 font-black shadow-xs">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-slate-900 text-base">Send Gmail to Customer</h4>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Dispatch official email alert for <span className="font-bold text-slate-800">Order #{emailModalOrder.id}</span>
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowEmailModal(false)}
+                className="text-slate-400 hover:text-slate-700 font-bold p-1 rounded-xl text-lg cursor-pointer transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Official Sender Tag */}
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="font-extrabold text-slate-700">Official Sender:</span>
+                <span className="font-mono font-bold text-indigo-700">woodynatdesigners12@gmail.com</span>
+              </div>
+              <span className="text-[10px] bg-indigo-100 text-indigo-800 font-black px-2 py-0.5 rounded-md">
+                Verified Gmail
+              </span>
+            </div>
+
+            <form onSubmit={handleDispatchAdminEmail} className="space-y-4">
+              
+              {/* Recipient Gmail */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Recipient Gmail / Email Address: <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <input
+                    type="email"
+                    required
+                    value={emailRecipient}
+                    onChange={(e) => setEmailRecipient(e.target.value)}
+                    placeholder="customer@gmail.com"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 pl-10 pr-3 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Customer: <strong className="text-slate-800">{emailModalOrder.customerName}</strong> ({emailModalOrder.customerPhone})
+                </p>
+              </div>
+
+              {/* Template / Purpose Selector */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                  Email Content Type:
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmailType('confirmation');
+                      setEmailSubject(`Official Order Confirmation #${emailModalOrder.id} - Woodynat Designers Limited`);
+                    }}
+                    className={`p-2 rounded-xl text-left border text-[11px] font-bold transition-all cursor-pointer ${
+                      emailType === 'confirmation'
+                        ? 'bg-indigo-50 border-indigo-500 text-indigo-900 ring-2 ring-indigo-200'
+                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <div className="font-extrabold">1. Order Receipt</div>
+                    <div className="text-[10px] text-slate-500 font-normal">Full itemized invoice</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmailType('status_update');
+                      setEmailSubject(`Order #${emailModalOrder.id} Status: "${emailModalOrder.orderStatus}" - Woodynat Designers`);
+                    }}
+                    className={`p-2 rounded-xl text-left border text-[11px] font-bold transition-all cursor-pointer ${
+                      emailType === 'status_update'
+                        ? 'bg-indigo-50 border-indigo-500 text-indigo-900 ring-2 ring-indigo-200'
+                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <div className="font-extrabold">2. Status Alert</div>
+                    <div className="text-[10px] text-slate-500 font-normal">Stage: {emailModalOrder.orderStatus}</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmailType('custom_message');
+                      setEmailSubject(`Production & Artwork Notice for Order #${emailModalOrder.id}`);
+                    }}
+                    className={`p-2 rounded-xl text-left border text-[11px] font-bold transition-all cursor-pointer ${
+                      emailType === 'custom_message'
+                        ? 'bg-indigo-50 border-indigo-500 text-indigo-900 ring-2 ring-indigo-200'
+                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <div className="font-extrabold">3. Custom Notice</div>
+                    <div className="text-[10px] text-slate-500 font-normal">Design proof note</div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Subject Line */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Email Subject Line:
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              {/* Custom Admin Note / Message */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Message / Workshop Instructions / Proof Notes:
+                </label>
+                <textarea
+                  rows={4}
+                  value={emailCustomNote}
+                  onChange={(e) => setEmailCustomNote(e.target.value)}
+                  placeholder="Add custom proof approval link, workshop directions, or delivery remarks..."
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEmailModal(false)}
+                  className="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs cursor-pointer transition-colors"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSendingEmail}
+                  className="w-2/3 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all disabled:opacity-50 active:scale-98"
+                >
+                  {isSendingEmail ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Dispatching Email...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>Send via woodynatdesigners12@gmail.com</span>
                     </>
                   )}
                 </button>
