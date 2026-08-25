@@ -47,14 +47,14 @@ export const Logo: React.FC<LogoProps> = ({
     }
   };
 
-  // Height mappings based on size prop for prominent, crystal-clear visibility
+  // Fixed height mappings based on size prop (non-responsive, uniform sizing across all screens)
   const logoHeightClass =
-    size === 'sm' ? 'h-10 sm:h-12' :
-    size === 'md' ? 'h-16 sm:h-20' :
-    size === 'lg' ? 'h-24 sm:h-28' : 'h-28 sm:h-36 md:h-44';
+    size === 'sm' ? 'h-10' :
+    size === 'md' ? 'h-16' :
+    size === 'lg' ? 'h-24' : 'h-32';
 
   // For footer / dark backgrounds (variant === 'white')
-  const darkBgWrapper = variant === 'white' ? 'bg-white p-1.5 sm:p-2 rounded-xl shadow-md border border-slate-100' : '';
+  const darkBgWrapper = variant === 'white' ? 'bg-white p-2 rounded-xl shadow-md border border-slate-100' : '';
 
   return (
     <div className={`inline-flex items-center justify-center shrink-0 select-none ${darkBgWrapper} ${className}`}>

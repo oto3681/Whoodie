@@ -96,7 +96,7 @@ export const Header: React.FC = () => {
               className="flex flex-col items-center justify-center text-center group cursor-pointer focus:outline-none"
               title="WoodyNat Designers Limited - Your Reliable Partner in Design and Branding"
             >
-              <Logo variant="full" size="xl" className="mx-auto scale-105 sm:scale-110 transition-transform hover:scale-115" />
+              <Logo variant="full" size="xl" className="mx-auto transition-transform hover:scale-105" />
             </button>
           </div>
 
