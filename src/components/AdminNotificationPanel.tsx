@@ -49,8 +49,6 @@ export const AdminNotificationPanel: React.FC<AdminNotificationPanelProps> = ({ 
     declineNotification,
     deleteNotification,
     clearAllNotifications,
-    simulateIncomingOrderNotification,
-    simulateIncomingInquiryNotification,
     sendOrderConfirmationEmail,
     wpSettings,
     showToast
@@ -184,31 +182,15 @@ export const AdminNotificationPanel: React.FC<AdminNotificationPanelProps> = ({ 
             </p>
           </div>
 
-          {/* Test Simulation Controls */}
-          <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row gap-2 shrink-0">
-            <button
-              onClick={() => {
-                if (soundEnabled) playNotificationSound('order');
-                simulateIncomingOrderNotification();
-              }}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer border border-emerald-400/40"
-              title="Simulate a real customer placing a new print order"
-            >
-              <ShoppingBag className="w-4 h-4 text-emerald-200" />
-              <span>+ Simulate Incoming Order</span>
-            </button>
-
-            <button
-              onClick={() => {
-                if (soundEnabled) playNotificationSound('inquiry');
-                simulateIncomingInquiryNotification();
-              }}
-              className="bg-blue-600 hover:bg-blue-500 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer border border-blue-400/40"
-              title="Simulate a corporate lead submitting a custom quote inquiry"
-            >
-              <FileText className="w-4 h-4 text-blue-200" />
-              <span>+ Simulate Quote Inquiry</span>
-            </button>
+          {/* Genuine Alerts Indicator */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex items-center gap-2.5">
+              <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+              <div>
+                <span className="text-xs font-black text-white block">Genuine Registered Orders Only</span>
+                <span className="text-[10px] text-slate-400">Order automation disabled • Live real client alerts</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -380,26 +362,12 @@ export const AdminNotificationPanel: React.FC<AdminNotificationPanelProps> = ({ 
             <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto text-slate-400">
               <Bell className="w-7 h-7" />
             </div>
-            <h4 className="font-extrabold text-slate-800 text-base">No Notifications Found</h4>
+            <h4 className="font-extrabold text-slate-800 text-base">No Pending Notifications</h4>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
               {searchQuery 
                 ? 'No alerts match your search query. Try clearing the search keyword.' 
-                : 'There are currently no notifications matching this filter category. You can simulate incoming orders or quote inquiries above to test the workflow.'}
+                : 'All clear! Real-time alerts will appear automatically here as soon as a registered client places a new order or submits a quote inquiry.'}
             </p>
-            <div className="flex justify-center gap-2 pt-2">
-              <button
-                onClick={simulateIncomingOrderNotification}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" /> Simulate Test Order
-              </button>
-              <button
-                onClick={simulateIncomingInquiryNotification}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" /> Simulate Test Inquiry
-              </button>
-            </div>
           </div>
         ) : (
           filteredNotifications.map((notif) => {

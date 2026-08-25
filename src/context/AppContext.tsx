@@ -198,6 +198,7 @@ interface AppContextType {
   declineNotification: (notificationId: string, reason?: string) => void;
   deleteNotification: (notificationId: string) => void;
   clearAllNotifications: () => void;
+  clearAllOrders: () => void;
   simulateIncomingOrderNotification: () => void;
   simulateIncomingInquiryNotification: () => void;
 
@@ -253,7 +254,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   });
 
   const [orders, setOrders] = useState<Order[]>(() => {
-    return safeGetLocalStorage<Order[]>('pixelprint_orders', MOCK_ORDERS);
+    const saved = safeGetLocalStorage<Order[]>('pixelprint_orders', []);
+    return Array.isArray(saved) ? saved.filter((o) => !o.id.startsWith('PX-982') && !o.id.startsWith('PX-771') && !o.id.startsWith('PX-883')) : [];
   });
 
   const [inquiries, setInquiries] = useState<CustomerInquiry[]>(() => {
@@ -313,7 +315,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Admin Notification Center State
   const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>(() => {
-    return safeGetLocalStorage<AdminNotification[]>('pixelprint_admin_notifications', INITIAL_ADMIN_NOTIFICATIONS);
+    const saved = safeGetLocalStorage<AdminNotification[]>('pixelprint_admin_notifications', []);
+    return Array.isArray(saved) ? saved.filter((n) => !n.id.startsWith('notif-ord-101') && !n.id.startsWith('notif-inq-102')) : [];
   });
 
   // Zoho Quotations & Invoice Engine State
@@ -587,8 +590,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     showToast('Logged Out', 'You have been safely logged out.', 'info');
   };
 
-  // Orders
+  // Orders (Genuine registered user orders only)
   const createOrder = (orderData: Omit<Order, 'id' | 'createdAt' | 'trackingHistory' | 'orderStatus' | 'paymentStatus'>): Order => {
+    if (!currentUser) {
+      showToast('Registration Required 🔒', 'Only registered users are permitted to place orders. Please sign in or create an account.', 'error');
+      throw new Error('Only registered users are permitted to place orders.');
+    }
+
     const randomNum = Math.floor(10000 + Math.random() * 90000);
     const id = `PX-${randomNum}`;
     const nowStr = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
@@ -632,19 +640,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     ];
 
-    const isRegistered = orderData.isRegisteredUser !== undefined 
-      ? orderData.isRegisteredUser 
-      : (currentUser ? currentUser.role !== 'admin' : false);
-    const resolvedUserId = orderData.userId || currentUser?.id || (isRegistered ? 'user-reg-01' : 'guest');
-    const resolvedUserEmail = orderData.userEmail || currentUser?.email || orderData.customerEmail;
-    const resolvedUserAvatar = orderData.userAvatar || currentUser?.avatar;
-    const resolvedUserProvider = orderData.userProvider || currentUser?.provider;
+    const isRegistered = true;
+    const resolvedUserId = currentUser.id;
+    const resolvedUserEmail = currentUser.email || orderData.customerEmail;
+    const resolvedUserAvatar = currentUser.avatar;
+    const resolvedUserProvider = currentUser.provider;
 
     const newOrder: Order = {
       ...orderData,
       id,
       userId: resolvedUserId,
-      isRegisteredUser: isRegistered,
+      isRegisteredUser: true,
       userEmail: resolvedUserEmail,
       userAvatar: resolvedUserAvatar,
       userProvider: resolvedUserProvider,
@@ -1463,121 +1469,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return { success: result.success, message: result.error };
   };
 
+  const clearAllOrders = () => {
+    setOrders([]);
+    safeSetLocalStorage('pixelprint_orders', []);
+    showToast('Orders Cleared ✨', 'Order list cleared. Admin will receive only genuine orders placed by registered users.', 'info');
+  };
+
   const simulateIncomingOrderNotification = () => {
-    const sampleCustomers = [
-      { name: 'Mercy Achieng', phone: '0711445566', email: 'm.achieng@gmail.com', city: 'Nairobi Westlands', isReg: true, provider: 'google' as const },
-      { name: 'Peter Karanja', phone: '0728990011', email: 'peter.k@gmail.com', city: 'Nairobi CBD', isReg: true, provider: 'email' as const },
-      { name: 'Eunice Wangari', phone: '0703887766', email: 'eunice.w@gmail.com', city: 'Upperhill Nairobi', isReg: true, provider: 'google' as const },
-      { name: 'Collins Otieno', phone: '0799332211', email: 'collins.o@gmail.com', city: 'Kilimani Nairobi', isReg: false, provider: undefined }
-    ];
-    const customer = sampleCustomers[Math.floor(Math.random() * sampleCustomers.length)];
-    const sampleAmounts = [4500, 8500, 14200, 26000, 39500];
-    const amt = sampleAmounts[Math.floor(Math.random() * sampleAmounts.length)];
-    const fakeOrderId = `PX-${Math.floor(10000 + Math.random() * 90000)}`;
-    const nowStr = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
-
-    // Also add to orders array so admin can manage directly in Order Queue
-    const newSimulatedOrder: Order = {
-      id: fakeOrderId,
-      userId: customer.isReg ? `user-${Date.now().toString().slice(-4)}` : 'guest',
-      isRegisteredUser: customer.isReg,
-      userEmail: customer.email,
-      userProvider: customer.provider,
-      customerName: customer.name,
-      customerPhone: customer.phone,
-      customerEmail: customer.email,
-      deliveryCity: customer.city,
-      deliveryAddress: `${customer.city}, Commercial Center Plaza, 2nd Floor`,
-      deliveryType: 'Express Home Delivery',
-      items: [
-        {
-          product: products[0] || INITIAL_PRODUCTS[0],
-          quantity: 2,
-          calculatedPrice: amt
-        }
-      ],
-      subtotal: amt - 300,
-      shippingFee: 300,
-      totalAmount: amt,
-      paymentMethod: 'M-Pesa',
-      paymentReference: `QGH${Math.floor(100000 + Math.random() * 900000)}`,
-      paymentStatus: 'Paid',
-      orderStatus: 'Order Placed',
-      createdAt: nowStr,
-      estimatedDelivery: 'Tomorrow, 03:00 PM',
-      trackingHistory: [
-        {
-          status: 'Order Placed',
-          timestamp: nowStr,
-          completed: true,
-          description: 'Order placed & M-Pesa payment authorized successfully.'
-        },
-        {
-          status: 'Order Received by Admin',
-          timestamp: 'Processing',
-          completed: false,
-          description: 'Order acknowledged & assigned to Woodynat production team.'
-        },
-        {
-          status: 'Design Approved',
-          timestamp: 'Pending Review',
-          completed: false,
-          description: 'Design proofing & artwork vectorization approved.'
-        },
-        {
-          status: 'Quality Check',
-          timestamp: 'Queued',
-          completed: false,
-          description: 'Color inspection, print calibration & packaging check.'
-        },
-        {
-          status: 'Out for Delivery',
-          timestamp: 'Pending Dispatch',
-          completed: false,
-          description: 'Package handed over to dispatch courier rider.'
-        },
-        {
-          status: 'Delivered',
-          timestamp: 'Pending Arrival',
-          completed: false,
-          description: 'Delivered to customer or designated pick-up station.'
-        }
-      ]
-    };
-
-    saveOrderToFirestore(newSimulatedOrder);
-
-    const notif: AdminNotification = {
-      id: `notif-ord-${Date.now()}`,
-      type: 'order_placed',
-      title: `New Order from ${customer.isReg ? `Registered User (${customer.name})` : customer.name} (#${fakeOrderId})`,
-      message: `${customer.isReg ? '👤 Registered User' : 'Customer'} ${customer.name} placed an order for custom print items totaling KSh ${amt.toLocaleString()} via M-Pesa.`,
-      timestamp: 'Just now',
-      timeAgo: 'Just now',
-      read: false,
-      status: 'pending',
-      referenceId: fakeOrderId,
-      referenceData: {
-        customerName: customer.name,
-        customerPhone: customer.phone,
-        customerEmail: customer.email,
-        isRegisteredUser: customer.isReg,
-        userId: newSimulatedOrder.userId,
-        userProvider: customer.provider,
-        amount: amt,
-        itemsCount: 2,
-        itemsSummary: 'Roll-Up Banners (x2), Custom Embroidered Polo Shirts (x15)',
-        deliveryCity: customer.city,
-        deliveryType: 'Express Home Delivery',
-        paymentMethod: 'M-Pesa',
-        paymentStatus: 'Paid',
-        notes: 'Customer uploaded vector PDF logo with corporate pantone codes.'
-      }
-    };
-
-    setAdminNotifications((prev) => [notif, ...prev]);
-    playNotificationSound('order');
-    showToast('🔔 Live Incoming Order Alert!', `${customer.isReg ? '👤 [Registered Client] ' : ''}${customer.name} placed order #${fakeOrderId} (KSh ${amt.toLocaleString()}). Accept in Order Queue or Notification Panel!`);
+    showToast('Real Orders Only 🛡️', 'Automated order simulation is disabled. Admin receives only genuine orders placed by registered customers.', 'info');
   };
 
   const simulateIncomingInquiryNotification = () => {
@@ -1947,6 +1846,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         declineNotification,
         deleteNotification,
         clearAllNotifications,
+        clearAllOrders,
         simulateIncomingOrderNotification,
         simulateIncomingInquiryNotification,
         zohoQuotations,

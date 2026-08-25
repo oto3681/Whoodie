@@ -113,48 +113,37 @@ export const deleteProductFromFirestore = async (productId: string): Promise<voi
   }
 };
 
-// Subscribe to Orders with bulletproof error suppression
+// Subscribe to Orders (real orders placed by registered users only)
 export const subscribeOrders = (onUpdate: (orders: Order[]) => void): Unsubscribe => {
   try {
     const colRef = collection(db, ORDERS_COL);
     return onSnapshot(
       colRef,
       (snapshot) => {
-        (async () => {
-          try {
-            if (snapshot.empty) {
-              for (const ord of MOCK_ORDERS) {
-                try {
-                  await setDoc(doc(db, ORDERS_COL, ord.id), ord);
-                } catch (e) {
-                  console.debug('Order seed bypass:', e);
-                }
-              }
-              onUpdate(MOCK_ORDERS);
-            } else {
-              const items: Order[] = [];
-              snapshot.forEach((docSnap) => {
-                items.push(docSnap.data() as Order);
-              });
-              items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-              onUpdate(items);
-            }
-          } catch (processErr) {
-            console.debug('Firestore orders processing caught:', processErr);
-            onUpdate(MOCK_ORDERS);
+        try {
+          if (snapshot.empty) {
+            onUpdate([]);
+          } else {
+            const items: Order[] = [];
+            snapshot.forEach((docSnap) => {
+              items.push(docSnap.data() as Order);
+            });
+            items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            onUpdate(items);
           }
-        })().catch((err) => {
-          console.debug('Firestore orders IIFE caught:', err);
-        });
+        } catch (processErr) {
+          console.debug('Firestore orders processing caught:', processErr);
+          onUpdate([]);
+        }
       },
       (error) => {
         console.debug('Firestore orders snapshot notice:', error);
-        onUpdate(MOCK_ORDERS);
+        onUpdate([]);
       }
     );
   } catch (err) {
     console.debug('Firestore subscribeOrders initialization error:', err);
-    onUpdate(MOCK_ORDERS);
+    onUpdate([]);
     return () => {};
   }
 };
