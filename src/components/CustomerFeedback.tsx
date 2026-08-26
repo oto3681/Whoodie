@@ -53,15 +53,15 @@ export const CustomerFeedback: React.FC = () => {
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       
       {/* Section Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10 pb-6 border-b border-slate-200">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10 pb-6 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200 inline-block mb-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800 inline-block mb-2">
             Verified Client Reviews
           </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             Customer Feedback & Trust Ratings
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl font-medium">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl font-medium">
             See real experiences, photos of completed print jobs, and reviews from companies, schools, event organizers, and families for Woodynat Designers Limited.
           </p>
         </div>
@@ -121,7 +121,7 @@ export const CustomerFeedback: React.FC = () => {
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               selectedCategory === cat
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
           >
             {cat}
@@ -134,20 +134,20 @@ export const CustomerFeedback: React.FC = () => {
         {filteredReviews.map((rev) => (
           <div 
             key={rev.id}
-            className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between space-y-4"
+            className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between space-y-4"
           >
             <div className="space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-sm text-slate-900">{rev.customerName}</h4>
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white">{rev.customerName}</h4>
                     {rev.verifiedBuyer && (
-                      <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Verified Buyer
+                      <span className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Verified Buyer
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-blue-600 font-bold mt-0.5">{rev.productName}</p>
+                  <p className="text-[11px] text-blue-600 dark:text-blue-400 font-bold mt-0.5">{rev.productName}</p>
                 </div>
 
                 <div className="flex text-amber-400">
@@ -157,13 +157,13 @@ export const CustomerFeedback: React.FC = () => {
                 </div>
               </div>
 
-              <p className="text-xs text-slate-700 leading-relaxed italic font-medium">
+              <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed italic font-medium">
                 "{rev.comment}"
               </p>
 
               {/* Uploaded Print Sample Photo if available */}
               {rev.photoUrl && (
-                <div className="rounded-xl overflow-hidden border border-slate-200 max-h-48 bg-slate-100">
+                <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 max-h-48 bg-slate-100 dark:bg-slate-800">
                   <img 
                     src={rev.photoUrl} 
                     alt="Finished Print Product" 
@@ -177,12 +177,12 @@ export const CustomerFeedback: React.FC = () => {
               )}
             </div>
 
-            <div className="flex items-center justify-between text-[11px] text-slate-400 border-t pt-3">
+            <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-800 pt-3">
               <span>{rev.date}</span>
 
               <button
                 onClick={() => likeReview(rev.id)}
-                className="flex items-center gap-1 text-slate-600 hover:text-blue-600 font-bold cursor-pointer bg-slate-50 hover:bg-blue-50 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors"
+                className="flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 font-bold cursor-pointer bg-slate-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors"
               >
                 <ThumbsUp className="w-3.5 h-3.5" />
                 <span>Helpful ({rev.likes})</span>
@@ -196,34 +196,34 @@ export const CustomerFeedback: React.FC = () => {
       {/* Leave a Review Modal */}
       {feedbackModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 border border-slate-200 space-y-4 animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center border-b pb-3">
-              <h3 className="font-extrabold text-base text-slate-900">Submit Your Review & Print Photo</h3>
-              <button onClick={() => setFeedbackModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl p-6 border border-slate-200 dark:border-slate-800 space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="font-extrabold text-base text-slate-900 dark:text-white">Submit Your Review & Print Photo</h3>
+              <button onClick={() => setFeedbackModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Your Name / Company:</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Your Name / Company:</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Kiprono M. (Apex Logistics)"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Product Category:</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Product Category:</label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value as ProductCategory)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 font-semibold focus:outline-none"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white font-semibold focus:outline-none"
                   >
                     {categories.filter(c => c !== 'All').map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
@@ -232,11 +232,11 @@ export const CustomerFeedback: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Star Rating:</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Star Rating:</label>
                   <select
                     value={rating}
                     onChange={(e) => setRating(parseInt(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 font-bold focus:outline-none"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none"
                   >
                     <option value={5}>⭐⭐⭐⭐⭐ (5 Stars)</option>
                     <option value={4}>⭐⭐⭐⭐ (4 Stars)</option>
@@ -246,36 +246,36 @@ export const CustomerFeedback: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Specific Item Name:</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Specific Item Name:</label>
                 <input
                   type="text"
                   placeholder="e.g. Custom Printed Hoodies or Eulogy Booklets"
                   value={productName}
                   onChange={(e) => setProductName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Your Review Feedback:</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Your Review Feedback:</label>
                 <textarea
                   rows={3}
                   required
                   placeholder="Share details about print sharpness, delivery speed, and customer service..."
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Finished Product Photo URL (Optional):</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Finished Product Photo URL (Optional):</label>
                 <input
                   type="url"
                   placeholder="https://images.unsplash.com/..."
                   value={photoUrl}
                   onChange={(e) => setPhotoUrl(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 

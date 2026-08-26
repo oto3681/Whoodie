@@ -91,8 +91,11 @@ interface AppContextType {
   activeView: 'shop' | 'dashboard' | 'admin' | 'tracking' | 'reviews';
   isDbConnected: boolean;
   isGuestBrowsing: boolean;
+  theme: 'light' | 'dark';
 
   // Actions
+  setTheme: (theme: 'light' | 'dark') => void;
+  toggleTheme: () => void;
   setIsGuestBrowsing: (val: boolean) => void;
   setSelectedCategory: (cat: ProductCategory) => void;
   setSearchQuery: (query: string) => void;
@@ -360,6 +363,40 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isDbConnected, setIsDbConnected] = useState<boolean>(false);
   const [isGuestBrowsing, setIsGuestBrowsing] = useState<boolean>(false);
+
+  // Theme Management (Light / Dark Mode)
+  const [theme, setThemeState] = useState<'light' | 'dark'>(() => {
+    const savedTheme = safeGetLocalStorage<'light' | 'dark' | null>('pixelprint_theme', null);
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      return savedTheme;
+    }
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    return 'light';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      document.body.classList.add('dark');
+      root.setAttribute('data-theme', 'dark');
+    } else {
+      root.classList.remove('dark');
+      document.body.classList.remove('dark');
+      root.setAttribute('data-theme', 'light');
+    }
+    safeSetLocalStorage('pixelprint_theme', theme);
+  }, [theme]);
+
+  const setTheme = (newTheme: 'light' | 'dark') => {
+    setThemeState(newTheme);
+  };
+
+  const toggleTheme = () => {
+    setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   // Firestore Real-time Subscriptions
   useEffect(() => {
@@ -1916,6 +1953,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         syncQuoteToZoho,
         sendOrderConfirmationEmail,
         sendOrderStatusUpdateEmail,
+        theme,
+        setTheme,
+        toggleTheme,
         setActiveModal,
         setSelectedProductForDetail,
         setActiveView,

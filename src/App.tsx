@@ -96,7 +96,7 @@ const ShopContent: React.FC = () => {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
       
       {/* HIGH-CONVERSION E-COMMERCE HERO BANNER & PROMO CAROUSEL */}
       {selectedCategory === 'All' && !searchQuery && (
@@ -104,8 +104,8 @@ const ShopContent: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             
             {/* Left Category Quick Navigation Menu */}
-            <div className="hidden lg:block bg-white rounded-2xl border border-slate-200 p-3 shadow-xs space-y-1">
-              <span className="text-[11px] font-extrabold uppercase text-slate-400 tracking-wider px-3 py-1 block">
+            <div className="hidden lg:block bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3 shadow-xs space-y-1">
+              <span className="text-[11px] font-extrabold uppercase text-slate-400 dark:text-slate-500 tracking-wider px-3 py-1 block">
                 Top Categories
               </span>
               {[
@@ -123,14 +123,14 @@ const ShopContent: React.FC = () => {
                   className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
                     selectedCategory === item.name
                       ? 'bg-blue-600 text-white shadow-xs'
-                      : 'text-slate-700 hover:bg-blue-50 hover:text-blue-600'
+                      : 'text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400'
                   }`}
                 >
                   <span className="flex items-center gap-2">
                     <item.icon className="w-3.5 h-3.5" />
                     <span>{item.name}</span>
                   </span>
-                  <span className={selectedCategory === item.name ? 'text-white font-bold' : 'text-slate-400'}>→</span>
+                  <span className={selectedCategory === item.name ? 'text-white font-bold' : 'text-slate-400 dark:text-slate-500'}>→</span>
                 </button>
               ))}
             </div>
@@ -201,15 +201,15 @@ const ShopContent: React.FC = () => {
       {/* EULOGY & MEMORIALS SPOTLIGHT BANNER */}
       {selectedCategory === 'All' && !searchQuery && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-md border-2 border-blue-600 text-slate-900 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-md border-2 border-blue-600 text-slate-900 dark:text-white flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
             <div className="space-y-2 text-center md:text-left z-10">
               <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider inline-block shadow-xs">
                 ⚡ Memorial Printing Service
               </span>
-              <h3 className="text-xl sm:text-2xl font-black text-slate-900">
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
                 Funeral Program Booklets, Tribute Books & Eulogies
               </h3>
-              <p className="text-xs sm:text-sm text-slate-600 max-w-2xl font-medium">
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl font-medium">
                 Respectful, dignified funeral service programs designed & printed with nationwide delivery. Free digital photo restoration included.
               </p>
             </div>
@@ -229,24 +229,24 @@ const ShopContent: React.FC = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
         {/* Catalog Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 pb-4 border-b border-slate-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
           <div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
               <span>{selectedCategory === 'All' ? 'Featured Products & Printing Packages' : selectedCategory}</span>
-              <span className="text-xs font-bold text-slate-500 bg-slate-200 px-2.5 py-0.5 rounded-full">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">
                 {filteredProducts.length} items
               </span>
             </h2>
             {searchQuery && (
-              <p className="text-xs text-slate-500 mt-1">
-                Showing search results for: "<span className="font-bold text-blue-600">{searchQuery}</span>"
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Showing search results for: "<span className="font-bold text-blue-600 dark:text-blue-400">{searchQuery}</span>"
               </p>
             )}
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-slate-500">
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <span>Sort by:</span>
-            <select className="bg-white border border-slate-300 rounded-lg p-1.5 font-semibold text-slate-800 focus:outline-none">
+            <select className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-1.5 font-semibold text-slate-800 dark:text-slate-200 focus:outline-none">
               <option>Popularity & Flash Deals</option>
               <option>Price: Low to High</option>
               <option>Price: High to Low</option>
@@ -257,15 +257,15 @@ const ShopContent: React.FC = () => {
 
         {/* Product Cards Grid */}
         {filteredProducts.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-slate-200 p-16 text-center space-y-3">
-            <Search className="w-12 h-12 text-slate-400 mx-auto" />
-            <h3 className="font-bold text-slate-800 text-base">No Products Found</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-16 text-center space-y-3">
+            <Search className="w-12 h-12 text-slate-400 dark:text-slate-500 mx-auto" />
+            <h3 className="font-bold text-slate-800 dark:text-slate-200 text-base">No Products Found</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
               Try searching for another keyword or change the category filter above.
             </p>
             <button
               onClick={() => { setSelectedCategory('All'); }}
-              className="bg-blue-600 text-white font-bold px-4 py-2 rounded-xl text-xs"
+              className="bg-blue-600 text-white font-bold px-4 py-2 rounded-xl text-xs cursor-pointer"
             >
               View All Products
             </button>
@@ -293,7 +293,7 @@ const ShopContent: React.FC = () => {
 export default function App() {
   return (
     <AppProvider>
-      <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased flex flex-col justify-between">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased flex flex-col justify-between transition-colors duration-200">
         <BannerNotice />
         <Header />
         <ShopContent />

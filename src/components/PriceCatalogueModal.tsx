@@ -87,7 +87,7 @@ export const PriceCatalogueModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
         
         {/* Header */}
         <div className="bg-slate-900 text-white p-5 sm:p-6 flex items-center justify-between border-b border-slate-800 shrink-0">
@@ -138,7 +138,7 @@ export const PriceCatalogueModal: React.FC = () => {
         </div>
 
         {/* Filter & Search Bar */}
-        <div className="bg-slate-50 border-b border-slate-200 p-4 space-y-3 shrink-0">
+        <div className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 space-y-3 shrink-0">
           <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
             {/* Search Input */}
             <div className="relative w-full sm:w-80">
@@ -147,13 +147,13 @@ export const PriceCatalogueModal: React.FC = () => {
                 placeholder="Search items, prices, banners, mugs..."
                 value={catalogueSearch}
                 onChange={(e) => setCatalogueSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 shadow-2xs"
+                className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 shadow-2xs"
               />
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
               {catalogueSearch && (
                 <button 
                   onClick={() => setCatalogueSearch('')}
-                  className="absolute right-3 top-2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                  className="absolute right-3 top-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-xs font-bold cursor-pointer"
                 >
                   ×
                 </button>
@@ -183,7 +183,7 @@ export const PriceCatalogueModal: React.FC = () => {
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
                   selectedCat === cat
                     ? 'bg-blue-600 text-white shadow-xs'
-                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-blue-50 hover:text-blue-600'
+                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-slate-700 hover:text-blue-600'
                 }`}
               >
                 {cat}
@@ -193,10 +193,10 @@ export const PriceCatalogueModal: React.FC = () => {
         </div>
 
         {/* Catalogue Body Grid */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-6 bg-slate-100/50">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-6 bg-slate-100/50 dark:bg-slate-950">
           
-          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-            <span>Showing <strong className="text-slate-900">{filteredCatalogue.length} items</strong> in price catalogue</span>
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span>Showing <strong className="text-slate-900 dark:text-white">{filteredCatalogue.length} items</strong> in price catalogue</span>
             <span className="hidden sm:inline">All item photos are live and updated</span>
           </div>
 
@@ -207,7 +207,7 @@ export const PriceCatalogueModal: React.FC = () => {
               return (
                 <div 
                   key={item.id}
-                  className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-all overflow-hidden flex flex-col justify-between group"
+                  className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition-all overflow-hidden flex flex-col justify-between group"
                 >
                   {/* Item Image */}
                   <div 
@@ -215,7 +215,7 @@ export const PriceCatalogueModal: React.FC = () => {
                       setSelectedProductForDetail(item);
                       setActiveModal('product-detail');
                     }}
-                    className="relative bg-slate-100 aspect-16/10 overflow-hidden cursor-pointer"
+                    className="relative bg-slate-100 dark:bg-slate-800 aspect-16/10 overflow-hidden cursor-pointer"
                   >
                     <img
                       src={item.image || getProductFallbackImage(item.name, item.category)}
@@ -249,20 +249,20 @@ export const PriceCatalogueModal: React.FC = () => {
                           setSelectedProductForDetail(item);
                           setActiveModal('product-detail');
                         }}
-                        className="font-extrabold text-slate-900 text-xs sm:text-sm line-clamp-2 hover:text-blue-600 cursor-pointer mb-2"
+                        className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer mb-2"
                       >
                         {item.name}
                       </h3>
 
-                      <p className="text-[11px] text-slate-500 line-clamp-2 mb-3 leading-relaxed">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 leading-relaxed">
                         {item.description}
                       </p>
 
                       {/* Features */}
                       <ul className="space-y-1 mb-4">
                         {item.features.slice(0, 3).map((f, i) => (
-                          <li key={i} className="text-[11px] text-slate-700 flex items-center gap-1.5">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                          <li key={i} className="text-[11px] text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
                             <span className="truncate">{f}</span>
                           </li>
                         ))}
@@ -270,14 +270,14 @@ export const PriceCatalogueModal: React.FC = () => {
                     </div>
 
                     {/* Price & Action */}
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
                       <div>
-                        <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Catalog Rate:</span>
-                        <div className="font-black text-slate-900 text-sm sm:text-base">
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider">Catalog Rate:</span>
+                        <div className="font-black text-slate-900 dark:text-white text-sm sm:text-base">
                           {isQuote ? (
-                            <span className="text-blue-600 text-xs sm:text-sm">WhatsApp Quote</span>
+                            <span className="text-blue-600 dark:text-blue-400 text-xs sm:text-sm">WhatsApp Quote</span>
                           ) : (
-                            <span className="text-emerald-700">KSh {item.price.toLocaleString()}</span>
+                            <span className="text-emerald-700 dark:text-emerald-400">KSh {item.price.toLocaleString()}</span>
                           )}
                         </div>
                       </div>
