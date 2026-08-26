@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
+import { optimizeProductImage } from '../utils/imageOptimizer';
 import { 
   Upload, 
   X, 
@@ -51,7 +52,7 @@ export const AdminLogoManagerModal: React.FC<AdminLogoManagerModalProps> = ({
     }
   ];
 
-  const processAndCompressFile = (file: File) => {
+  const processAndCompressFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       showToast('Invalid File Type', 'Please upload a valid image file (PNG, JPG, SVG, WebP).', 'warning');
       return;
@@ -60,62 +61,26 @@ export const AdminLogoManagerModal: React.FC<AdminLogoManagerModalProps> = ({
     setIsProcessing(true);
     setSelectedFileName(file.name);
 
-    // If it is SVG, read directly as data URL
-    if (file.type === 'image/svg+xml') {
+    try {
+      const optimized = await optimizeProductImage(file, { maxDimension: 900, quality: 0.88 });
+      setPreviewLogo(optimized);
+      setNewLogoUrl(optimized);
+      setIsProcessing(false);
+    } catch (err) {
+      console.warn('Logo optimization fallback:', err);
       const reader = new FileReader();
       reader.onload = (e) => {
-        const svgUrl = e.target?.result as string;
-        setPreviewLogo(svgUrl);
-        setNewLogoUrl(svgUrl);
+        const fallbackUrl = e.target?.result as string;
+        setPreviewLogo(fallbackUrl);
+        setNewLogoUrl(fallbackUrl);
         setIsProcessing(false);
       };
-      reader.readAsDataURL(file);
-      return;
-    }
-
-    // For raster images (PNG, JPG, WebP), process & optimize with canvas
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        const maxDim = 1200;
-
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          // Preserve PNG transparency if png, otherwise high-quality jpeg
-          const isPng = file.type === 'image/png';
-          const compressed = isPng 
-            ? canvas.toDataURL('image/png') 
-            : canvas.toDataURL('image/jpeg', 0.92);
-          
-          setPreviewLogo(compressed);
-          setNewLogoUrl(compressed);
-        }
-        setIsProcessing(false);
-      };
-      img.onerror = () => {
+      reader.onerror = () => {
         setIsProcessing(false);
         showToast('Image Load Error', 'Could not parse the selected image file.', 'error');
       };
-      img.src = e.target?.result as string;
-    };
-    reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleDrag = (e: React.DragEvent) => {

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { INITIAL_PRODUCTS, getProductFallbackImage } from '../data/initialData';
 import { restoreAllProductImages } from '../services/firestoreService';
+import { optimizeProductImage } from '../utils/imageOptimizer';
 import { 
   exportAllSystemDataToExcel, 
   exportTransactionsToExcel, 
@@ -177,9 +178,12 @@ export const AdminDashboard: React.FC = () => {
     setCompanyCity(wpSettings.companyCity || 'Nairobi');
   }, [wpSettings]);
 
-  const processAndCompressImage = (file: File, callback: (compressedUrl: string) => void) => {
-    // If SVG, read directly as data URL to preserve vector crispness
-    if (file.type === 'image/svg+xml') {
+  const processAndCompressImage = async (file: File, callback: (compressedUrl: string) => void) => {
+    try {
+      const optimized = await optimizeProductImage(file, { maxDimension: 900, quality: 0.84 });
+      callback(optimized);
+    } catch (err) {
+      console.warn('Image optimization fallback:', err);
       const reader = new FileReader();
       reader.onload = (e) => {
         if (typeof e.target?.result === 'string') {
@@ -187,52 +191,7 @@ export const AdminDashboard: React.FC = () => {
         }
       };
       reader.readAsDataURL(file);
-      return;
     }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        const maxDim = 1200;
-
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          const isPng = file.type === 'image/png';
-          const compressedDataUrl = isPng 
-            ? canvas.toDataURL('image/png') 
-            : canvas.toDataURL('image/jpeg', 0.92);
-          callback(compressedDataUrl);
-        } else {
-          callback(e.target?.result as string);
-        }
-      };
-      img.onerror = () => {
-        if (typeof e.target?.result === 'string') {
-          callback(e.target.result);
-        }
-      };
-      if (typeof e.target?.result === 'string') {
-        img.src = e.target.result;
-      }
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleRegisterC2bUrls = async () => {

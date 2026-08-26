@@ -68,6 +68,7 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void): Unsu
         (async () => {
           try {
             const customImages = getAdminCustomProductImages();
+            const updatedCustomImages = { ...customImages };
 
             if (snapshot.empty) {
               // Only seed initial products if collection is completely fresh
@@ -99,13 +100,21 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void): Unsu
                   data.category = CATEGORY_MAPPINGS[data.category];
                 }
 
-                // If admin has set a custom image for this product, ALWAYS preserve it
-                if (customImages[data.id] && customImages[data.id].trim() !== '') {
+                // If Firestore has a valid image, preserve it permanently and sync with customImages cache
+                if (data.image && data.image.trim() !== '') {
+                  // If there's an asset path that needs resolving, clean it
+                  if (data.image.startsWith('/src/assets/') || data.image.startsWith('src/assets/')) {
+                    data.image = data.image.replace(/^\/?src\/assets\//, '/assets/');
+                    saveProductToFirestore(data).catch(() => {});
+                  }
+                  // Keep local custom images synchronized with live Firestore
+                  updatedCustomImages[data.id] = data.image;
+                } else if (customImages[data.id] && customImages[data.id].trim() !== '') {
+                  // Fallback to local admin custom image if Firestore doc was missing it
                   data.image = customImages[data.id];
-                } else if (data.image && (data.image.startsWith('/src/assets/') || data.image.startsWith('src/assets/'))) {
-                  data.image = data.image.replace(/^\/?src\/assets\//, '/assets/');
                   saveProductToFirestore(data).catch(() => {});
-                } else if (!data.image || data.image.trim() === '') {
+                } else {
+                  // Only fallback if both Firestore and local admin map have no image
                   const initMatch = INITIAL_PRODUCTS.find(p => p.id === data.id);
                   data.image = initMatch?.image || getProductFallbackImage(data.name, data.category);
                   saveProductToFirestore(data).catch(() => {});
@@ -114,11 +123,14 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void): Unsu
                 items.push(data);
               });
 
+              // Update persistent local image map so all uploaded images survive session resets
+              safeSetLocalStorage('pixelprint_admin_product_images', updatedCustomImages);
+
               const existingIds = new Set(items.map(item => item.id));
               for (const initProd of INITIAL_PRODUCTS) {
                 if (!existingIds.has(initProd.id)) {
-                  const prodWithCustom = customImages[initProd.id] 
-                    ? { ...initProd, image: customImages[initProd.id] } 
+                  const prodWithCustom = updatedCustomImages[initProd.id] 
+                    ? { ...initProd, image: updatedCustomImages[initProd.id] } 
                     : initProd;
                   saveProductToFirestore(prodWithCustom).catch(() => {});
                   items.push(prodWithCustom);
@@ -154,6 +166,9 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void): Unsu
 
 export const saveProductToFirestore = async (product: Product): Promise<void> => {
   try {
+    if (product.image && product.image.trim() !== '') {
+      setAdminCustomProductImage(product.id, product.image);
+    }
     await setDoc(doc(db, PRODUCTS_COL, product.id), product);
   } catch (err) {
     console.debug('Failed to save product to Firestore (fallback to local state):', err);
@@ -162,6 +177,7 @@ export const saveProductToFirestore = async (product: Product): Promise<void> =>
 
 export const deleteProductFromFirestore = async (productId: string): Promise<void> => {
   try {
+    setAdminCustomProductImage(productId, null);
     await deleteDoc(doc(db, PRODUCTS_COL, productId));
   } catch (err) {
     console.debug('Failed to delete product from Firestore:', err);
