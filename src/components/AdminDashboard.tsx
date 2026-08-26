@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { getProductFallbackImage } from '../data/initialData';
+import { INITIAL_PRODUCTS, getProductFallbackImage } from '../data/initialData';
 import { restoreAllProductImages } from '../services/firestoreService';
 import { 
   exportAllSystemDataToExcel, 
@@ -61,7 +61,8 @@ import {
   Megaphone,
   UserCheck,
   AlertCircle,
-  BadgeCheck
+  BadgeCheck,
+  RotateCcw
 } from 'lucide-react';
 import { Product, Order, OrderStatus, ProductCategory } from '../types';
 
@@ -162,7 +163,33 @@ export const AdminDashboard: React.FC = () => {
   const [showConsumerSecret, setShowConsumerSecret] = useState(false);
   const [isRegisteringC2b, setIsRegisteringC2b] = useState(false);
 
+  // Keep WordPress Customizer state synced with wpSettings
+  React.useEffect(() => {
+    setSiteLogo(wpSettings.siteLogo || '');
+    setSiteTitle(wpSettings.siteTitle || '');
+    setTagline(wpSettings.tagline || '');
+    setWhatsappNumber(wpSettings.whatsappNumber || '');
+    setSupportPhone(wpSettings.supportPhone || '');
+    setCompanyEmail(wpSettings.companyEmail || '');
+    setPaybillNumber(wpSettings.paybillNumber || '247247');
+    setPaybillAccount(wpSettings.paybillAccount || '0797939199');
+    setCompanyAddress(wpSettings.companyAddress || 'Temple Road Gatkim Complex Building fourth floor Wing B Room 4B1');
+    setCompanyCity(wpSettings.companyCity || 'Nairobi');
+  }, [wpSettings]);
+
   const processAndCompressImage = (file: File, callback: (compressedUrl: string) => void) => {
+    // If SVG, read directly as data URL to preserve vector crispness
+    if (file.type === 'image/svg+xml') {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (typeof e.target?.result === 'string') {
+          callback(e.target.result);
+        }
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
@@ -187,7 +214,10 @@ export const AdminDashboard: React.FC = () => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          const isPng = file.type === 'image/png';
+          const compressedDataUrl = isPng 
+            ? canvas.toDataURL('image/png') 
+            : canvas.toDataURL('image/jpeg', 0.92);
           callback(compressedDataUrl);
         } else {
           callback(e.target?.result as string);
@@ -1344,9 +1374,23 @@ export const AdminDashboard: React.FC = () => {
                       </label>
                     </div>
 
-                    {/* Quick Stock Sample Photo Presets */}
+                    {/* Quick Stock Sample Photo Presets & Reset */}
                     <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase block">Or Choose Quick Sample Stock Picture:</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase block">Or Choose Quick Sample Stock Picture:</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const defaultImg = INITIAL_PRODUCTS.find(p => p.id === editingProduct.id)?.image || getProductFallbackImage(editingProduct.name, editingProduct.category);
+                            setEditingProduct({ ...editingProduct, image: defaultImg });
+                            showToast('Template Photo Selected', 'Click "Save Product Changes" to apply.');
+                          }}
+                          className="text-[10px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 hover:underline cursor-pointer"
+                          title="Restore original default template image"
+                        >
+                          <RotateCcw className="w-3 h-3" /> Reset to Original Template Photo
+                        </button>
+                      </div>
                       <div className="flex flex-wrap gap-1.5">
                         {[
                           { label: '👕 T-Shirt', url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80' },

@@ -56,6 +56,8 @@ import {
   saveReviewToFirestore,
   subscribeWpSettings,
   saveWpSettingsToFirestore,
+  setAdminCustomProductImage,
+  getAdminCustomProductImages,
 } from '../services/firestoreService';
 import {
   sendOrderConfirmationToGmail,
@@ -230,9 +232,13 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(() => {
+    const customImages = safeGetLocalStorage<Record<string, string>>('pixelprint_admin_product_images', {});
     const parsed = safeGetLocalStorage<Product[] | null>('pixelprint_products', null);
     if (parsed && Array.isArray(parsed)) {
       return parsed.map((p) => {
+        if (customImages[p.id] && customImages[p.id].trim() !== '') {
+          return { ...p, image: customImages[p.id] };
+        }
         if (p.image && p.image.trim() !== '') {
           if (p.image.startsWith('/src/assets/')) {
             return { ...p, image: p.image.replace('/src/assets/', '/assets/') };
@@ -246,7 +252,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return p;
       });
     }
-    return INITIAL_PRODUCTS;
+    return INITIAL_PRODUCTS.map((p) => customImages[p.id] ? { ...p, image: customImages[p.id] } : p);
   });
 
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -283,13 +289,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [wpSettings, setWpSettings] = useState<WordPressSettings>(() => {
     const parsed = safeGetLocalStorage<WordPressSettings | null>('pixelprint_wp_settings', null);
+    const savedCustomLogo = safeGetLocalStorage<string | null>('pixelprint_admin_custom_logo', null);
     if (parsed) {
       if (parsed.companyAddress && (parsed.companyAddress.includes('Ronald Ngala') || parsed.companyAddress.includes('complex building'))) {
         parsed.companyAddress = 'Temple Road Gatkim Complex Building fourth floor Wing B Room 4B1';
       }
+      if (savedCustomLogo && (!parsed.siteLogo || parsed.siteLogo.trim() === '')) {
+        parsed.siteLogo = savedCustomLogo;
+      }
       return parsed;
     }
-    return DEFAULT_WORDPRESS_SETTINGS;
+    return {
+      ...DEFAULT_WORDPRESS_SETTINGS,
+      siteLogo: savedCustomLogo || DEFAULT_WORDPRESS_SETTINGS.siteLogo || '',
+    };
   });
 
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
@@ -351,7 +364,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Firestore Real-time Subscriptions
   useEffect(() => {
     const unsubProducts = subscribeProducts((fetched) => {
-      setProducts(fetched);
+      setProducts((prev) => {
+        const customImages = safeGetLocalStorage<Record<string, string>>('pixelprint_admin_product_images', {});
+        const merged = fetched.map((p) => {
+          if (customImages[p.id] && customImages[p.id].trim() !== '') {
+            return { ...p, image: customImages[p.id] };
+          }
+          const prevMatch = prev.find(item => item.id === p.id);
+          if (prevMatch?.image && (!p.image || p.image.trim() === '')) {
+            return { ...p, image: prevMatch.image };
+          }
+          return p;
+        });
+        safeSetLocalStorage('pixelprint_products', merged);
+        return merged;
+      });
       setIsDbConnected(true);
     });
 
@@ -364,7 +391,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
 
     const unsubWp = subscribeWpSettings((fetched) => {
-      setWpSettings(fetched);
+      setWpSettings((prev) => {
+        const savedCustomLogo = safeGetLocalStorage<string | null>('pixelprint_admin_custom_logo', null);
+        const resolvedLogo = fetched.siteLogo || (savedCustomLogo || prev.siteLogo || '');
+        const merged: WordPressSettings = {
+          ...fetched,
+          siteLogo: resolvedLogo
+        };
+        safeSetLocalStorage('pixelprint_wp_settings', merged);
+        return merged;
+      });
     });
 
     return () => {
@@ -784,10 +820,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Product Admin
   const addProduct = (product: Product) => {
+    if (product.image && product.image.trim() !== '') {
+      setAdminCustomProductImage(product.id, product.image);
+    }
     setProducts((prev) => {
       const exists = prev.some((p) => p.id === product.id);
       const next = exists ? prev.map((p) => (p.id === product.id ? product : p)) : [...prev, product];
-      localStorage.setItem('pixelprint_products', JSON.stringify(next));
+      safeSetLocalStorage('pixelprint_products', next);
       return next;
     });
     saveProductToFirestore(product);
@@ -795,9 +834,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const updateProduct = (updated: Product) => {
+    if (updated.image && updated.image.trim() !== '') {
+      setAdminCustomProductImage(updated.id, updated.image);
+    } else {
+      setAdminCustomProductImage(updated.id, null);
+    }
     setProducts((prev) => {
       const next = prev.map((p) => (p.id === updated.id ? updated : p));
-      localStorage.setItem('pixelprint_products', JSON.stringify(next));
+      safeSetLocalStorage('pixelprint_products', next);
       return next;
     });
     saveProductToFirestore(updated);
@@ -805,9 +849,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const deleteProduct = (id: string) => {
+    setAdminCustomProductImage(id, null);
     setProducts((prev) => {
       const next = prev.filter((p) => p.id !== id);
-      localStorage.setItem('pixelprint_products', JSON.stringify(next));
+      safeSetLocalStorage('pixelprint_products', next);
       return next;
     });
     deleteProductFromFirestore(id);
@@ -838,12 +883,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const updateWpSettings = (newSettings: Partial<WordPressSettings>) => {
     setWpSettings((prev) => {
       const updated = { ...prev, ...newSettings };
-      localStorage.setItem('pixelprint_wp_settings', JSON.stringify(updated));
+      safeSetLocalStorage('pixelprint_wp_settings', updated);
+      if (newSettings.siteLogo !== undefined) {
+        if (newSettings.siteLogo && newSettings.siteLogo.trim() !== '') {
+          safeSetLocalStorage('pixelprint_admin_custom_logo', newSettings.siteLogo);
+        } else {
+          try {
+            localStorage.removeItem('pixelprint_admin_custom_logo');
+          } catch (e) {
+            console.debug('Failed to remove custom logo key:', e);
+          }
+        }
+      }
+      saveWpSettingsToFirestore(updated);
       return updated;
     });
-    const updated = { ...wpSettings, ...newSettings };
-    saveWpSettingsToFirestore(updated);
-    showToast('WordPress Settings Saved ⚡', 'Live site branding & config synchronized.');
+    showToast('WordPress Settings Saved ⚡', 'Live site branding & logo synchronized.');
   };
 
   // Customer Inquiries

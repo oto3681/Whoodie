@@ -23,7 +23,41 @@ const CATEGORY_MAPPINGS: Record<string, ProductCategory> = {
   'Product Stickers & Labels': 'Banners & Stickers'
 };
 
-// Subscribe to Products with bulletproof error suppression
+// Safe LocalStorage helpers for resilient local caching
+const safeGetLocalStorage = <T>(key: string, fallback: T): T => {
+  try {
+    const item = localStorage.getItem(key);
+    if (!item) return fallback;
+    return JSON.parse(item) as T;
+  } catch (e) {
+    console.debug(`Failed to read ${key} from localStorage:`, e);
+    return fallback;
+  }
+};
+
+const safeSetLocalStorage = (key: string, value: unknown) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    console.debug(`Failed to save ${key} to localStorage:`, e);
+  }
+};
+
+export const getAdminCustomProductImages = (): Record<string, string> => {
+  return safeGetLocalStorage<Record<string, string>>('pixelprint_admin_product_images', {});
+};
+
+export const setAdminCustomProductImage = (productId: string, imageUrl: string | null) => {
+  const customMap = getAdminCustomProductImages();
+  if (imageUrl && imageUrl.trim() !== '') {
+    customMap[productId] = imageUrl;
+  } else {
+    delete customMap[productId];
+  }
+  safeSetLocalStorage('pixelprint_admin_product_images', customMap);
+};
+
+// Subscribe to Products with bulletproof error suppression and permanent picture preservation
 export const subscribeProducts = (onUpdate: (products: Product[]) => void): Unsubscribe => {
   try {
     const colRef = collection(db, PRODUCTS_COL);
@@ -33,15 +67,25 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void): Unsu
         // Run processing in an internal async IIFE with full try/catch
         (async () => {
           try {
+            const customImages = getAdminCustomProductImages();
+
             if (snapshot.empty) {
-              for (const prod of INITIAL_PRODUCTS) {
+              // Only seed initial products if collection is completely fresh
+              const seededItems: Product[] = INITIAL_PRODUCTS.map((p) => {
+                if (customImages[p.id]) {
+                  return { ...p, image: customImages[p.id] };
+                }
+                return p;
+              });
+
+              for (const prod of seededItems) {
                 try {
                   await setDoc(doc(db, PRODUCTS_COL, prod.id), prod);
                 } catch (e) {
                   console.debug('Initial product seed bypass:', e);
                 }
               }
-              onUpdate(INITIAL_PRODUCTS);
+              onUpdate(seededItems);
             } else {
               const items: Product[] = [];
               snapshot.forEach((docSnap) => {
@@ -55,11 +99,14 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void): Unsu
                   data.category = CATEGORY_MAPPINGS[data.category];
                 }
 
-                const initMatch = INITIAL_PRODUCTS.find(p => p.id === data.id);
-                if (data.image && (data.image.startsWith('/src/assets/') || data.image.startsWith('src/assets/'))) {
+                // If admin has set a custom image for this product, ALWAYS preserve it
+                if (customImages[data.id] && customImages[data.id].trim() !== '') {
+                  data.image = customImages[data.id];
+                } else if (data.image && (data.image.startsWith('/src/assets/') || data.image.startsWith('src/assets/'))) {
                   data.image = data.image.replace(/^\/?src\/assets\//, '/assets/');
                   saveProductToFirestore(data).catch(() => {});
                 } else if (!data.image || data.image.trim() === '') {
+                  const initMatch = INITIAL_PRODUCTS.find(p => p.id === data.id);
                   data.image = initMatch?.image || getProductFallbackImage(data.name, data.category);
                   saveProductToFirestore(data).catch(() => {});
                 }
@@ -70,8 +117,11 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void): Unsu
               const existingIds = new Set(items.map(item => item.id));
               for (const initProd of INITIAL_PRODUCTS) {
                 if (!existingIds.has(initProd.id)) {
-                  saveProductToFirestore(initProd).catch(() => {});
-                  items.push(initProd);
+                  const prodWithCustom = customImages[initProd.id] 
+                    ? { ...initProd, image: customImages[initProd.id] } 
+                    : initProd;
+                  saveProductToFirestore(prodWithCustom).catch(() => {});
+                  items.push(prodWithCustom);
                 }
               }
 
@@ -79,20 +129,25 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void): Unsu
             }
           } catch (processErr) {
             console.debug('Firestore products processing caught:', processErr);
-            onUpdate(INITIAL_PRODUCTS);
+            const localSaved = safeGetLocalStorage<Product[] | null>('pixelprint_products', null);
+            onUpdate(localSaved && localSaved.length > 0 ? localSaved : INITIAL_PRODUCTS);
           }
         })().catch((err) => {
           console.debug('Firestore products IIFE caught:', err);
+          const localSaved = safeGetLocalStorage<Product[] | null>('pixelprint_products', null);
+          onUpdate(localSaved && localSaved.length > 0 ? localSaved : INITIAL_PRODUCTS);
         });
       },
       (error) => {
         console.debug('Firestore products snapshot notice:', error);
-        onUpdate(INITIAL_PRODUCTS);
+        const localSaved = safeGetLocalStorage<Product[] | null>('pixelprint_products', null);
+        onUpdate(localSaved && localSaved.length > 0 ? localSaved : INITIAL_PRODUCTS);
       }
     );
   } catch (err) {
     console.debug('Firestore subscribeProducts initialization error:', err);
-    onUpdate(INITIAL_PRODUCTS);
+    const localSaved = safeGetLocalStorage<Product[] | null>('pixelprint_products', null);
+    onUpdate(localSaved && localSaved.length > 0 ? localSaved : INITIAL_PRODUCTS);
     return () => {};
   }
 };
@@ -258,6 +313,11 @@ export const saveWpSettingsToFirestore = async (settings: WordPressSettings): Pr
 
 export const restoreAllProductImages = async (): Promise<void> => {
   try {
+    try {
+      localStorage.removeItem('pixelprint_admin_product_images');
+    } catch (e) {
+      console.debug('Failed to clear custom product images in localStorage:', e);
+    }
     for (const initProd of INITIAL_PRODUCTS) {
       if (initProd.image) {
         await setDoc(doc(db, PRODUCTS_COL, initProd.id), {
