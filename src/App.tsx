@@ -31,7 +31,9 @@ import {
   ArrowRight, 
   Search,
   MessageCircle,
-  Truck
+  Truck,
+  Signpost,
+  Crown
 } from 'lucide-react';
 import { ProductCategory } from './types';
 
@@ -111,9 +113,11 @@ const ShopContent: React.FC = () => {
               {[
                 { name: 'Printed T-Shirts', icon: Shirt },
                 { name: 'Hoodies', icon: Layers },
+                { name: 'Caps', icon: Crown },
                 { name: 'Reflectors & Aprons', icon: Award },
                 { name: 'Banners & Stickers', icon: Flag },
-                { name: 'Branding & Signage', icon: Sparkles },
+                { name: 'Branding', icon: Sparkles },
+                { name: 'Signage', icon: Signpost },
                 { name: 'Flyers & Posters', icon: FileText },
                 { name: 'Eulogies & Memorials', icon: Clock }
               ].map((item) => (

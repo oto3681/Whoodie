@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export const Footer: React.FC = () => {
-  const { wpSettings, setActiveModal, setActiveView, currentUser, logout } = useApp();
+  const { wpSettings, setActiveModal, setActiveView, setSelectedCategory, currentUser, logout } = useApp();
 
   const rawPhone = wpSettings.whatsappNumber.replace(/[^0-9]/g, '');
   const cleanPhone = rawPhone.startsWith('0') ? '254' + rawPhone.slice(1) : rawPhone;
@@ -151,13 +151,14 @@ export const Footer: React.FC = () => {
           <div>
             <h4 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">Products & Print</h4>
             <ul className="space-y-2 text-xs text-slate-400">
-              <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Printed T-Shirts & Polos</button></li>
-              <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Custom Branded Hoodies</button></li>
-              <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Safety Vests & Reflectors</button></li>
-              <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Rollup & Vinyl Banners</button></li>
-              <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Vehicle & Office Signage</button></li>
-              <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Die-Cut Waterproof Stickers</button></li>
-              <li><button onClick={() => setActiveView('shop')} className="hover:text-blue-400 transition-colors">Funeral & Eulogy Programs</button></li>
+              <li><button onClick={() => { setSelectedCategory('Printed T-Shirts'); setActiveView('shop'); }} className="hover:text-blue-400 transition-colors">Printed T-Shirts & Polos</button></li>
+              <li><button onClick={() => { setSelectedCategory('Hoodies'); setActiveView('shop'); }} className="hover:text-blue-400 transition-colors">Custom Branded Hoodies</button></li>
+              <li><button onClick={() => { setSelectedCategory('Caps'); setActiveView('shop'); }} className="hover:text-blue-400 transition-colors">Custom Branded Caps & Snapbacks</button></li>
+              <li><button onClick={() => { setSelectedCategory('Reflectors & Aprons'); setActiveView('shop'); }} className="hover:text-blue-400 transition-colors">Safety Vests & Reflectors</button></li>
+              <li><button onClick={() => { setSelectedCategory('Banners & Stickers'); setActiveView('shop'); }} className="hover:text-blue-400 transition-colors">Rollup & Vinyl Banners</button></li>
+              <li><button onClick={() => { setSelectedCategory('Signage'); setActiveView('shop'); }} className="hover:text-blue-400 transition-colors">Storefront & 3D Signage</button></li>
+              <li><button onClick={() => { setSelectedCategory('Branding'); setActiveView('shop'); }} className="hover:text-blue-400 transition-colors">Corporate Gifts & Drinkware</button></li>
+              <li><button onClick={() => { setSelectedCategory('Eulogies & Memorials'); setActiveView('shop'); }} className="hover:text-blue-400 transition-colors">Funeral & Eulogy Programs</button></li>
             </ul>
           </div>
 

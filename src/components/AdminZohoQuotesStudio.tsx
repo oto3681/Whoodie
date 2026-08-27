@@ -1057,9 +1057,11 @@ export const AdminZohoQuotesStudio: React.FC = () => {
                       >
                         <option value="Printed T-Shirts">Printed T-Shirts</option>
                         <option value="Hoodies">Hoodies</option>
+                        <option value="Caps">Caps</option>
                         <option value="Reflectors & Aprons">Reflectors & Aprons</option>
                         <option value="Banners & Stickers">Banners & Stickers</option>
-                        <option value="Branding & Signage">Branding & Signage</option>
+                        <option value="Branding">Branding</option>
+                        <option value="Signage">Signage</option>
                         <option value="Flyers & Posters">Flyers & Posters</option>
                         <option value="Eulogies & Memorials">Eulogies & Memorials</option>
                       </select>

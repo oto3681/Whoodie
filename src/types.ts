@@ -2,9 +2,11 @@ export type ProductCategory =
   | 'All'
   | 'Printed T-Shirts'
   | 'Hoodies'
+  | 'Caps'
   | 'Reflectors & Aprons'
   | 'Banners & Stickers'
-  | 'Branding & Signage'
+  | 'Branding'
+  | 'Signage'
   | 'Flyers & Posters'
   | 'Eulogies & Memorials';
 

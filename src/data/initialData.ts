@@ -284,7 +284,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-waterbottle-branding',
     name: 'Water Bottle Branding & Flask Printing',
-    category: 'Branding & Signage',
+    category: 'Branding',
     price: 0,
     isQuoteOnly: true,
     priceDisplay: 'Ask for Quote via WhatsApp',
@@ -309,7 +309,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-normal-mug',
     name: 'Normal Mug Branding @ KSh 350',
-    category: 'Branding & Signage',
+    category: 'Branding',
     price: 350,
     originalPrice: 500,
     rating: 4.9,
@@ -335,7 +335,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-magic-mug',
     name: 'Magic Mug Branding @ KSh 650',
-    category: 'Branding & Signage',
+    category: 'Branding',
     price: 650,
     originalPrice: 900,
     rating: 5.0,
@@ -360,7 +360,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-advertisement',
     name: 'Advertisement & Outdoor Billboard Graphics',
-    category: 'Branding & Signage',
+    category: 'Signage',
     price: 0,
     isQuoteOnly: true,
     priceDisplay: 'Ask for Quote via WhatsApp',
@@ -465,7 +465,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-signs',
     name: 'Signs & 3D Illuminated LED Storefront Signage',
-    category: 'Branding & Signage',
+    category: 'Signage',
     price: 0,
     isQuoteOnly: true,
     priceDisplay: 'Ask for Quote via WhatsApp',
@@ -490,7 +490,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-diaries',
     name: 'Executive Branded Leatherette Diaries',
-    category: 'Branding & Signage',
+    category: 'Branding',
     price: 0,
     isQuoteOnly: true,
     priceDisplay: 'Ask for Quote via WhatsApp',
@@ -516,7 +516,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-notebooks',
     name: 'Custom Branded Hardcover Notebooks',
-    category: 'Branding & Signage',
+    category: 'Branding',
     price: 0,
     isQuoteOnly: true,
     priceDisplay: 'Ask for Quote via WhatsApp',
@@ -593,7 +593,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-shopping-bags',
     name: 'Shopping Bags & Kraft Carrier Bag Branding',
-    category: 'Branding & Signage',
+    category: 'Branding',
     price: 0,
     isQuoteOnly: true,
     priceDisplay: 'Ask for Quote via WhatsApp',
@@ -619,7 +619,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-umbrella-branding',
     name: 'Umbrella Branding (Golf & Folding Umbrellas)',
-    category: 'Branding & Signage',
+    category: 'Branding',
     price: 0,
     isQuoteOnly: true,
     priceDisplay: 'Ask for Quote via WhatsApp',
@@ -638,6 +638,109 @@ export const INITIAL_PRODUCTS: Product[] = [
       sizes: ['30-Inch Golf Umbrella', '21-Inch Folding Umbrella', 'Outdoor Parasol'],
       finishes: ['Print 2 Panels', 'Print 4 Panels', 'Full Canopy Custom Color'],
       minQuantity: 10,
+    }
+  },
+
+  // 22. Custom Branded Baseball Caps
+  {
+    id: 'prod-branded-baseball-caps',
+    name: 'Custom Branded Baseball Caps @ KSh 350',
+    category: 'Caps',
+    price: 350,
+    originalPrice: 500,
+    rating: 4.9,
+    reviewCount: 230,
+    image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800&auto=format&fit=crop&q=80',
+    description: 'Premium structured 6-panel cotton twill baseball caps with precision 3D raised embroidery or vibrant full-color heat press branding. Features adjustable metal brass buckle.',
+    features: [
+      '100% Heavy Brushed Cotton Twill',
+      'Precision 3D Raised Embroidery or Heat Transfer',
+      'Adjustable Brass Buckle & Tuck-in Strap',
+      'Pre-Curved Visor with Contrast Stitching'
+    ],
+    stockCount: 500,
+    isFlashDeal: true,
+    customizationOptions: {
+      sizes: ['Standard Adult (Adjustable)', 'Youth / Kids Size'],
+      finishes: ['3D Puff Embroidery (Front)', 'Flat Stitch Embroidery', 'Full-Color Heat Transfer Badge', 'Side & Back Text Stitching'],
+      minQuantity: 10,
+    }
+  },
+
+  // 23. Premium Flat-Peak Snapback Caps
+  {
+    id: 'prod-snapback-caps',
+    name: 'Premium Flat-Peak Snapback Caps @ KSh 650',
+    category: 'Caps',
+    price: 650,
+    originalPrice: 900,
+    rating: 5.0,
+    reviewCount: 142,
+    image: 'https://images.unsplash.com/photo-1575428652377-a2d80e2277fc?w=800&auto=format&fit=crop&q=80',
+    description: 'High-profile structured urban street snapbacks with flat brim, green under-visor, reinforced front panel, and retro snapback closure.',
+    features: [
+      'High-Density 3D Front Panel Embroidery',
+      'Classic 7-Hole Plastic Snapback Closure',
+      'Structured 6-Panel Wool-Blend Crown',
+      'Moisture-Wicking Internal Sweatband'
+    ],
+    stockCount: 220,
+    customizationOptions: {
+      sizes: ['One Size Fits Most (Adjustable Snapback)'],
+      finishes: ['3D Raised Embroidery', 'Laser Engraved Leather Patch', 'Woven Damask Label'],
+      minQuantity: 5,
+    }
+  },
+
+  // 24. Promotional Mesh Trucker Caps
+  {
+    id: 'prod-trucker-caps',
+    name: 'Promotional Breathable Mesh Trucker Caps',
+    category: 'Caps',
+    price: 0,
+    isQuoteOnly: true,
+    priceDisplay: 'Ask for Quote via WhatsApp',
+    rating: 4.8,
+    reviewCount: 98,
+    image: 'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=800&auto=format&fit=crop&q=80',
+    description: 'Lightweight foam-front mesh back trucker caps with vibrant sublimation or screen printed logos. Perfect for corporate outdoor runs, rallies, and promo activations.',
+    features: [
+      'Ask for quote through WhatsApp inquiry',
+      'Breathable Nylon Mesh Back Panels',
+      'Padded Polyester Foam Front Panel',
+      'Full Color Sublimation or Screen Print'
+    ],
+    stockCount: 850,
+    customizationOptions: {
+      sizes: ['Standard Adult (Adjustable Snap)'],
+      finishes: ['Full-Color Photo Sublimation', 'Screen Printed Logo', 'Embroidered Front Patch'],
+      minQuantity: 20,
+    }
+  },
+
+  // 25. Custom Bucket Hats & Sun Visors
+  {
+    id: 'prod-bucket-hats-visors',
+    name: 'Branded Bucket Hats & Sports Sun Visors',
+    category: 'Caps',
+    price: 0,
+    isQuoteOnly: true,
+    priceDisplay: 'Ask for Quote via WhatsApp',
+    rating: 4.9,
+    reviewCount: 76,
+    image: 'https://images.unsplash.com/photo-1565084888279-aca607ecce0c?w=800&auto=format&fit=crop&q=80',
+    description: 'Reversible heavy cotton canvas bucket hats and athletic sports sun visors with embroidered perimeter branding for sports days, festivals, and safaris.',
+    features: [
+      'Ask for quote through WhatsApp inquiry',
+      '100% Breathable Heavy Cotton Canvas',
+      'All-Around Sun Protection Brim with Brass Eyelets',
+      'Embroidered or Woven Patch Branding'
+    ],
+    stockCount: 300,
+    customizationOptions: {
+      sizes: ['Small/Medium (56cm)', 'Large/XL (58-60cm)', 'Sun Visor (Velcro Band)'],
+      finishes: ['Perimeter Embroidery', 'Center Front Patch', 'Dual-Sided Reversible Print'],
+      minQuantity: 15,
     }
   }
 ];
@@ -855,6 +958,9 @@ export const getProductFallbackImage = (name?: string, category?: string): strin
   if (n.includes('reflector') || n.includes('vest') || n.includes('reflective') || c.includes('reflector')) {
     return '/assets/images/lightweight_reflectors_vest_1785247161011.jpg';
   }
+  if (n.includes('cap') || n.includes('hat') || n.includes('snapback') || n.includes('beanie') || n.includes('visor') || c.includes('cap') || c.includes('hat')) {
+    return 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800&auto=format&fit=crop&q=80';
+  }
   if (n.includes('t-shirt') || n.includes('tshirt') || n.includes('polo') || n.includes('shirt') || c.includes('t-shirt')) {
     return 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80';
   }
@@ -870,10 +976,10 @@ export const getProductFallbackImage = (name?: string, category?: string): strin
   if (n.includes('card') || n.includes('flyer') || n.includes('brochure') || n.includes('program') || c.includes('stationery') || c.includes('flyer')) {
     return 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80';
   }
-  if (n.includes('diary') || n.includes('notebook') || n.includes('calendar') || c.includes('gift')) {
+  if (n.includes('diary') || n.includes('notebook') || n.includes('calendar') || c.includes('branding') || c.includes('gift')) {
     return 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&auto=format&fit=crop&q=80';
   }
-  if (n.includes('sign') || n.includes('billboard') || c.includes('signage')) {
+  if (n.includes('sign') || n.includes('billboard') || c.includes('signage') || c.includes('sign')) {
     return 'https://images.unsplash.com/photo-1572949645841-094f3a9c4c94?w=800&auto=format&fit=crop&q=80';
   }
   return 'https://images.unsplash.com/photo-1542744094-3a3172720177?w=800&auto=format&fit=crop&q=80';
@@ -1122,7 +1228,7 @@ export const INITIAL_ADMIN_NOTIFICATIONS: AdminNotification[] = [
       customerPhone: '0701554433',
       companyName: 'Bright Spark Media',
       topic: '3D Acrylic Signage & Teardrop Flags',
-      category: 'Branding & Signage',
+      category: 'Signage',
       notes: 'Requested sample inspection at Gatkim Complex CBD workshop.'
     },
     acceptedAt: 'Yesterday, 05:10 PM',

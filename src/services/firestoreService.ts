@@ -20,7 +20,11 @@ const CATEGORY_MAPPINGS: Record<string, ProductCategory> = {
   'Reflectors & Safety': 'Reflectors & Aprons',
   'Banners & Displays': 'Banners & Stickers',
   'Brochures & Flyers': 'Flyers & Posters',
-  'Product Stickers & Labels': 'Banners & Stickers'
+  'Product Stickers & Labels': 'Banners & Stickers',
+  'Signs': 'Signage',
+  'Caps & Hats': 'Caps',
+  'Hats': 'Caps',
+  'Headwear': 'Caps'
 };
 
 // Safe LocalStorage helpers for resilient local caching
@@ -98,6 +102,17 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void): Unsu
 
                 if (CATEGORY_MAPPINGS[data.category]) {
                   data.category = CATEGORY_MAPPINGS[data.category];
+                }
+
+                // Automatically split legacy combined "Branding & Signage" into separate Branding and Signage
+                if ((data.category as string) === 'Branding & Signage' || (data.category as string) === 'Branding and Signage') {
+                  const nameLow = (data.name || '').toLowerCase();
+                  if (nameLow.includes('sign') || nameLow.includes('billboard') || nameLow.includes('led') || nameLow.includes('advertisement') || nameLow.includes('storefront') || nameLow.includes('plaque') || nameLow.includes('channel letter')) {
+                    data.category = 'Signage';
+                  } else {
+                    data.category = 'Branding';
+                  }
+                  saveProductToFirestore(data).catch(() => {});
                 }
 
                 // If Firestore has a valid image, preserve it permanently and sync with customImages cache

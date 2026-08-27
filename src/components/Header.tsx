@@ -200,7 +200,7 @@ export const Header: React.FC = () => {
             <div className="relative flex-1 flex items-center">
               <input
                 type="text"
-                placeholder="Search T-Shirts, Hoodies, Banners, Eulogies, Stickers..."
+                placeholder="Search T-Shirts, Hoodies, Caps, Banners, Eulogies, Stickers..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 pl-3 pr-8 py-2.5 bg-transparent focus:outline-none"

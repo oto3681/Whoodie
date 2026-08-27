@@ -453,9 +453,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     'All',
     'Printed T-Shirts',
     'Hoodies',
+    'Caps',
     'Reflectors & Aprons',
     'Banners & Stickers',
-    'Branding & Signage',
+    'Branding',
+    'Signage',
     'Flyers & Posters',
     'Eulogies & Memorials'
   ];
@@ -1574,7 +1576,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const simulateIncomingInquiryNotification = () => {
     const sampleLeads = [
       { name: 'Brian Ombati', company: 'Prime Agro Chemicals Ltd', phone: '0733889900', email: 'brian@primeagro.co.ke', topic: '500 Heavy-Duty Reflective Vests & Caps', cat: 'Reflectors & Aprons' as ProductCategory, qty: 500 },
-      { name: 'Dr. Beatrice Nduta', company: 'St. Jude Medical Centre', phone: '0710223344', email: 'info@stjudemed.org', topic: 'Full Hospital Signage, Acrylic Door Plates & Posters', cat: 'Branding & Signage' as ProductCategory, qty: 25 },
+      { name: 'Dr. Beatrice Nduta', company: 'St. Jude Medical Centre', phone: '0710223344', email: 'info@stjudemed.org', topic: 'Full Hospital Signage, Acrylic Door Plates & Posters', cat: 'Signage' as ProductCategory, qty: 25 },
       { name: 'Kelvin Mutua', company: 'Silverstone Logistics', phone: '0722114455', email: 'kmutua@silverstone.co.ke', topic: '100 Embroidered Hoodies & Thermal Coffee Mugs', cat: 'Hoodies' as ProductCategory, qty: 100 }
     ];
     const lead = sampleLeads[Math.floor(Math.random() * sampleLeads.length)];
