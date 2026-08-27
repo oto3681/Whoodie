@@ -116,6 +116,12 @@ export const CheckoutModal: React.FC = () => {
   const [manualCode, setManualCode] = useState('');
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
 
+  // Credential validation helpers
+  const cleanPhoneDigits = customerPhone.replace(/[^0-9]/g, '');
+  const isPhoneValid = cleanPhoneDigits.length >= 9;
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
+  const hasRequiredCredentials = isPhoneValid && isEmailValid;
+
   if (activeModal !== 'checkout') return null;
 
   const subtotal = cart.reduce((sum, item) => sum + item.calculatedPrice, 0);
@@ -124,6 +130,17 @@ export const CheckoutModal: React.FC = () => {
 
   const handleVerifyManualCode = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isPhoneValid) {
+      showToast('Phone Number Required', 'Please enter a valid mobile number (e.g. 0712345678) to proceed with your order.', 'error');
+      return;
+    }
+
+    if (!isEmailValid) {
+      showToast('Email Address Required', 'Please enter a valid email address (e.g. name@gmail.com) to receive your order receipt.', 'error');
+      return;
+    }
+
     if (!manualCode || manualCode.trim().length < 6) {
       showToast('Enter M-Pesa Code', 'Please enter your 10-character M-Pesa transaction reference (e.g. QGH8923KL9).', 'error');
       return;
@@ -506,10 +523,42 @@ export const CheckoutModal: React.FC = () => {
           {(step === 'details' || step === 'payment') && (
             <form onSubmit={handleStartPayment} className="space-y-6">
               
+              {/* Mandatory Credentials Verification Banner */}
+              <div className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 text-xs transition-all ${
+                hasRequiredCredentials
+                  ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950'
+                  : 'bg-amber-50 border-amber-300 text-amber-950 shadow-xs'
+              }`}>
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                    hasRequiredCredentials ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white animate-pulse'
+                  }`}>
+                    {hasRequiredCredentials ? <Check className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                  </div>
+                  <div>
+                    <span className="font-extrabold block text-xs">
+                      {hasRequiredCredentials 
+                        ? 'Mandatory Contact Credentials Verified' 
+                        : 'Condition Required to Proceed: Email & Phone Number'}
+                    </span>
+                    <p className="text-[11px] text-slate-600 leading-tight">
+                      {hasRequiredCredentials
+                        ? `Receipt will be sent to ${customerEmail} and M-Pesa / SMS alerts to ${customerPhone}.`
+                        : 'Please enter both your valid Email Address and active Mobile Phone Number below before proceeding.'}
+                    </p>
+                  </div>
+                </div>
+                <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 ${
+                  hasRequiredCredentials ? 'bg-emerald-600 text-white' : 'bg-amber-200 text-amber-900 border border-amber-300'
+                }`}>
+                  {hasRequiredCredentials ? 'Ready to Order' : 'Credentials Required'}
+                </span>
+              </div>
+
               {/* Delivery Info */}
               <div className="space-y-4">
                 <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b pb-2">
-                  <MapPin className="w-4 h-4 text-blue-600" /> 1. Shipping & Delivery Address
+                  <MapPin className="w-4 h-4 text-blue-600" /> 1. Contact Credentials & Shipping Address
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -528,15 +577,19 @@ export const CheckoutModal: React.FC = () => {
                   </div>
 
                   {/* Mobile Phone Number */}
-                  <div className="bg-emerald-50/50 border border-emerald-200/80 rounded-xl p-2.5 space-y-1">
+                  <div className={`border rounded-xl p-2.5 space-y-1 transition-all ${
+                    isPhoneValid ? 'bg-emerald-50/60 border-emerald-300' : 'bg-amber-50/50 border-amber-300'
+                  }`}>
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-extrabold text-emerald-950 flex items-center gap-1.5">
+                      <label className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
                         <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
                         <span>Mobile Phone (M-Pesa):</span>
                         <span className="text-red-500">*</span>
                       </label>
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded">
-                        STK & SMS Alerts
+                      <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                        isPhoneValid ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800 font-extrabold'
+                      }`}>
+                        {isPhoneValid ? '✓ Valid Number' : 'Required to Proceed'}
                       </span>
                     </div>
                     <input
@@ -547,21 +600,25 @@ export const CheckoutModal: React.FC = () => {
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       className="w-full bg-white border border-emerald-300 rounded-lg p-2 text-xs text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono font-bold"
                     />
-                    <p className="text-[10px] text-emerald-800 font-medium">
+                    <p className="text-[10px] text-slate-600 font-medium">
                       Used for M-Pesa STK push PIN prompt & instant delivery dispatch updates.
                     </p>
                   </div>
 
                   {/* Gmail / Email Address */}
-                  <div className="bg-blue-50/50 border border-blue-200/80 rounded-xl p-2.5 space-y-1">
+                  <div className={`border rounded-xl p-2.5 space-y-1 transition-all ${
+                    isEmailValid ? 'bg-blue-50/60 border-blue-300' : 'bg-amber-50/50 border-amber-300'
+                  }`}>
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-extrabold text-blue-950 flex items-center gap-1.5">
+                      <label className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
                         <Mail className="w-3.5 h-3.5 text-blue-600" />
                         <span>Gmail / Email Address:</span>
                         <span className="text-red-500">*</span>
                       </label>
-                      <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded">
-                        e-Receipt & Proof
+                      <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                        isEmailValid ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800 font-extrabold'
+                      }`}>
+                        {isEmailValid ? '✓ Valid Email' : 'Required to Proceed'}
                       </span>
                     </div>
                     <input
@@ -572,7 +629,7 @@ export const CheckoutModal: React.FC = () => {
                       onChange={(e) => setCustomerEmail(e.target.value)}
                       className="w-full bg-white border border-blue-300 rounded-lg p-2 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium"
                     />
-                    <p className="text-[10px] text-blue-800 font-medium">
+                    <p className="text-[10px] text-slate-600 font-medium">
                       Itemized e-receipt & artwork proof sent from <strong className="font-semibold">woodynatdesigners12@gmail.com</strong>.
                     </p>
                   </div>
@@ -749,23 +806,38 @@ export const CheckoutModal: React.FC = () => {
                   <span>KSh {totalAmount.toLocaleString()}</span>
                 </div>
 
+                {!hasRequiredCredentials && (
+                  <div className="bg-amber-500/20 border border-amber-400/40 rounded-lg p-2 text-center text-amber-300 text-[11px] font-bold flex items-center justify-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                    <span>Provide valid Email & Phone Number above to unlock payment</span>
+                  </div>
+                )}
+
                 {mpesaMode === 'stk' ? (
                   <button
                     type="submit"
-                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold py-3.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer mt-3"
+                    className={`w-full font-extrabold py-3.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer mt-2 ${
+                      hasRequiredCredentials
+                        ? 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 active:scale-98'
+                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    }`}
                   >
                     <Smartphone className="w-4 h-4" />
-                    <span>Send M-PESA STK Push Prompt for KSh {totalAmount.toLocaleString()}</span>
+                    <span>{hasRequiredCredentials ? `Send M-PESA STK Push Prompt for KSh ${totalAmount.toLocaleString()}` : 'Enter Email & Phone Number to Proceed'}</span>
                   </button>
                 ) : (
                   <button
                     type="button"
                     onClick={handleVerifyManualCode}
                     disabled={isVerifyingCode}
-                    className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-slate-950 font-extrabold py-3.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer mt-3"
+                    className={`w-full font-extrabold py-3.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer mt-2 ${
+                      hasRequiredCredentials
+                        ? 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 active:scale-98'
+                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    }`}
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Verify Code & Confirm KSh {totalAmount.toLocaleString()} Order</span>
+                    <span>{hasRequiredCredentials ? `Verify Code & Confirm KSh ${totalAmount.toLocaleString()} Order` : 'Enter Email & Phone Number to Proceed'}</span>
                   </button>
                 )}
               </div>
