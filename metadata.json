@@ -1,6 +1,6 @@
 {
   "name": "Woodynat Designers Limited",
-  "description": "Commercial printing, apparel & signage platform with Live Admin Member & Order Database Management, Real-time Inquiry & Order Acceptance Panel, WhatsApp WhatBot (0797939199), Bulk SMS & Email Broadcasts, M-Pesa Paybill checkout, custom artwork uploads, and WordPress CMS.",
+  "description": "Commercial printing, apparel & signage platform with Live Customer Registration & Login QR Code Studio & Print Hub, Credential-gated M-Pesa Checkout, Live Admin Member & Order Database Management, WhatsApp WhatBot (0797939199), Bulk SMS & Email Broadcasts, and WordPress CMS.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

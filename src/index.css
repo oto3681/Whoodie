@@ -7,3 +7,25 @@
     color-scheme: dark;
   }
 }
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  
+  header, footer, nav, .no-print, button:not(.allow-print) {
+    display: none !important;
+  }
+  
+  #woodynat-printable-poster {
+    border: 2px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    margin: 0 auto !important;
+    padding: 24px !important;
+    max-width: 750px !important;
+    width: 100% !important;
+    display: block !important;
+    page-break-inside: avoid;
+  }
+}

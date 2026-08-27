@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   Lock, 
@@ -7,13 +7,15 @@ import {
   CheckCircle2, 
   ArrowRight, 
   ShieldCheck, 
-  Eye,
-  EyeOff,
-  Mail,
-  Facebook,
-  Sparkles,
-  X,
-  UserCheck
+  Eye, 
+  EyeOff, 
+  Mail, 
+  Facebook, 
+  Sparkles, 
+  X, 
+  UserCheck,
+  QrCode,
+  Smartphone
 } from 'lucide-react';
 
 export const RegistrationGate: React.FC = () => {
@@ -25,6 +27,24 @@ export const RegistrationGate: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [isFromQrScan, setIsFromQrScan] = useState(false);
+
+  // Check URL for QR scan parameters
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const auth = params.get('auth') || params.get('action');
+      const ref = params.get('ref');
+      if (ref?.includes('qrcode') || params.get('scan') === 'true' || auth) {
+        setIsFromQrScan(true);
+      }
+      if (auth === 'login' || auth === 'signin') {
+        setAuthMode('login');
+      } else if (auth === 'register' || auth === 'signup') {
+        setAuthMode('register');
+      }
+    }
+  }, []);
 
   // Social Auth Modal states
   const [socialModal, setSocialModal] = useState<'google' | 'facebook' | null>(null);
@@ -145,6 +165,28 @@ export const RegistrationGate: React.FC = () => {
         {/* Right Side: Registration / Sign In Form */}
         <div className="p-8 sm:p-10 flex flex-col justify-center space-y-4">
           
+          {/* QR Code Scanned Welcome Banner */}
+          {isFromQrScan && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-300 rounded-2xl p-3 flex items-center gap-3 text-xs text-blue-950 shadow-xs animate-in fade-in">
+              <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
+                <QrCode className="w-4 h-4 text-amber-300" />
+              </div>
+              <div>
+                <div className="font-extrabold flex items-center gap-1.5">
+                  <span>Welcome! You Scanned Store QR Code</span>
+                  <span className="bg-blue-600 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase">
+                    Verified
+                  </span>
+                </div>
+                <p className="text-[11px] text-blue-800 leading-tight">
+                  {authMode === 'register' 
+                    ? 'Create your account below to start ordering and receiving instant proofing.'
+                    : 'Sign in to access your registered Woodynat account and view quotes.'}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Mode Tabs */}
           <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
             <button

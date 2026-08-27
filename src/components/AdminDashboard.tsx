@@ -16,6 +16,7 @@ import { AdminZohoQuotesStudio } from './AdminZohoQuotesStudio';
 import { AdminMpesaStudio } from './AdminMpesaStudio';
 import { AdminLogoManagerModal } from './AdminLogoManagerModal';
 import { AdminMembersDatabase } from './AdminMembersDatabase';
+import { AdminQrStudio } from './AdminQrStudio';
 import { 
   BarChart3, 
   Package, 
@@ -65,7 +66,8 @@ import {
   UserCheck,
   AlertCircle,
   BadgeCheck,
-  RotateCcw
+  RotateCcw,
+  QrCode
 } from 'lucide-react';
 import { Product, Order, OrderStatus, ProductCategory } from '../types';
 
@@ -94,7 +96,7 @@ export const AdminDashboard: React.FC = () => {
     showToast
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'notifications' | 'database' | 'members' | 'mpesa' | 'zoho' | 'kpis' | 'orders' | 'whatsapp' | 'bulk' | 'catalogue' | 'products' | 'wordpress'>('database');
+  const [activeTab, setActiveTab] = useState<'notifications' | 'database' | 'members' | 'qrcode' | 'mpesa' | 'zoho' | 'kpis' | 'orders' | 'whatsapp' | 'bulk' | 'catalogue' | 'products' | 'wordpress'>('database');
   const [showLogoModal, setShowLogoModal] = useState(false);
 
   // Admin Email to Customer State
@@ -469,6 +471,19 @@ export const AdminDashboard: React.FC = () => {
           </button>
 
           <button
+            onClick={() => setActiveTab('qrcode')}
+            className={`font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md border ${
+              activeTab === 'qrcode'
+                ? 'bg-blue-600 text-white border-blue-400 ring-2 ring-blue-400/50'
+                : 'bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white border-blue-500'
+            }`}
+            title="Generate and print high-resolution customer login and registration QR codes for walk-ins & tabletop display"
+          >
+            <QrCode className="w-4 h-4 text-amber-300" />
+            <span>Login/Signup QR Code & Print</span>
+          </button>
+
+          <button
             onClick={() => setShowLogoModal(true)}
             className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md border border-blue-400/40"
             title="Upload or change the official site logo across all screens"
@@ -606,6 +621,21 @@ export const AdminDashboard: React.FC = () => {
           <span>Members & Database</span>
           <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded-full">
             {registeredMembers.length} Accounts
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('qrcode')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+            activeTab === 'qrcode'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-2 ring-blue-400'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <QrCode className="w-4 h-4 text-blue-500" />
+          <span>Login & Signup QR Studio</span>
+          <span className="bg-blue-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
+            Print Ready
           </span>
         </button>
 
@@ -760,6 +790,11 @@ export const AdminDashboard: React.FC = () => {
       {/* TAB: DATABASE & REGISTERED MEMBERS MANAGEMENT */}
       {(activeTab === 'database' || activeTab === 'members') && (
         <AdminMembersDatabase />
+      )}
+
+      {/* TAB: LOGIN & SIGNUP QR CODE STUDIO */}
+      {activeTab === 'qrcode' && (
+        <AdminQrStudio />
       )}
 
       {/* TAB: LIVE NOTIFICATIONS & INQUIRY ACCEPTANCE PANEL */}
