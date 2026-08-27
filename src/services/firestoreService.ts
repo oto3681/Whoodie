@@ -251,48 +251,47 @@ export const deleteOrderFromFirestore = async (orderId: string): Promise<void> =
   }
 };
 
-// Subscribe to Registered Members with local fallback & seed
+// Subscribe to Registered Members (genuine registered users via Gmail, Facebook, Phone/Email or admin-created)
 export const subscribeMembers = (onUpdate: (members: RegisteredMember[]) => void): Unsubscribe => {
   try {
     const colRef = collection(db, MEMBERS_COL);
     return onSnapshot(
       colRef,
       (snapshot) => {
-        (async () => {
-          try {
-            if (snapshot.empty) {
-              for (const member of INITIAL_REGISTERED_MEMBERS) {
-                try {
-                  await setDoc(doc(db, MEMBERS_COL, member.id), member);
-                } catch (e) {
-                  console.debug('Member seed bypass:', e);
-                }
+        try {
+          if (snapshot.empty) {
+            onUpdate([]);
+          } else {
+            const items: RegisteredMember[] = [];
+            snapshot.forEach((docSnap) => {
+              const data = docSnap.data() as RegisteredMember;
+              // Exclude legacy mock seed IDs if any exist
+              if (!['mem-001', 'mem-002', 'mem-003', 'mem-004', 'mem-005'].includes(data.id)) {
+                items.push(data);
               }
-              onUpdate(INITIAL_REGISTERED_MEMBERS);
-            } else {
-              const items: RegisteredMember[] = [];
-              snapshot.forEach((docSnap) => {
-                items.push(docSnap.data() as RegisteredMember);
-              });
-              items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-              onUpdate(items);
-            }
-          } catch (processErr) {
-            console.debug('Firestore members processing caught:', processErr);
-            onUpdate(INITIAL_REGISTERED_MEMBERS);
+            });
+            items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            onUpdate(items);
           }
-        })().catch((err) => {
-          console.debug('Firestore members IIFE caught:', err);
-        });
+        } catch (processErr) {
+          console.debug('Firestore members processing caught:', processErr);
+          const localSaved = safeGetLocalStorage<RegisteredMember[]>('pixelprint_registered_members', []);
+          const cleanLocal = (localSaved || []).filter(m => !['mem-001', 'mem-002', 'mem-003', 'mem-004', 'mem-005'].includes(m.id));
+          onUpdate(cleanLocal);
+        }
       },
       (error) => {
         console.debug('Firestore members snapshot notice:', error);
-        onUpdate(INITIAL_REGISTERED_MEMBERS);
+        const localSaved = safeGetLocalStorage<RegisteredMember[]>('pixelprint_registered_members', []);
+        const cleanLocal = (localSaved || []).filter(m => !['mem-001', 'mem-002', 'mem-003', 'mem-004', 'mem-005'].includes(m.id));
+        onUpdate(cleanLocal);
       }
     );
   } catch (err) {
     console.debug('Firestore subscribeMembers initialization error:', err);
-    onUpdate(INITIAL_REGISTERED_MEMBERS);
+    const localSaved = safeGetLocalStorage<RegisteredMember[]>('pixelprint_registered_members', []);
+    const cleanLocal = (localSaved || []).filter(m => !['mem-001', 'mem-002', 'mem-003', 'mem-004', 'mem-005'].includes(m.id));
+    onUpdate(cleanLocal);
     return () => {};
   }
 };

@@ -494,8 +494,15 @@ export const AdminMembersDatabase: React.FC = () => {
                     <tr>
                       <td colSpan={6} className="py-12 text-center text-slate-400">
                         <Users className="w-10 h-10 mx-auto mb-2 text-slate-300 opacity-60" />
-                        <p className="text-sm font-bold text-slate-600">No registered members found</p>
-                        <p className="text-xs text-slate-400 mt-1">Try adjusting your search criteria or click "Add New Member" above.</p>
+                        <p className="text-sm font-bold text-slate-600">
+                          {registeredMembers.length === 0 ? 'No Registered Members in Database' : 'No matching members found'}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                          {registeredMembers.length === 0 
+                            ? 'Users are added to this database automatically when they register via Gmail (Google), Facebook, or Phone/Email, or when created manually by Admin.'
+                            : 'Try adjusting your search criteria, clearing filters, or click "Add New Member" to register a client manually.'
+                          }
+                        </p>
                       </td>
                     </tr>
                   ) : (

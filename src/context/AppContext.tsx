@@ -362,9 +362,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return safeGetLocalStorage<ZohoQuotation[]>('pixelprint_zoho_quotations', INITIAL_ZOHO_QUOTATIONS);
   });
 
-  // Registered Members Database State
+  // Registered Members Database State (Stores ONLY genuinely registered users or admin-created members)
   const [registeredMembers, setRegisteredMembers] = useState<RegisteredMember[]>(() => {
-    return safeGetLocalStorage<RegisteredMember[]>('pixelprint_registered_members', INITIAL_REGISTERED_MEMBERS);
+    const saved = safeGetLocalStorage<RegisteredMember[]>('pixelprint_registered_members', []);
+    return Array.isArray(saved) ? saved.filter((m) => !['mem-001', 'mem-002', 'mem-003', 'mem-004', 'mem-005'].includes(m.id)) : [];
   });
 
   const [zohoSettings, setZohoSettings] = useState<ZohoSettings>(() => {
@@ -630,7 +631,57 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setCart([]);
   };
 
-  // Auth Handlers
+  // Auth Handlers & Registered Member Recording
+  const recordRegisteredMember = (user: UserProfile) => {
+    if (!user || !user.email) return;
+    const cleanEmail = user.email.toLowerCase().trim();
+    const nowIso = new Date().toISOString();
+
+    setRegisteredMembers((prev) => {
+      const existingIdx = prev.findIndex((m) => m.email.toLowerCase() === cleanEmail);
+      let updatedList: RegisteredMember[];
+
+      if (existingIdx >= 0) {
+        const existing = prev[existingIdx];
+        const updatedMember: RegisteredMember = {
+          ...existing,
+          name: (user.name && user.name !== 'John Doe') ? user.name : existing.name,
+          phone: user.phone || existing.phone,
+          avatar: user.avatar || existing.avatar,
+          provider: user.provider || existing.provider,
+          role: existing.role || user.role || 'user',
+          lastActive: nowIso,
+        };
+        updatedList = [...prev];
+        updatedList[existingIdx] = updatedMember;
+        saveMemberToFirestore(updatedMember);
+      } else {
+        const newMember: RegisteredMember = {
+          id: user.id || `mem-${Date.now().toString().slice(-6)}`,
+          name: user.name,
+          email: cleanEmail,
+          phone: user.phone || '',
+          role: user.role || 'user',
+          avatar: user.avatar || '',
+          provider: user.provider || 'email',
+          status: 'active',
+          createdAt: nowIso,
+          companyName: '',
+          city: 'Nairobi',
+          notes: `Registered via ${user.provider === 'google' ? 'Gmail / Google' : user.provider === 'facebook' ? 'Facebook' : 'Email / Phone'}`,
+          ordersCount: 0,
+          totalSpend: 0,
+          lastActive: nowIso
+        };
+        updatedList = [newMember, ...prev];
+        saveMemberToFirestore(newMember);
+      }
+
+      safeSetLocalStorage('pixelprint_registered_members', updatedList);
+      return updatedList;
+    });
+  };
+
   const loginAsUser = (userData?: { name?: string; email?: string; phone?: string }) => {
     const rawEmail = (userData?.email || 'client@woodynat.co.ke').trim().toLowerCase();
     
@@ -670,11 +721,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       avatar,
     };
     setCurrentUser(user);
+    recordRegisteredMember(user);
     setActiveModal(null);
     showToast(`Welcome, ${user.name}! 👋`, 'Logged in to Woodynat Customer Account.');
   };
 
-  const loginWithGoogle = (customData?: { name?: string; email?: string; avatar?: string }) => {
+  const loginWithGoogle = (customData?: { name?: string; email?: string; avatar?: string; phone?: string }) => {
     const defaultEmail = (customData?.email || 'client.woodynat@gmail.com').trim().toLowerCase();
     const savedProfiles = safeGetLocalStorage<Record<string, { name: string; phone?: string; avatar?: string }>>('pixelprint_user_registry', {});
     const existingProfile = savedProfiles[defaultEmail];
@@ -689,7 +741,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     }
 
-    const resolvedPhone = existingProfile?.phone || '+254700123456';
+    const resolvedPhone = customData?.phone || existingProfile?.phone || '+254700123456';
     const avatar = customData?.avatar || existingProfile?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
 
     savedProfiles[defaultEmail] = {
@@ -709,11 +761,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       avatar,
     };
     setCurrentUser(user);
+    recordRegisteredMember(user);
     setActiveModal(null);
     showToast(`Signed In with Google! 🚀`, `Welcome ${user.name}! Your Gmail account is connected.`);
   };
 
-  const loginWithFacebook = (customData?: { name?: string; email?: string; avatar?: string }) => {
+  const loginWithFacebook = (customData?: { name?: string; email?: string; avatar?: string; phone?: string }) => {
     const defaultEmail = (customData?.email || 'customer.fb@woodynat.co.ke').trim().toLowerCase();
     const savedProfiles = safeGetLocalStorage<Record<string, { name: string; phone?: string; avatar?: string }>>('pixelprint_user_registry', {});
     const existingProfile = savedProfiles[defaultEmail];
@@ -728,7 +781,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     }
 
-    const resolvedPhone = existingProfile?.phone || '+254711889900';
+    const resolvedPhone = customData?.phone || existingProfile?.phone || '+254711889900';
     const avatar = customData?.avatar || existingProfile?.avatar || 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80';
 
     savedProfiles[defaultEmail] = {
@@ -748,6 +801,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       avatar,
     };
     setCurrentUser(user);
+    recordRegisteredMember(user);
     setActiveModal(null);
     showToast(`Signed In with Facebook! 💙`, `Welcome ${user.name}! Connected via Facebook.`);
   };
@@ -856,6 +910,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     saveOrderToFirestore(newOrder);
+
+    // Update Registered Member metrics if order placed by registered user
+    if (resolvedUserEmail) {
+      const cleanEmail = resolvedUserEmail.toLowerCase().trim();
+      setRegisteredMembers((prev) => {
+        const memberIdx = prev.findIndex((m) => m.email.toLowerCase() === cleanEmail);
+        if (memberIdx >= 0) {
+          const m = prev[memberIdx];
+          const updatedM: RegisteredMember = {
+            ...m,
+            ordersCount: (m.ordersCount || 0) + 1,
+            totalSpend: (m.totalSpend || 0) + newOrder.totalAmount,
+            lastActive: new Date().toISOString()
+          };
+          const next = [...prev];
+          next[memberIdx] = updatedM;
+          saveMemberToFirestore(updatedM);
+          safeSetLocalStorage('pixelprint_registered_members', next);
+          return next;
+        }
+        return prev;
+      });
+    }
 
     // Auto-dispatch confirmation receipt to Customer's Gmail from woodynatdesigners12@gmail.com
     if (resolvedUserEmail && resolvedUserEmail.includes('@')) {
