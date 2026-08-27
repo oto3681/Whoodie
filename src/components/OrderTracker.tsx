@@ -12,7 +12,6 @@ import {
   UserCheck,
   FileCheck,
   ArrowRight,
-  Sparkles,
   Clock,
   Mail,
   Send,
@@ -81,7 +80,6 @@ export const OrderTracker: React.FC = () => {
     setActiveModal, 
     activeTrackingId, 
     setActiveTrackingId, 
-    updateOrderStatus,
     sendOrderConfirmationEmail,
     wpSettings 
   } = useApp();
@@ -128,13 +126,6 @@ export const OrderTracker: React.FC = () => {
   // Percentage metrics
   const completionPercentage = Math.round(((activeStepIdx + 1) / TRACKING_STAGES.length) * 100);
   const pathFillPercentage = Math.round((activeStepIdx / (TRACKING_STAGES.length - 1)) * 100);
-
-  const handleProgressNextStage = () => {
-    if (!currentOrder) return;
-    const nextIdx = Math.min(activeStepIdx + 1, TRACKING_STAGES.length - 1);
-    const nextStage = TRACKING_STAGES[nextIdx].id;
-    updateOrderStatus(currentOrder.id, nextStage);
-  };
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
@@ -209,18 +200,6 @@ export const OrderTracker: React.FC = () => {
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                       <span>Current Stage: {TRACKING_STAGES[activeStepIdx].label}</span>
                     </span>
-
-                    {/* Progress Stage Simulation Button for Demo */}
-                    {activeStepIdx < TRACKING_STAGES.length - 1 && (
-                      <button
-                        onClick={handleProgressNextStage}
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-extrabold px-3 py-1 rounded-full transition-all flex items-center gap-1 shadow-xs cursor-pointer"
-                        title="Simulate next stage progression"
-                      >
-                        <Sparkles className="w-3 h-3 text-amber-200" />
-                        <span>Advance Stage</span>
-                      </button>
-                    )}
                   </div>
                 </div>
 

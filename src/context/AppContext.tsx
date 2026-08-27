@@ -112,8 +112,8 @@ interface AppContextType {
   
   // Auth
   loginAsUser: (userData?: { name?: string; email?: string; phone?: string }) => void;
-  loginWithGoogle: (customData?: { name?: string; email?: string; avatar?: string }) => void;
-  loginWithFacebook: (customData?: { name?: string; email?: string; avatar?: string }) => void;
+  loginWithGoogle: (customData?: { name?: string; email?: string; avatar?: string; phone?: string }) => void;
+  loginWithFacebook: (customData?: { name?: string; email?: string; avatar?: string; phone?: string }) => void;
   loginAsAdmin: (adminEmail?: string) => void;
   logout: () => void;
   

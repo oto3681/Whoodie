@@ -76,7 +76,13 @@ export const Header: React.FC = () => {
 
             {/* Price Catalogue Button */}
             <button
-              onClick={() => setActiveModal('catalogue')}
+              onClick={() => {
+                if (!currentUser) {
+                  setActiveModal('login');
+                } else {
+                  setActiveModal('catalogue');
+                }
+              }}
               className="hidden md:flex items-center gap-1.5 text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 px-3 py-2 rounded-xl transition-colors cursor-pointer shadow-2xs shrink-0"
             >
               <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -85,7 +91,13 @@ export const Header: React.FC = () => {
 
             {/* Tracking Button */}
             <button
-              onClick={() => setActiveModal('track')}
+              onClick={() => {
+                if (!currentUser) {
+                  setActiveModal('login');
+                } else {
+                  setActiveModal('track');
+                }
+              }}
               className="hidden xl:flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 px-2.5 py-2 rounded-xl hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
             >
               <Package className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -165,7 +177,13 @@ export const Header: React.FC = () => {
 
             {/* Cart Button */}
             <button
-              onClick={() => setActiveModal('cart')}
+              onClick={() => {
+                if (!currentUser) {
+                  setActiveModal('login');
+                } else {
+                  setActiveModal('cart');
+                }
+              }}
               className="relative bg-blue-600 hover:bg-blue-700 text-white font-extrabold p-2 sm:px-3.5 sm:py-2 rounded-xl flex items-center gap-1.5 transition-transform active:scale-95 shadow-md cursor-pointer shrink-0"
             >
               <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -280,7 +298,14 @@ export const Header: React.FC = () => {
             {activeView === 'shop' && <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
           </button>
           <button
-            onClick={() => { setActiveModal('catalogue'); setMobileMenuOpen(false); }}
+            onClick={() => { 
+              if (!currentUser) {
+                setActiveModal('login');
+              } else {
+                setActiveModal('catalogue');
+              }
+              setMobileMenuOpen(false); 
+            }}
             className="w-full text-left py-2 text-sm font-semibold text-blue-600 dark:text-blue-400 font-bold border-b border-slate-100 dark:border-slate-800 flex items-center justify-between"
           >
             <span>Price Catalogue & Rate Card</span>
@@ -294,7 +319,14 @@ export const Header: React.FC = () => {
             {activeView === 'reviews' && <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
           </button>
           <button
-            onClick={() => { setActiveModal('track'); setMobileMenuOpen(false); }}
+            onClick={() => { 
+              if (!currentUser) {
+                setActiveModal('login');
+              } else {
+                setActiveModal('track');
+              }
+              setMobileMenuOpen(false); 
+            }}
             className="w-full text-left py-2 text-sm font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between"
           >
             <span>Track My Order</span>

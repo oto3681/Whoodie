@@ -30,6 +30,7 @@ export const RegistrationGate: React.FC = () => {
   const [socialModal, setSocialModal] = useState<'google' | 'facebook' | null>(null);
   const [socialEmail, setSocialEmail] = useState('');
   const [socialName, setSocialName] = useState('');
+  const [socialPhone, setSocialPhone] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,12 +60,14 @@ export const RegistrationGate: React.FC = () => {
   const handleOpenGoogle = () => {
     setSocialName(fullName || 'Jane Wambui');
     setSocialEmail(email && email.includes('@') ? email : 'oto36810@gmail.com');
+    setSocialPhone(phone || '0712345678');
     setSocialModal('google');
   };
 
   const handleOpenFacebook = () => {
     setSocialName(fullName || 'David Ochieng');
     setSocialEmail(email && email.includes('@') ? email : 'david.ochieng@facebook.com');
+    setSocialPhone(phone || '0722889900');
     setSocialModal('facebook');
   };
 
@@ -73,11 +76,13 @@ export const RegistrationGate: React.FC = () => {
       loginWithGoogle({
         name: socialName || 'Google User',
         email: socialEmail || 'user@gmail.com',
+        phone: socialPhone || '+254700123456'
       });
     } else {
       loginWithFacebook({
         name: socialName || 'Facebook User',
         email: socialEmail || 'user@facebook.com',
+        phone: socialPhone || '+254711889900'
       });
     }
     setSocialModal(null);
@@ -358,6 +363,17 @@ export const RegistrationGate: React.FC = () => {
                     className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">Phone Number (for M-Pesa order delivery):</label>
+                  <input
+                    type="tel"
+                    value={socialPhone}
+                    onChange={(e) => setSocialPhone(e.target.value)}
+                    placeholder="0712 345 678"
+                    className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
               </div>
 
               <div className="flex flex-col gap-2 pt-2">
@@ -426,6 +442,17 @@ export const RegistrationGate: React.FC = () => {
                     value={socialEmail}
                     onChange={(e) => setSocialEmail(e.target.value)}
                     placeholder="user@example.com"
+                    className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">Phone Number (for M-Pesa order delivery):</label>
+                  <input
+                    type="tel"
+                    value={socialPhone}
+                    onChange={(e) => setSocialPhone(e.target.value)}
+                    placeholder="0722 889 900"
                     className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
