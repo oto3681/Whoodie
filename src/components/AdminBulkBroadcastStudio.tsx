@@ -1574,7 +1574,7 @@ export const AdminBulkBroadcastStudio: React.FC = () => {
                   type="text"
                   value={newContactName}
                   onChange={(e) => setNewContactName(e.target.value)}
-                  placeholder="e.g. John Kamau"
+                  placeholder="e.g. David Mwangi"
                   className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
                 />
               </div>
@@ -1596,7 +1596,7 @@ export const AdminBulkBroadcastStudio: React.FC = () => {
                   type="email"
                   value={newContactEmail}
                   onChange={(e) => setNewContactEmail(e.target.value)}
-                  placeholder="e.g. john@company.co.ke"
+                  placeholder="e.g. client@company.co.ke"
                   className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
                 />
               </div>

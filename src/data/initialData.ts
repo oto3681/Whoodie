@@ -8,7 +8,8 @@ import {
   BotRule, 
   AdminNotification,
   ZohoQuotation,
-  ZohoSettings
+  ZohoSettings,
+  RegisteredMember
 } from '../types';
 
 export const INITIAL_PRODUCTS: Product[] = [
@@ -1656,6 +1657,111 @@ export const INITIAL_ZOHO_QUOTATIONS: ZohoQuotation[] = [
     createdAt: '2026-08-14T06:00:00Z',
     updatedAt: '2026-08-14T06:00:00Z',
     preparedBy: 'Admin Desk'
+  }
+];
+
+export const INITIAL_REGISTERED_MEMBERS: RegisteredMember[] = [
+  {
+    id: 'mem-001',
+    name: 'Kelvin Kiprono',
+    email: 'kiprono.kelvin@apexlogistics.co.ke',
+    phone: '+254712345678',
+    role: 'user',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    provider: 'google',
+    status: 'active',
+    createdAt: '2026-08-01T09:30:00Z',
+    companyName: 'Apex Hauliers & Logistics Ltd',
+    city: 'Nairobi',
+    notes: 'Corporate account client. Regularly orders branded staff polo shirts & safety reflector vests.',
+    ordersCount: 2,
+    totalSpend: 24500,
+    lastActive: '2026-08-26T14:15:00Z'
+  },
+  {
+    id: 'mem-002',
+    name: 'Jane Wambui',
+    email: 'jane.wambui@organicbeauty.co.ke',
+    phone: '+254722889900',
+    role: 'user',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    provider: 'email',
+    status: 'active',
+    createdAt: '2026-08-05T11:15:00Z',
+    companyName: 'Organic Beauty Botanicals Ltd',
+    city: 'Nairobi',
+    notes: 'Packaging sticker labels & branded gift mugs client. Prefers waterproof vinyl finishes.',
+    ordersCount: 3,
+    totalSpend: 18400,
+    lastActive: '2026-08-27T01:10:00Z'
+  },
+  {
+    id: 'mem-003',
+    name: 'David Mwangi',
+    email: 'david.mwangi@vibeevents.co.ke',
+    phone: '+254733445566',
+    role: 'user',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    provider: 'facebook',
+    status: 'active',
+    createdAt: '2026-08-10T14:20:00Z',
+    companyName: 'Vibe Events & Media Group',
+    city: 'Mombasa',
+    notes: 'Event organizer. Requires teardrop & roll-up banners with same-day express dispatch.',
+    ordersCount: 1,
+    totalSpend: 8200,
+    lastActive: '2026-08-25T17:40:00Z'
+  },
+  {
+    id: 'mem-004',
+    name: 'Sarah Kimani',
+    email: 'sarah.kimani@savannahagro.co.ke',
+    phone: '+254711223344',
+    role: 'user',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+    provider: 'email',
+    status: 'active',
+    createdAt: '2026-08-12T08:45:00Z',
+    companyName: 'Savannah Agro Export Ltd',
+    city: 'Nakuru',
+    notes: 'Staff apparel client. Orders heavy brushed fleece hoodies with embroidered chest logo.',
+    ordersCount: 1,
+    totalSpend: 15600,
+    lastActive: '2026-08-26T10:05:00Z'
+  },
+  {
+    id: 'mem-005',
+    name: 'Marcus Otieno',
+    email: 'm.otieno@apexlogistics.co.ke',
+    phone: '+254733112233',
+    role: 'user',
+    avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80',
+    provider: 'google',
+    status: 'active',
+    createdAt: '2026-08-14T07:10:00Z',
+    companyName: 'Apex Logistics Fleet Crew',
+    city: 'Nairobi',
+    notes: 'Large fleet apparel orders. Requires official VAT tax invoices & LPO processing.',
+    ordersCount: 1,
+    totalSpend: 68660,
+    lastActive: '2026-08-27T02:00:00Z'
+  },
+  {
+    id: 'mem-006',
+    name: 'Woodynat Admin',
+    email: 'woodynatdesigners12@gmail.com',
+    phone: '+254797939199',
+    role: 'admin',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    provider: 'email',
+    status: 'active',
+    createdAt: '2026-07-01T00:00:00Z',
+    companyName: 'Woodynat Designers Limited',
+    city: 'Nairobi CBD',
+    notes: 'Super Administrator & Workshop Production Manager (Gatkim Complex 4th Floor Room 4B1).',
+    ordersCount: 0,
+    totalSpend: 0,
+    lastActive: '2026-08-27T02:35:00Z'
   }
 ];
 

@@ -27,8 +27,14 @@ export const UserDashboard: React.FC = () => {
 
   if (!currentUser) return null;
 
-  // Filter orders for logged-in user or general mock orders
-  const myOrders = orders.filter((o) => o.userId === currentUser.id || o.userId === 'user-01' || o.customerName.includes('Kiprono') || o.customerName.includes('John'));
+  // Filter orders for logged-in user matching their user ID, email, phone, or customer name
+  const myOrders = orders.filter((o) => 
+    (currentUser.id && o.userId === currentUser.id) ||
+    (currentUser.email && o.customerEmail && o.customerEmail.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser.email && o.userEmail && o.userEmail.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (currentUser.phone && o.customerPhone && o.customerPhone.replace(/[^0-9]/g, '') === currentUser.phone.replace(/[^0-9]/g, '')) ||
+    (currentUser.name && o.customerName && o.customerName.toLowerCase() === currentUser.name.toLowerCase())
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">

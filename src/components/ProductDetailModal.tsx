@@ -353,7 +353,7 @@ export const ProductDetailModal: React.FC = () => {
                 </label>
                 <textarea
                   rows={2}
-                  placeholder="e.g. Please print company logo on left chest in gold, and staff name 'John' on right sleeve..."
+                  placeholder="e.g. Please print company logo on left chest in gold, and staff name 'David' on right sleeve..."
                   value={designInstructions}
                   onChange={(e) => setDesignInstructions(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:bg-white focus:outline-none"

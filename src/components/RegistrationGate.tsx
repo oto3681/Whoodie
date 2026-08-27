@@ -226,7 +226,7 @@ export const RegistrationGate: React.FC = () => {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Jane Doe"
+                    placeholder="e.g. Jane Wambui"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"

@@ -21,7 +21,8 @@ import {
   ZohoQuotation,
   ZohoQuoteItem,
   ZohoSettings,
-  ZohoQuoteStatus
+  ZohoQuoteStatus,
+  RegisteredMember
 } from '../types';
 import { 
   INITIAL_PRODUCTS, 
@@ -33,7 +34,8 @@ import {
   INITIAL_BOT_RULES,
   INITIAL_ADMIN_NOTIFICATIONS,
   DEFAULT_ZOHO_SETTINGS,
-  INITIAL_ZOHO_QUOTATIONS
+  INITIAL_ZOHO_QUOTATIONS,
+  INITIAL_REGISTERED_MEMBERS
 } from '../data/initialData';
 import { playNotificationSound } from '../utils/audioNotification';
 import {
@@ -52,6 +54,10 @@ import {
   deleteProductFromFirestore,
   subscribeOrders,
   saveOrderToFirestore,
+  deleteOrderFromFirestore,
+  subscribeMembers,
+  saveMemberToFirestore,
+  deleteMemberFromFirestore,
   subscribeReviews,
   saveReviewToFirestore,
   subscribeWpSettings,
@@ -219,6 +225,13 @@ interface AppContextType {
   updateZohoSettings: (newSettings: Partial<ZohoSettings>) => void;
   syncQuoteToZoho: (quoteId: string) => Promise<boolean>;
 
+  // Registered Members Database & Management
+  registeredMembers: RegisteredMember[];
+  addRegisteredMember: (memberData: Omit<RegisteredMember, 'id' | 'createdAt'>) => RegisteredMember;
+  updateRegisteredMember: (memberId: string, updates: Partial<RegisteredMember>) => void;
+  deleteRegisteredMember: (memberId: string) => void;
+  deleteOrder: (orderId: string) => void;
+
   // Gmail Order Confirmation & Notification Engine (from woodynatdesigners12@gmail.com)
   sendOrderConfirmationEmail: (orderId: string, customRecipient?: string, customNote?: string) => Promise<{ success: boolean; message?: string }>;
   sendOrderStatusUpdateEmail: (orderId: string, stage: OrderStatus, customRecipient?: string, customNote?: string) => Promise<{ success: boolean; message?: string }>;
@@ -309,7 +322,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   });
 
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
-    return safeGetLocalStorage<UserProfile | null>('pixelprint_user', null);
+    const saved = safeGetLocalStorage<UserProfile | null>('pixelprint_user', null);
+    if (saved && (saved.name === 'John Doe' || !saved.name)) {
+      if (saved.email && saved.email.includes('@')) {
+        saved.name = saved.email.split('@')[0].replace(/[._-]/g, ' ').replace(/(^\w|\s\w)/g, (m) => m.toUpperCase());
+      } else {
+        saved.name = 'Registered Customer';
+      }
+      safeSetLocalStorage('pixelprint_user', saved);
+    }
+    return saved;
   });
 
   // Bulk SMS & Email Campaign Studio State
@@ -338,6 +360,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Zoho Quotations & Invoice Engine State
   const [zohoQuotations, setZohoQuotations] = useState<ZohoQuotation[]>(() => {
     return safeGetLocalStorage<ZohoQuotation[]>('pixelprint_zoho_quotations', INITIAL_ZOHO_QUOTATIONS);
+  });
+
+  // Registered Members Database State
+  const [registeredMembers, setRegisteredMembers] = useState<RegisteredMember[]>(() => {
+    return safeGetLocalStorage<RegisteredMember[]>('pixelprint_registered_members', INITIAL_REGISTERED_MEMBERS);
   });
 
   const [zohoSettings, setZohoSettings] = useState<ZohoSettings>(() => {
@@ -427,6 +454,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setReviews(fetched);
     });
 
+    const unsubMembers = subscribeMembers((fetched) => {
+      setRegisteredMembers(fetched);
+      safeSetLocalStorage('pixelprint_registered_members', fetched);
+    });
+
     const unsubWp = subscribeWpSettings((fetched) => {
       setWpSettings((prev) => {
         const savedCustomLogo = safeGetLocalStorage<string | null>('pixelprint_admin_custom_logo', null);
@@ -443,6 +475,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return () => {
       unsubProducts();
       unsubOrders();
+      unsubMembers();
       unsubReviews();
       unsubWp();
     };
@@ -494,6 +527,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     safeSetLocalStorage('pixelprint_wp_settings', wpSettings);
   }, [wpSettings]);
+
+  useEffect(() => {
+    safeSetLocalStorage('pixelprint_registered_members', registeredMembers);
+  }, [registeredMembers]);
 
   useEffect(() => {
     safeSetLocalStorage('pixelprint_customer_contacts', customerContacts);
@@ -595,14 +632,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Auth Handlers
   const loginAsUser = (userData?: { name?: string; email?: string; phone?: string }) => {
+    const rawEmail = (userData?.email || 'client@woodynat.co.ke').trim().toLowerCase();
+    
+    // Check saved user profiles in local registry
+    const savedProfiles = safeGetLocalStorage<Record<string, { name: string; phone?: string; avatar?: string }>>('pixelprint_user_registry', {});
+    const existingProfile = savedProfiles[rawEmail];
+
+    let resolvedName = userData?.name?.trim();
+    if (!resolvedName || resolvedName === 'John Doe') {
+      if (existingProfile?.name && existingProfile.name !== 'John Doe') {
+        resolvedName = existingProfile.name;
+      } else if (rawEmail.includes('@')) {
+        const handle = rawEmail.split('@')[0];
+        resolvedName = handle.replace(/[._-]/g, ' ').replace(/(^\w|\s\w)/g, (m) => m.toUpperCase());
+      } else {
+        resolvedName = 'Registered Customer';
+      }
+    }
+
+    const resolvedPhone = userData?.phone || existingProfile?.phone || '+254712998877';
+    const avatar = existingProfile?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+
+    savedProfiles[rawEmail] = {
+      name: resolvedName,
+      phone: resolvedPhone,
+      avatar,
+    };
+    safeSetLocalStorage('pixelprint_user_registry', savedProfiles);
+
     const user: UserProfile = {
       id: `user-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`,
-      name: userData?.name || 'John Doe',
-      email: userData?.email || 'client@gmail.com',
-      phone: userData?.phone || '+254712998877',
+      name: resolvedName,
+      email: rawEmail,
+      phone: resolvedPhone,
       role: 'user',
       provider: 'email',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+      avatar,
     };
     setCurrentUser(user);
     setActiveModal(null);
@@ -610,16 +675,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const loginWithGoogle = (customData?: { name?: string; email?: string; avatar?: string }) => {
-    const defaultEmail = customData?.email || 'client.woodynat@gmail.com';
-    const defaultName = customData?.name || (defaultEmail.split('@')[0].replace('.', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase()) || 'Google User');
+    const defaultEmail = (customData?.email || 'client.woodynat@gmail.com').trim().toLowerCase();
+    const savedProfiles = safeGetLocalStorage<Record<string, { name: string; phone?: string; avatar?: string }>>('pixelprint_user_registry', {});
+    const existingProfile = savedProfiles[defaultEmail];
+
+    let defaultName = customData?.name?.trim();
+    if (!defaultName || defaultName === 'John Doe' || defaultName === 'Google User') {
+      if (existingProfile?.name && existingProfile.name !== 'John Doe') {
+        defaultName = existingProfile.name;
+      } else {
+        const handle = defaultEmail.split('@')[0];
+        defaultName = handle.replace(/[._-]/g, ' ').replace(/(^\w|\s\w)/g, (m) => m.toUpperCase()) || 'Google User';
+      }
+    }
+
+    const resolvedPhone = existingProfile?.phone || '+254700123456';
+    const avatar = customData?.avatar || existingProfile?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+
+    savedProfiles[defaultEmail] = {
+      name: defaultName,
+      phone: resolvedPhone,
+      avatar,
+    };
+    safeSetLocalStorage('pixelprint_user_registry', savedProfiles);
+
     const user: UserProfile = {
       id: `google-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`,
       name: defaultName,
       email: defaultEmail,
-      phone: '+254700123456',
+      phone: resolvedPhone,
       role: 'user',
       provider: 'google',
-      avatar: customData?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
+      avatar,
     };
     setCurrentUser(user);
     setActiveModal(null);
@@ -627,16 +714,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const loginWithFacebook = (customData?: { name?: string; email?: string; avatar?: string }) => {
-    const defaultEmail = customData?.email || 'customer.fb@woodynat.co.ke';
-    const defaultName = customData?.name || 'Facebook Customer';
+    const defaultEmail = (customData?.email || 'customer.fb@woodynat.co.ke').trim().toLowerCase();
+    const savedProfiles = safeGetLocalStorage<Record<string, { name: string; phone?: string; avatar?: string }>>('pixelprint_user_registry', {});
+    const existingProfile = savedProfiles[defaultEmail];
+
+    let defaultName = customData?.name?.trim();
+    if (!defaultName || defaultName === 'John Doe' || defaultName === 'Facebook Customer') {
+      if (existingProfile?.name && existingProfile.name !== 'John Doe') {
+        defaultName = existingProfile.name;
+      } else {
+        const handle = defaultEmail.split('@')[0];
+        defaultName = handle.replace(/[._-]/g, ' ').replace(/(^\w|\s\w)/g, (m) => m.toUpperCase()) || 'Facebook Customer';
+      }
+    }
+
+    const resolvedPhone = existingProfile?.phone || '+254711889900';
+    const avatar = customData?.avatar || existingProfile?.avatar || 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80';
+
+    savedProfiles[defaultEmail] = {
+      name: defaultName,
+      phone: resolvedPhone,
+      avatar,
+    };
+    safeSetLocalStorage('pixelprint_user_registry', savedProfiles);
+
     const user: UserProfile = {
       id: `fb-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`,
       name: defaultName,
       email: defaultEmail,
-      phone: '+254711889900',
+      phone: resolvedPhone,
       role: 'user',
       provider: 'facebook',
-      avatar: customData?.avatar || 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80'
+      avatar,
     };
     setCurrentUser(user);
     setActiveModal(null);
@@ -717,13 +826,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const isRegistered = true;
     const resolvedUserId = currentUser.id;
+    const resolvedCustomerName = (currentUser.name && currentUser.name.trim() !== '' && currentUser.name !== 'John Doe')
+      ? currentUser.name.trim()
+      : (orderData.customerName && orderData.customerName.trim() !== '' && orderData.customerName !== 'John Doe'
+          ? orderData.customerName.trim()
+          : (currentUser.email ? currentUser.email.split('@')[0].replace(/[._-]/g, ' ').replace(/(^\w|\s\w)/g, (m) => m.toUpperCase()) : 'Registered Customer'));
     const resolvedUserEmail = currentUser.email || orderData.customerEmail;
+    const resolvedUserPhone = currentUser.phone || orderData.customerPhone;
     const resolvedUserAvatar = currentUser.avatar;
     const resolvedUserProvider = currentUser.provider;
 
     const newOrder: Order = {
       ...orderData,
       id,
+      customerName: resolvedCustomerName,
+      customerPhone: resolvedUserPhone,
       userId: resolvedUserId,
       isRegisteredUser: true,
       userEmail: resolvedUserEmail,
@@ -1854,6 +1971,80 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return true;
   };
 
+  // Registered Members Database Management
+  const addRegisteredMember = (memberData: Omit<RegisteredMember, 'id' | 'createdAt'>): RegisteredMember => {
+    const id = `mem-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+    const newMember: RegisteredMember = {
+      ...memberData,
+      id,
+      createdAt: new Date().toISOString(),
+      ordersCount: memberData.ordersCount || 0,
+      totalSpend: memberData.totalSpend || 0,
+      status: memberData.status || 'active',
+      role: memberData.role || 'user',
+      provider: memberData.provider || 'manual',
+      lastActive: new Date().toISOString()
+    };
+
+    setRegisteredMembers((prev) => {
+      const updated = [newMember, ...prev.filter((m) => m.email.toLowerCase() !== newMember.email.toLowerCase())];
+      safeSetLocalStorage('pixelprint_registered_members', updated);
+      return updated;
+    });
+
+    saveMemberToFirestore(newMember);
+
+    // Also update local registry
+    const savedProfiles = safeGetLocalStorage<Record<string, { name: string; phone?: string; avatar?: string }>>('pixelprint_user_registry', {});
+    savedProfiles[newMember.email.toLowerCase()] = {
+      name: newMember.name,
+      phone: newMember.phone,
+      avatar: newMember.avatar,
+    };
+    safeSetLocalStorage('pixelprint_user_registry', savedProfiles);
+
+    showToast('Member Registered 🎉', `${newMember.name} (${newMember.role}) has been added to the database.`, 'success');
+    return newMember;
+  };
+
+  const updateRegisteredMember = (memberId: string, updates: Partial<RegisteredMember>) => {
+    setRegisteredMembers((prev) => {
+      const updated = prev.map((m) => {
+        if (m.id === memberId) {
+          const merged: RegisteredMember = { ...m, ...updates };
+          saveMemberToFirestore(merged);
+          return merged;
+        }
+        return m;
+      });
+      safeSetLocalStorage('pixelprint_registered_members', updated);
+      return updated;
+    });
+    showToast('Member Updated ✍️', 'Customer profile details updated successfully.', 'success');
+  };
+
+  const deleteRegisteredMember = (memberId: string) => {
+    const target = registeredMembers.find((m) => m.id === memberId);
+    setRegisteredMembers((prev) => {
+      const filtered = prev.filter((m) => m.id !== memberId);
+      safeSetLocalStorage('pixelprint_registered_members', filtered);
+      return filtered;
+    });
+    deleteMemberFromFirestore(memberId);
+    showToast('Member Removed 🗑️', `${target?.name || 'Member'} was removed from the database.`, 'info');
+  };
+
+  const deleteOrder = (orderId: string) => {
+    const target = orders.find((o) => o.id === orderId);
+    setOrders((prev) => {
+      const filtered = prev.filter((o) => o.id !== orderId);
+      safeSetLocalStorage('pixelprint_orders', filtered);
+      return filtered;
+    });
+    deleteOrderFromFirestore(orderId);
+    showToast('Order Deleted 🗑️', `Order #${orderId} was removed from the database.`, 'info');
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -1863,6 +2054,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         searchQuery,
         cart,
         orders,
+        registeredMembers,
+        addRegisteredMember,
+        updateRegisteredMember,
+        deleteRegisteredMember,
+        deleteOrder,
         inquiries,
         reviews,
         currentUser,

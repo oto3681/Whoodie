@@ -15,6 +15,7 @@ import { AdminNotificationPanel } from './AdminNotificationPanel';
 import { AdminZohoQuotesStudio } from './AdminZohoQuotesStudio';
 import { AdminMpesaStudio } from './AdminMpesaStudio';
 import { AdminLogoManagerModal } from './AdminLogoManagerModal';
+import { AdminMembersDatabase } from './AdminMembersDatabase';
 import { 
   BarChart3, 
   Package, 
@@ -53,6 +54,7 @@ import {
   FileSpreadsheet,
   TrendingUp,
   DollarSign,
+  Database,
   ShieldCheck,
   Printer,
   Bell,
@@ -71,6 +73,7 @@ export const AdminDashboard: React.FC = () => {
   const { 
     products, 
     orders, 
+    registeredMembers,
     inquiries,
     whatsappThreads,
     adminNotifications,
@@ -91,7 +94,7 @@ export const AdminDashboard: React.FC = () => {
     showToast
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'notifications' | 'mpesa' | 'zoho' | 'kpis' | 'orders' | 'whatsapp' | 'bulk' | 'catalogue' | 'products' | 'wordpress'>('orders');
+  const [activeTab, setActiveTab] = useState<'notifications' | 'database' | 'members' | 'mpesa' | 'zoho' | 'kpis' | 'orders' | 'whatsapp' | 'bulk' | 'catalogue' | 'products' | 'wordpress'>('database');
   const [showLogoModal, setShowLogoModal] = useState(false);
 
   // Admin Email to Customer State
@@ -537,44 +540,75 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Admin KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Revenue</span>
-          <div className="text-2xl font-extrabold text-slate-900">KSh {totalRevenue.toLocaleString()}</div>
-          <span className="text-[11px] font-semibold text-emerald-600">✓ All Payments Verified via M-Pesa</span>
+          <div className="text-xl sm:text-2xl font-extrabold text-slate-900">KSh {totalRevenue.toLocaleString()}</div>
+          <span className="text-[10px] font-semibold text-emerald-600">✓ Verified via M-Pesa</span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+        <div 
+          onClick={() => setActiveTab('database')}
+          className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-xs space-y-1 cursor-pointer hover:border-amber-400 transition-colors group"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Registered Members</span>
+            <span className="bg-amber-50 text-amber-800 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full border border-amber-200 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors">
+              Manage ➔
+            </span>
+          </div>
+          <div className="text-xl sm:text-2xl font-extrabold text-slate-900">{registeredMembers.length} Accounts</div>
+          <span className="text-[10px] font-semibold text-slate-500 flex items-center gap-1">
+            <Users className="w-3 h-3 text-amber-500" /> Real Verified Users
+          </span>
+        </div>
+
+        <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Active Print Jobs</span>
-          <div className="text-2xl font-extrabold text-blue-600">{activeJobs} Pending</div>
-          <span className="text-[11px] font-semibold text-blue-600">In Design / Press Queue</span>
+          <div className="text-xl sm:text-2xl font-extrabold text-blue-600">{activeJobs} Pending</div>
+          <span className="text-[10px] font-semibold text-blue-600">In Production Queue</span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Live Catalog Products</span>
-          <div className="text-2xl font-extrabold text-slate-900">{totalProducts} Items</div>
-          <span className="text-[11px] font-semibold text-slate-500">Across 9 Print Categories</span>
+        <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Catalog Products</span>
+          <div className="text-xl sm:text-2xl font-extrabold text-slate-900">{totalProducts} Items</div>
+          <span className="text-[10px] font-semibold text-slate-500">Across Categories</span>
         </div>
 
         <div 
           onClick={() => setActiveTab('notifications')}
-          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1 cursor-pointer hover:border-amber-300 transition-colors group"
+          className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-xs space-y-1 cursor-pointer hover:border-amber-300 transition-colors group"
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Live Alerts & Leads</span>
-            <span className="bg-amber-50 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-amber-200 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors">
+            <span className="bg-amber-50 text-amber-800 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full border border-amber-200 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors">
               Accept Alerts ➔
             </span>
           </div>
-          <div className="text-2xl font-extrabold text-amber-500">{adminNotifications.length} Total Alerts</div>
-          <span className="text-[11px] font-semibold text-amber-700 flex items-center gap-1">
-            <BellRing className="w-3 h-3 text-amber-600 animate-pulse" /> {unreadNotificationsCount} Pending Admin Action
+          <div className="text-xl sm:text-2xl font-extrabold text-amber-500">{adminNotifications.length} Total Alerts</div>
+          <span className="text-[10px] font-semibold text-amber-700 flex items-center gap-1">
+            <BellRing className="w-3 h-3 text-amber-600 animate-pulse" /> {unreadNotificationsCount} Pending Action
           </span>
         </div>
       </div>
 
       {/* Admin Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-1 scrollbar-none">
+        <button
+          onClick={() => setActiveTab('database')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+            activeTab === 'database' || activeTab === 'members'
+              ? 'bg-slate-950 text-amber-400 shadow-md shadow-slate-900/30 ring-2 ring-amber-400'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Database className="w-4 h-4 text-amber-400" />
+          <span>Members & Database</span>
+          <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded-full">
+            {registeredMembers.length} Accounts
+          </span>
+        </button>
+
         <button
           onClick={() => setActiveTab('notifications')}
           className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
@@ -722,6 +756,11 @@ export const AdminDashboard: React.FC = () => {
           <Globe className="w-4 h-4 text-blue-400" /> CMS & Footer Customizer
         </button>
       </div>
+
+      {/* TAB: DATABASE & REGISTERED MEMBERS MANAGEMENT */}
+      {(activeTab === 'database' || activeTab === 'members') && (
+        <AdminMembersDatabase />
+      )}
 
       {/* TAB: LIVE NOTIFICATIONS & INQUIRY ACCEPTANCE PANEL */}
       {activeTab === 'notifications' && (

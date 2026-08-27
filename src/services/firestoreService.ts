@@ -7,13 +7,14 @@ import {
   Unsubscribe 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Product, Order, CustomerReview, WordPressSettings, ProductCategory } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_REVIEWS, MOCK_ORDERS, DEFAULT_WORDPRESS_SETTINGS, getProductFallbackImage } from '../data/initialData';
+import { Product, Order, CustomerReview, WordPressSettings, ProductCategory, RegisteredMember } from '../types';
+import { INITIAL_PRODUCTS, INITIAL_REVIEWS, MOCK_ORDERS, DEFAULT_WORDPRESS_SETTINGS, INITIAL_REGISTERED_MEMBERS, getProductFallbackImage } from '../data/initialData';
 
 const PRODUCTS_COL = 'products';
 const ORDERS_COL = 'orders';
 const REVIEWS_COL = 'reviews';
 const SETTINGS_COL = 'settings';
+const MEMBERS_COL = 'members';
 
 const CATEGORY_MAPPINGS: Record<string, ProductCategory> = {
   'Hoodies & Sweatshirts': 'Hoodies',
@@ -239,6 +240,76 @@ export const saveOrderToFirestore = async (order: Order): Promise<void> => {
     await setDoc(doc(db, ORDERS_COL, order.id), order);
   } catch (err) {
     console.debug('Failed to save order to Firestore (fallback to local state):', err);
+  }
+};
+
+export const deleteOrderFromFirestore = async (orderId: string): Promise<void> => {
+  try {
+    await deleteDoc(doc(db, ORDERS_COL, orderId));
+  } catch (err) {
+    console.debug('Failed to delete order from Firestore:', err);
+  }
+};
+
+// Subscribe to Registered Members with local fallback & seed
+export const subscribeMembers = (onUpdate: (members: RegisteredMember[]) => void): Unsubscribe => {
+  try {
+    const colRef = collection(db, MEMBERS_COL);
+    return onSnapshot(
+      colRef,
+      (snapshot) => {
+        (async () => {
+          try {
+            if (snapshot.empty) {
+              for (const member of INITIAL_REGISTERED_MEMBERS) {
+                try {
+                  await setDoc(doc(db, MEMBERS_COL, member.id), member);
+                } catch (e) {
+                  console.debug('Member seed bypass:', e);
+                }
+              }
+              onUpdate(INITIAL_REGISTERED_MEMBERS);
+            } else {
+              const items: RegisteredMember[] = [];
+              snapshot.forEach((docSnap) => {
+                items.push(docSnap.data() as RegisteredMember);
+              });
+              items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+              onUpdate(items);
+            }
+          } catch (processErr) {
+            console.debug('Firestore members processing caught:', processErr);
+            onUpdate(INITIAL_REGISTERED_MEMBERS);
+          }
+        })().catch((err) => {
+          console.debug('Firestore members IIFE caught:', err);
+        });
+      },
+      (error) => {
+        console.debug('Firestore members snapshot notice:', error);
+        onUpdate(INITIAL_REGISTERED_MEMBERS);
+      }
+    );
+  } catch (err) {
+    console.debug('Firestore subscribeMembers initialization error:', err);
+    onUpdate(INITIAL_REGISTERED_MEMBERS);
+    return () => {};
+  }
+};
+
+export const saveMemberToFirestore = async (member: RegisteredMember): Promise<void> => {
+  try {
+    await setDoc(doc(db, MEMBERS_COL, member.id), member);
+  } catch (err) {
+    console.debug('Failed to save member to Firestore (fallback to local state):', err);
+  }
+};
+
+export const deleteMemberFromFirestore = async (memberId: string): Promise<void> => {
+  try {
+    await deleteDoc(doc(db, MEMBERS_COL, memberId));
+  } catch (err) {
+    console.debug('Failed to delete member from Firestore:', err);
   }
 };
 

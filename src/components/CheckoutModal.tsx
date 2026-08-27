@@ -296,15 +296,19 @@ export const CheckoutModal: React.FC = () => {
   };
 
   const finalizeOrder = (mpesaReceipt?: string) => {
+    const finalCustomerName = currentUser?.name?.trim() || customerName.trim() || 'Registered Customer';
+    const finalCustomerPhone = currentUser?.phone?.trim() || customerPhone.trim();
+    const finalCustomerEmail = currentUser?.email?.trim() || customerEmail.trim();
+
     return createOrder({
       userId: currentUser?.id,
       isRegisteredUser: !!currentUser,
       userEmail: currentUser?.email || customerEmail,
       userAvatar: currentUser?.avatar,
       userProvider: currentUser?.provider,
-      customerName,
-      customerPhone,
-      customerEmail,
+      customerName: finalCustomerName,
+      customerPhone: finalCustomerPhone,
+      customerEmail: finalCustomerEmail,
       deliveryCity,
       deliveryAddress,
       deliveryType,
@@ -516,7 +520,7 @@ export const CheckoutModal: React.FC = () => {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Kiprono M. / Jane Doe"
+                      placeholder="e.g. Kelvin Kiprono / Jane Wambui"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none"

@@ -73,7 +73,7 @@ export interface Order {
   isRegisteredUser?: boolean;
   userEmail?: string;
   userAvatar?: string;
-  userProvider?: 'email' | 'google' | 'facebook';
+  userProvider?: 'email' | 'google' | 'facebook' | 'manual';
   customerName: string;
   customerPhone: string;
   customerEmail: string;
@@ -126,14 +126,40 @@ export interface CustomerReview {
   likes: number;
 }
 
+export interface RegisteredMember {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: 'admin' | 'user' | 'manager';
+  avatar?: string;
+  provider?: 'email' | 'google' | 'facebook' | 'manual';
+  status: 'active' | 'inactive' | 'suspended' | 'pending';
+  createdAt: string;
+  companyName?: string;
+  city?: string;
+  notes?: string;
+  ordersCount?: number;
+  totalSpend?: number;
+  lastActive?: string;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
   email: string;
   phone: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'user' | 'manager';
   avatar?: string;
-  provider?: 'email' | 'google' | 'facebook';
+  provider?: 'email' | 'google' | 'facebook' | 'manual';
+  status?: 'active' | 'inactive' | 'suspended' | 'pending';
+  createdAt?: string;
+  companyName?: string;
+  city?: string;
+  notes?: string;
+  ordersCount?: number;
+  totalSpend?: number;
+  lastActive?: string;
 }
 
 export interface WordPressSettings {

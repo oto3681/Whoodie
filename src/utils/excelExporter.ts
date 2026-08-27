@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { Order, Product } from '../types';
+import { Order, Product, RegisteredMember } from '../types';
 
 /**
  * Export full system database, transactions, payments, financial analysis, and product analytics to an Excel file (.xlsx).
@@ -253,4 +253,108 @@ export const exportAnalyticsToExcel = (orders: Order[], products: Product[]) => 
   XLSX.utils.book_append_sheet(wb, catWs, 'Category Analytics');
 
   XLSX.writeFile(wb, `Woodynat_Financial_Analytics_${new Date().toISOString().slice(0, 10)}.xlsx`);
+};
+
+/**
+ * Export specifically the Registered Members Database to Excel
+ */
+export const exportMembersToExcel = (members: RegisteredMember[]) => {
+  const wb = XLSX.utils.book_new();
+
+  const memberRows = members.map((m) => ({
+    'Member ID': m.id,
+    'Full Name': m.name,
+    'Email Address': m.email,
+    'Phone Number': m.phone,
+    'Role': m.role === 'admin' ? 'Administrator' : m.role === 'manager' ? 'Staff / Manager' : 'Customer',
+    'Account Status': m.status.toUpperCase(),
+    'Company / Organization': m.companyName || 'Individual Customer',
+    'City / Region': m.city || 'Nairobi',
+    'Auth Provider': m.provider || 'email',
+    'Joined Date': m.createdAt,
+    'Total Orders Placed': m.ordersCount || 0,
+    'Total Cumulative Spend (KSh)': m.totalSpend || 0,
+    'Last Active Timestamp': m.lastActive || m.createdAt,
+    'Admin Notes': m.notes || ''
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(memberRows);
+  ws['!cols'] = [
+    { wch: 15 }, // ID
+    { wch: 22 }, // Name
+    { wch: 28 }, // Email
+    { wch: 18 }, // Phone
+    { wch: 18 }, // Role
+    { wch: 15 }, // Status
+    { wch: 28 }, // Company
+    { wch: 18 }, // City
+    { wch: 15 }, // Provider
+    { wch: 22 }, // Joined Date
+    { wch: 18 }, // Orders Count
+    { wch: 25 }, // Spend
+    { wch: 22 }, // Last Active
+    { wch: 40 }, // Notes
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Registered Members');
+  XLSX.writeFile(wb, `Woodynat_Registered_Members_Database_${new Date().toISOString().slice(0, 10)}.xlsx`);
+};
+
+/**
+ * Export complete Database (Orders & Registered Members)
+ */
+export const exportDatabaseCombinedToExcel = (members: RegisteredMember[], orders: Order[]) => {
+  const wb = XLSX.utils.book_new();
+
+  // 1. Members Sheet
+  const memberRows = members.map((m) => ({
+    'Member ID': m.id,
+    'Full Name': m.name,
+    'Email Address': m.email,
+    'Phone Number': m.phone,
+    'Role': m.role.toUpperCase(),
+    'Status': m.status.toUpperCase(),
+    'Company': m.companyName || 'N/A',
+    'City': m.city || 'N/A',
+    'Joined Date': m.createdAt,
+    'Orders Count': m.ordersCount || 0,
+    'Total Spend (KSh)': m.totalSpend || 0,
+    'Notes': m.notes || ''
+  }));
+  const memWs = XLSX.utils.json_to_sheet(memberRows);
+  memWs['!cols'] = [
+    { wch: 15 }, { wch: 22 }, { wch: 28 }, { wch: 18 }, { wch: 15 },
+    { wch: 15 }, { wch: 25 }, { wch: 18 }, { wch: 22 }, { wch: 15 },
+    { wch: 20 }, { wch: 35 }
+  ];
+  XLSX.utils.book_append_sheet(wb, memWs, 'Registered Members');
+
+  // 2. Orders Sheet
+  const orderRows = orders.map((ord) => {
+    const itemNames = ord.items.map((i) => `${i.product.name} (x${i.quantity})`).join('; ');
+    return {
+      'Order ID': ord.id,
+      'Date': ord.createdAt,
+      'Customer Name': ord.customerName,
+      'Customer Phone': ord.customerPhone,
+      'Customer Email': ord.customerEmail || 'N/A',
+      'Total Amount (KSh)': ord.totalAmount,
+      'Payment Status': ord.paymentStatus || 'Paid',
+      'Payment Reference': ord.paymentReference || 'VERIFIED-MPESA',
+      'Production Status': ord.orderStatus,
+      'Delivery City': ord.deliveryCity,
+      'Delivery Address': ord.deliveryAddress,
+      'Delivery Type': ord.deliveryType,
+      'Items': itemNames
+    };
+  });
+  const ordWs = XLSX.utils.json_to_sheet(orderRows);
+  ordWs['!cols'] = [
+    { wch: 16 }, { wch: 20 }, { wch: 22 }, { wch: 18 }, { wch: 25 },
+    { wch: 18 }, { wch: 15 }, { wch: 20 }, { wch: 22 }, { wch: 18 },
+    { wch: 30 }, { wch: 22 }, { wch: 45 }
+  ];
+  XLSX.utils.book_append_sheet(wb, ordWs, 'Orders Database');
+
+  XLSX.writeFile(wb, `Woodynat_Full_Database_Backup_${new Date().toISOString().slice(0, 10)}.xlsx`);
 };
