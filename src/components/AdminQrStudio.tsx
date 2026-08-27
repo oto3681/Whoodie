@@ -186,9 +186,144 @@ export const AdminQrStudio: React.FC = () => {
     showToast('Vector SVG Downloaded! 🎨', 'Crisp vector graphic ready for vinyl cut & large format printing.');
   };
 
-  // Handle Print Action
-  const handlePrintPoster = () => {
-    window.print();
+  // Handle Print Action - Prints ONLY the QR code in an isolated clean frame
+  const handlePrintOnlyQr = (mode: 'pure_qr' | 'qr_card' = 'pure_qr') => {
+    if (!qrDataUrl) return;
+
+    // Create or reuse hidden print iframe
+    let printIframe = document.getElementById('woodynat-qr-print-iframe') as HTMLIFrameElement;
+    if (!printIframe) {
+      printIframe = document.createElement('iframe');
+      printIframe.id = 'woodynat-qr-print-iframe';
+      printIframe.style.position = 'fixed';
+      printIframe.style.right = '0';
+      printIframe.style.bottom = '0';
+      printIframe.style.width = '0';
+      printIframe.style.height = '0';
+      printIframe.style.border = '0';
+      document.body.appendChild(printIframe);
+    }
+
+    const iframeDoc = printIframe.contentDocument || printIframe.contentWindow?.document;
+    if (!iframeDoc) {
+      window.print();
+      return;
+    }
+
+    const titleText = 
+      qrPreset === 'signup' ? 'Scan to Register & Sign Up' :
+      qrPreset === 'login' ? 'Scan to Log In' :
+      qrPreset === 'shop' ? 'Scan for Full Store Catalogue' :
+      qrPreset === 'whatsapp' ? 'Scan to Chat on WhatsApp' :
+      qrPreset === 'paybill' ? 'M-Pesa Paybill: 247247' :
+      'Scan to Access Portal';
+
+    iframeDoc.open();
+    iframeDoc.write(`
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="utf-8" />
+          <title>Woodynat QR Code</title>
+          <style>
+            @page {
+              size: auto;
+              margin: 15mm;
+            }
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+            }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              background: #ffffff;
+              color: #0f172a;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              min-height: 90vh;
+              text-align: center;
+              padding: 20px;
+            }
+            .qr-print-wrapper {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              margin: auto;
+              text-align: center;
+            }
+            .qr-brand {
+              font-size: 16px;
+              font-weight: 800;
+              letter-spacing: 1.5px;
+              text-transform: uppercase;
+              color: #1e40af;
+              margin-bottom: 6px;
+            }
+            .qr-header-title {
+              font-size: 22px;
+              font-weight: 900;
+              color: #0f172a;
+              margin-bottom: 20px;
+            }
+            .qr-code-box {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: #ffffff;
+              padding: 16px;
+              border-radius: 20px;
+            }
+            .qr-img {
+              width: 360px;
+              height: 360px;
+              object-fit: contain;
+              display: block;
+            }
+            .qr-instructions {
+              margin-top: 18px;
+              font-size: 14px;
+              font-weight: 700;
+              color: #334155;
+            }
+            .qr-url {
+              margin-top: 6px;
+              font-size: 11px;
+              font-family: monospace;
+              color: #64748b;
+              word-break: break-all;
+              max-width: 400px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="qr-print-wrapper">
+            ${mode === 'qr_card' ? `
+              <div class="qr-brand">Woodynat Designers Limited</div>
+              <div class="qr-header-title">${titleText}</div>
+            ` : ''}
+            
+            <div class="qr-code-box">
+              <img src="${qrDataUrl}" alt="Woodynat QR Code" class="qr-img" />
+            </div>
+
+            <div class="qr-instructions">Point your smartphone camera to scan</div>
+            <div class="qr-url">${currentUrl}</div>
+          </div>
+        </body>
+      </html>
+    `);
+    iframeDoc.close();
+
+    showToast('Printing QR Code... 🖨️', 'Opening printer dialog for isolated QR code.');
+
+    setTimeout(() => {
+      printIframe.contentWindow?.focus();
+      printIframe.contentWindow?.print();
+    }, 300);
   };
 
   return (
@@ -201,7 +336,7 @@ export const AdminQrStudio: React.FC = () => {
               <QrCode className="w-3 h-3" /> OFFICIAL QR CODE STATION
             </span>
             <span className="bg-emerald-500/20 text-emerald-300 text-xs font-mono px-2 py-0.5 rounded-md border border-emerald-500/30 flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> Mobile Camera Auto-Detect
+              <CheckCircle2 className="w-3 h-3" /> Clean QR-Only Print Enabled
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
@@ -214,11 +349,11 @@ export const AdminQrStudio: React.FC = () => {
 
         <div className="flex items-center gap-2.5 flex-wrap">
           <button
-            onClick={handlePrintPoster}
+            onClick={() => handlePrintOnlyQr('pure_qr')}
             className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-5 py-3 rounded-2xl text-xs flex items-center gap-2 shadow-lg shadow-amber-400/20 transition-all cursor-pointer hover:scale-105 active:scale-95 shrink-0"
           >
             <Printer className="w-4 h-4" />
-            <span>Print QR Display Poster</span>
+            <span>Print QR Code Only</span>
           </button>
 
           <button
@@ -520,7 +655,10 @@ export const AdminQrStudio: React.FC = () => {
 
             {/* Centered QR Code Box */}
             <div className="flex flex-col items-center justify-center my-4">
-              <div className="bg-slate-50 p-4 sm:p-6 rounded-3xl border-2 border-dashed border-slate-300 shadow-inner inline-block text-center relative group">
+              <div 
+                id="woodynat-qr-print-target"
+                className="bg-slate-50 p-4 sm:p-6 rounded-3xl border-2 border-dashed border-slate-300 shadow-inner inline-block text-center relative group"
+              >
                 {qrDataUrl ? (
                   <img
                     src={qrDataUrl}
@@ -607,11 +745,12 @@ export const AdminQrStudio: React.FC = () => {
             </button>
 
             <button
-              onClick={handlePrintPoster}
+              onClick={() => handlePrintOnlyQr('pure_qr')}
               className="bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
+              title="Print strictly the standalone scannable QR code without system UI"
             >
               <Printer className="w-4 h-4" />
-              <span>Print This Poster</span>
+              <span>Print QR Code Only</span>
             </button>
           </div>
         </div>

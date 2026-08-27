@@ -9,23 +9,45 @@
 }
 
 @media print {
-  body {
+  html, body {
     background: #ffffff !important;
-    color: #0f172a !important;
-  }
-  
-  header, footer, nav, .no-print, button:not(.allow-print) {
-    display: none !important;
-  }
-  
-  #woodynat-printable-poster {
-    border: 2px solid #cbd5e1 !important;
-    box-shadow: none !important;
-    margin: 0 auto !important;
-    padding: 24px !important;
-    max-width: 750px !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
     width: 100% !important;
-    display: block !important;
-    page-break-inside: avoid;
+    height: 100% !important;
+  }
+  
+  /* Hide all system elements, dashboards, modals, overlays, headers, buttons */
+  body * {
+    visibility: hidden !important;
+  }
+  
+  /* Strictly isolate and show only the QR print container */
+  #woodynat-qr-print-target,
+  #woodynat-qr-print-target * {
+    visibility: visible !important;
+  }
+  
+  #woodynat-qr-print-target {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    z-index: 999999 !important;
+    page-break-inside: avoid !important;
   }
 }
+
