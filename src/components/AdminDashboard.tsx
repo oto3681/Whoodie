@@ -12,7 +12,7 @@ import { AdminCatalogueStudio } from './AdminCatalogueStudio';
 import { AdminWhatsAppBotHub } from './AdminWhatsAppBotHub';
 import { AdminBulkBroadcastStudio } from './AdminBulkBroadcastStudio';
 import { AdminNotificationPanel } from './AdminNotificationPanel';
-import { AdminZohoQuotesStudio } from './AdminZohoQuotesStudio';
+import { AdminWoodyQuoteStudio } from './AdminWoodyQuoteStudio';
 import { AdminMpesaStudio } from './AdminMpesaStudio';
 import { AdminLogoManagerModal } from './AdminLogoManagerModal';
 import { AdminMembersDatabase } from './AdminMembersDatabase';
@@ -703,13 +703,13 @@ export const AdminDashboard: React.FC = () => {
           onClick={() => setActiveTab('zoho')}
           className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
             activeTab === 'zoho'
-              ? 'bg-blue-700 text-white shadow-md shadow-blue-700/30 ring-2 ring-blue-400'
-              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-2 ring-blue-400'
+              : 'bg-white text-slate-700 hover:bg-blue-50/50 border border-slate-200'
           }`}
         >
           <FileText className="w-4 h-4 text-blue-400" />
-          <span>Zoho Quotations & Pricing</span>
-          <span className="bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
+          <span>Woody-Quote Studio</span>
+          <span className="bg-blue-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
             {zohoQuotations.length}
           </span>
         </button>
@@ -811,9 +811,9 @@ export const AdminDashboard: React.FC = () => {
         <AdminMpesaStudio />
       )}
 
-      {/* TAB: ZOHO QUOTATIONS & ESTIMATES STUDIO */}
+      {/* TAB: WOODY-QUOTE COMMERCIAL QUOTATIONS & ESTIMATES STUDIO */}
       {activeTab === 'zoho' && (
-        <AdminZohoQuotesStudio />
+        <AdminWoodyQuoteStudio />
       )}
 
       {/* TAB: WHATSAPP & WHATBOT HUB */}

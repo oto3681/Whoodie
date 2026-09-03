@@ -1452,16 +1452,17 @@ export const DEFAULT_ZOHO_SETTINGS: ZohoSettings = {
   refreshToken: '1000.zoho_refresh_token_live_woodynat',
   environment: 'production',
   autoSyncToZoho: true,
-  defaultQuotePrefix: 'ZOHO-QT-2026',
+  autoSyncWoodyQuote: true,
+  defaultQuotePrefix: 'WQ-2026',
   defaultPaymentTerms: '50% Deposit, 50% on Delivery',
   defaultValidityDays: 14,
   defaultTaxRate: 16,
   defaultDeliveryTimeline: '24-48 Hours Express Delivery',
   defaultNotes: 'Thank you for choosing Woodynat Designers Limited for your branding and printing needs. High-resolution digital vector proofs will be provided for sign-off before mass production begins.',
   defaultTerms: '1. 50% advance deposit is required before commencement of production; remaining 50% balance payable upon dispatch or shop collection.\n2. Digital vector proof approval is mandatory for all personalized and corporate apparel/signage.\n3. Turnaround time commences after design approval & deposit confirmation.\n4. Official M-Pesa Paybill: 247247 | Account: 0797939199.',
-  companyKraPin: 'P051982734Z',
-  includeEtrQrCode: true
 };
+
+export const DEFAULT_WOODY_QUOTE_SETTINGS = DEFAULT_ZOHO_SETTINGS;
 
 export const INITIAL_ZOHO_QUOTATIONS: ZohoQuotation[] = [
   {
@@ -1673,6 +1674,8 @@ export const INITIAL_ZOHO_QUOTATIONS: ZohoQuotation[] = [
     preparedBy: 'Admin Desk'
   }
 ];
+
+export const INITIAL_WOODY_QUOTATIONS = INITIAL_ZOHO_QUOTATIONS;
 
 export const INITIAL_REGISTERED_MEMBERS: RegisteredMember[] = [];
 

@@ -370,7 +370,7 @@ export interface AdminNotification {
   actionTakenNotes?: string;
 }
 
-export interface ZohoQuoteItem {
+export interface WoodyQuoteItem {
   id: string;
   productId?: string;
   name: string;
@@ -388,11 +388,11 @@ export interface ZohoQuoteItem {
   artworkNotes?: string;
 }
 
-export type ZohoQuoteStatus = 'Draft' | 'Sent' | 'Approved' | 'Invoiced' | 'Declined' | 'Converted to Order';
+export type WoodyQuoteStatus = 'Draft' | 'Sent' | 'Approved' | 'Invoiced' | 'Declined' | 'Converted to Order';
 
-export interface ZohoQuotation {
+export interface WoodyQuotation {
   id: string;
-  quoteNumber: string; // e.g. ZOHO-QT-2026-0042
+  quoteNumber: string; // e.g. WQ-2026-0042
   referenceInquiryId?: string;
   referenceChatId?: string;
   customerName: string;
@@ -409,7 +409,7 @@ export interface ZohoQuotation {
   paymentTerms: 'Due on Receipt' | 'Net 15' | 'Net 30' | '50% Deposit, 50% on Delivery' | 'Cash on Delivery';
   deliveryTimeline: string; // e.g. "24-48 Hours Express", "3-5 Working Days"
   currency: 'KSh' | 'USD';
-  items: ZohoQuoteItem[];
+  items: WoodyQuoteItem[];
   subtotal: number;
   discountTotal: number;
   taxRate: number; // 16% VAT or 0%
@@ -421,25 +421,28 @@ export interface ZohoQuotation {
   termsAndConditions: string;
   paybillNumber: string;
   paybillAccount: string;
-  status: ZohoQuoteStatus;
+  status: WoodyQuoteStatus;
   zohoSyncStatus?: 'synced' | 'local_only' | 'pending';
   zohoEstimateId?: string;
+  woodyQuoteSyncStatus?: 'synced' | 'local_only' | 'pending';
+  woodyQuoteEstimateId?: string;
   convertedOrderId?: string;
   createdAt: string;
   updatedAt: string;
   preparedBy: string;
 }
 
-export interface ZohoSettings {
+export interface WoodyQuoteSettings {
   accountEmail: string;
   notificationEmail: string;
   senderName: string;
-  organizationId: string;
-  clientId: string;
-  clientSecret: string;
-  refreshToken: string;
-  environment: 'sandbox' | 'production';
-  autoSyncToZoho: boolean;
+  organizationId?: string;
+  clientId?: string;
+  clientSecret?: string;
+  refreshToken?: string;
+  environment?: 'sandbox' | 'production';
+  autoSyncToZoho?: boolean;
+  autoSyncWoodyQuote?: boolean;
   defaultQuotePrefix: string;
   defaultPaymentTerms: 'Due on Receipt' | 'Net 15' | 'Net 30' | '50% Deposit, 50% on Delivery' | 'Cash on Delivery';
   defaultValidityDays: number;
@@ -447,7 +450,13 @@ export interface ZohoSettings {
   defaultDeliveryTimeline: string;
   defaultNotes: string;
   defaultTerms: string;
-  companyKraPin: string;
-  includeEtrQrCode: boolean;
+  companyKraPin?: string;
+  includeEtrQrCode?: boolean;
 }
+
+// Backward-compatibility aliases
+export type ZohoQuoteItem = WoodyQuoteItem;
+export type ZohoQuoteStatus = WoodyQuoteStatus;
+export type ZohoQuotation = WoodyQuotation;
+export type ZohoSettings = WoodyQuoteSettings;
 

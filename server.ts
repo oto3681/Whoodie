@@ -2089,6 +2089,216 @@ app.get('/api/email/logs', (req, res) => {
   });
 });
 
+// 5. Send Official Woody-Quote Commercial Quotation via Gmail
+app.post('/api/quote/send-email', async (req, res) => {
+  try {
+    const { quote, recipientEmail, customSubject, customMessage } = req.body;
+
+    if (!quote || !quote.quoteNumber) {
+      return res.status(400).json({ success: false, error: 'Quotation data is required' });
+    }
+
+    const targetEmail = (recipientEmail || quote.customerEmail || '').trim();
+    if (!targetEmail || !targetEmail.includes('@')) {
+      return res.status(400).json({ success: false, error: 'Valid customer email address is required' });
+    }
+
+    const quoteNumber = quote.quoteNumber;
+    const customerName = quote.customerName || 'Valued Customer';
+    const grandTotalFormatted = Number(quote.grandTotal || 0).toLocaleString();
+    const subject = customSubject || `Official Quotation #${quoteNumber} - Woodynat Designers Limited`;
+
+    const itemsRows = (quote.items || [])
+      .map((item: any, idx: number) => `
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+          <td style="padding: 10px 12px; font-size: 13px; color: #64748b;">${idx + 1}</td>
+          <td style="padding: 10px 12px; font-size: 13px; font-weight: 600; color: #0f172a;">
+            ${item.name}
+            ${item.selectedSize ? `<div style="font-size: 11px; color: #2563eb; font-weight: normal; margin-top: 2px;">Specs: ${item.selectedSize}</div>` : ''}
+            ${item.description ? `<div style="font-size: 11px; color: #64748b; font-weight: normal; margin-top: 2px;">${item.description.slice(0, 100)}</div>` : ''}
+          </td>
+          <td style="padding: 10px 12px; font-size: 13px; text-align: center; font-weight: 600;">${item.quantity} ${item.unit || 'pcs'}</td>
+          <td style="padding: 10px 12px; font-size: 13px; text-align: right; font-family: monospace;">KSh ${Number(item.unitPrice || 0).toLocaleString()}</td>
+          <td style="padding: 10px 12px; font-size: 13px; text-align: right; font-family: monospace; font-weight: bold; color: #0f2240;">KSh ${Number(item.total || 0).toLocaleString()}</td>
+        </tr>
+      `).join('');
+
+    const emailHtml = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 650px; margin: 0 auto; background-color: #ffffff; border: 1px solid #dbeafe; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(15, 34, 64, 0.08);">
+        <!-- Blue Theme Header -->
+        <div style="background: linear-gradient(135deg, #0f2240 0%, #1e3a8a 50%, #2563eb 100%); padding: 28px 24px; color: #ffffff;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td>
+                <h1 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px;">WOODYNAT DESIGNERS LIMITED</h1>
+                <p style="margin: 4px 0 0; font-size: 12px; color: #bfdbfe;">Branding, Commercial Printing & Signage Solutions</p>
+                <p style="margin: 4px 0 0; font-size: 11px; color: #93c5fd;">📍 Temple Road Gatkim complex, 4th Floor Wing B Room 4B1, Nairobi CBD</p>
+              </td>
+              <td style="text-align: right; vertical-align: top;">
+                <span style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                  WOODY-QUOTE
+                </span>
+                <div style="font-size: 12px; font-family: monospace; font-weight: bold; margin-top: 6px; color: #ffffff;">#${quoteNumber}</div>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="padding: 24px;">
+          <!-- Customer greeting & summary -->
+          <p style="font-size: 14px; color: #334155; margin-top: 0;">Dear <strong>${customerName}</strong>,</p>
+          <p style="font-size: 13px; color: #475569; line-height: 1.6;">
+            Thank you for reaching out to Woodynat Designers Limited. Below is our official commercial quotation <strong>#${quoteNumber}</strong> prepared especially for your requested items and project requirements.
+          </p>
+
+          ${customMessage ? `
+            <div style="background-color: #eff6ff; border-left: 4px solid #2563eb; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 13px; color: #1e3a8a;">
+              ${customMessage}
+            </div>
+          ` : ''}
+
+          <!-- Quote Meta Card -->
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin: 18px 0;">
+            <table style="width: 100%; font-size: 12px; color: #475569;">
+              <tr>
+                <td><strong>Quote Date:</strong> ${quote.quoteDate || new Date().toISOString().split('T')[0]}</td>
+                <td style="text-align: right;"><strong>Valid Until:</strong> ${quote.expiryDate || '14 Days'}</td>
+              </tr>
+              <tr>
+                <td style="padding-top: 6px;"><strong>Fulfillment:</strong> ${quote.deliveryType || 'Workshop CBD Pickup'}</td>
+                <td style="padding-top: 6px; text-align: right;"><strong>Turnaround:</strong> ${quote.deliveryTimeline || '24-48 Hours Express'}</td>
+              </tr>
+              <tr>
+                <td style="padding-top: 6px;"><strong>Prepared By:</strong> ${quote.preparedBy || 'Woodynat Commercial Desk'}</td>
+                <td style="padding-top: 6px; text-align: right;"><strong>Payment Terms:</strong> ${quote.paymentTerms || '50% Deposit, 50% on Delivery'}</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Line Items Table -->
+          <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin: 20px 0;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+              <thead>
+                <tr style="background-color: #0f2240; color: #ffffff; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+                  <th style="padding: 10px 12px;">#</th>
+                  <th style="padding: 10px 12px;">Item & Specs</th>
+                  <th style="padding: 10px 12px; text-align: center;">Qty</th>
+                  <th style="padding: 10px 12px; text-align: right;">Unit Price</th>
+                  <th style="padding: 10px 12px; text-align: right;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsRows}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Financial Breakdown -->
+          <div style="margin: 20px 0; display: flex; justify-content: flex-end;">
+            <table style="width: 260px; margin-left: auto; font-size: 13px; color: #334155;">
+              <tr>
+                <td style="padding: 4px 0;">Subtotal:</td>
+                <td style="padding: 4px 0; text-align: right; font-family: monospace; font-weight: bold;">KSh ${Number(quote.subtotal || 0).toLocaleString()}</td>
+              </tr>
+              ${quote.discountTotal > 0 ? `
+                <tr>
+                  <td style="padding: 4px 0; color: #d97706;">Total Discount:</td>
+                  <td style="padding: 4px 0; text-align: right; font-family: monospace; font-weight: bold; color: #d97706;">-KSh ${Number(quote.discountTotal || 0).toLocaleString()}</td>
+                </tr>
+              ` : ''}
+              ${quote.taxTotal > 0 ? `
+                <tr>
+                  <td style="padding: 4px 0; color: #64748b;">16% VAT:</td>
+                  <td style="padding: 4px 0; text-align: right; font-family: monospace; font-weight: bold;">+KSh ${Number(quote.taxTotal || 0).toLocaleString()}</td>
+                </tr>
+              ` : ''}
+              ${quote.shippingCost > 0 ? `
+                <tr>
+                  <td style="padding: 4px 0; color: #64748b;">Logistics / Delivery:</td>
+                  <td style="padding: 4px 0; text-align: right; font-family: monospace; font-weight: bold;">+KSh ${Number(quote.shippingCost || 0).toLocaleString()}</td>
+                </tr>
+              ` : ''}
+              <tr style="border-top: 2px solid #0f2240;">
+                <td style="padding: 10px 0; font-size: 15px; font-weight: 800; color: #0f2240;">GRAND TOTAL:</td>
+                <td style="padding: 10px 0; font-size: 16px; font-weight: 800; color: #2563eb; text-align: right; font-family: monospace;">KSh ${grandTotalFormatted}</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- M-Pesa Instructions Box -->
+          <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px; margin: 20px 0;">
+            <div style="font-size: 12px; font-weight: 800; color: #1e3a8a; text-transform: uppercase; margin-bottom: 6px;">
+              💳 Official M-Pesa Payment Details
+            </div>
+            <p style="margin: 2px 0; font-size: 13px; color: #1e293b;">• <strong>Paybill Number:</strong> ${quote.paybillNumber || '247247'}</p>
+            <p style="margin: 2px 0; font-size: 13px; color: #1e293b;">• <strong>Account Number:</strong> ${quote.paybillAccount || '0797939199'}</p>
+            <p style="margin: 2px 0; font-size: 13px; color: #1e293b;">• <strong>Account Name:</strong> Woodynat Designers Limited</p>
+            <p style="margin: 6px 0 0; font-size: 11px; color: #64748b;">Turnaround commences immediately upon 50% deposit confirmation and vector proof approval.</p>
+          </div>
+
+          <!-- Contact & Footer -->
+          <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 24px; font-size: 12px; color: #64748b; line-height: 1.5;">
+            <p style="margin: 0 0 4px;"><strong>Woodynat Designers Limited - Commercial Sales & Production</strong></p>
+            <p style="margin: 0 0 4px;">Phone / WhatsApp: <a href="tel:+254797939199" style="color: #2563eb;">+254 797 939 199</a> | Email: <a href="mailto:woodynatdesigners12@gmail.com" style="color: #2563eb;">woodynatdesigners12@gmail.com</a></p>
+            <p style="margin: 0;">Showroom & Workshop: Temple Road Gatkim complex building 4th floor wing B Room 4B1, Nairobi Central Business District</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const transporter = createNodemailerTransporter();
+    let messageId = `msg-woodyquote-${Date.now()}`;
+    let deliveryStatus: 'sent' | 'simulated' = 'simulated';
+
+    if (transporter) {
+      try {
+        const info = await transporter.sendMail({
+          from: SENDER_HEADER,
+          to: targetEmail,
+          cc: ADMIN_OFFICIAL_GMAIL,
+          subject,
+          html: emailHtml
+        });
+        messageId = info.messageId || messageId;
+        deliveryStatus = 'sent';
+      } catch (sendErr: any) {
+        console.warn(`[Gmail Dispatcher] Live SMTP sending failed for quote #${quoteNumber}, fallback to simulated:`, sendErr.message);
+      }
+    }
+
+    const logEntry: EmailLogEntry = {
+      id: `log-quote-${Date.now()}`,
+      orderId: quoteNumber,
+      type: 'custom_broadcast',
+      sender: ADMIN_OFFICIAL_GMAIL,
+      recipient: targetEmail,
+      subject,
+      status: deliveryStatus,
+      timestamp: new Date().toISOString(),
+      messageId,
+      previewSummary: `Woody-Quote #${quoteNumber} for KSh ${grandTotalFormatted} dispatched to ${targetEmail}`
+    };
+
+    recentEmailLogs.unshift(logEntry);
+    if (recentEmailLogs.length > 50) recentEmailLogs.pop();
+
+    return res.status(200).json({
+      success: true,
+      sender: ADMIN_OFFICIAL_GMAIL,
+      recipient: targetEmail,
+      quoteNumber,
+      subject,
+      messageId,
+      status: deliveryStatus,
+      message: `Quotation #${quoteNumber} dispatched to ${targetEmail} from ${ADMIN_OFFICIAL_GMAIL}!`
+    });
+
+  } catch (err: any) {
+    console.error('Error in /api/quote/send-email:', err);
+    return res.status(500).json({ success: false, error: err.message || 'Failed to dispatch quotation email' });
+  }
+});
+
 async function startServer() {
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
