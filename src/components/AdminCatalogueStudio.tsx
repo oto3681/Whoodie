@@ -37,9 +37,11 @@ import {
   X,
   ExternalLink,
   Edit3,
-  Upload
+  Upload,
+  FolderPlus
 } from 'lucide-react';
 import { AdminProductEditModal } from './AdminProductEditModal';
+import { AdminCategoryManagerModal } from './AdminCategoryManagerModal';
 
 export const AdminCatalogueStudio: React.FC = () => {
   const { 
@@ -59,6 +61,7 @@ export const AdminCatalogueStudio: React.FC = () => {
   // Price Catalogue Product Edit Dialogue Box State
   const [editingProductModal, setEditingProductModal] = useState<Product | null>(null);
   const [isNewProductModal, setIsNewProductModal] = useState<boolean>(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState<boolean>(false);
 
   // Selected Products State
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>(() => 
@@ -484,6 +487,15 @@ export const AdminCatalogueStudio: React.FC = () => {
                     ⚡ Flash Deals
                   </button>
                   <button
+                    id="catalogue-manage-categories-btn"
+                    onClick={() => setIsCategoryModalOpen(true)}
+                    className="bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-950/30 dark:hover:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-[11px] font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-2xs shrink-0"
+                    title="Add, rename or remove product categories across the catalogue"
+                  >
+                    <FolderPlus className="w-3 h-3 text-purple-600" />
+                    <span>Manage Categories</span>
+                  </button>
+                  <button
                     id="catalogue-add-product-btn"
                     onClick={() => {
                       setEditingProductModal({
@@ -549,6 +561,14 @@ export const AdminCatalogueStudio: React.FC = () => {
                       {cat}
                     </button>
                   ))}
+                  <button
+                    onClick={() => setIsCategoryModalOpen(true)}
+                    className="px-2 py-1 rounded-lg text-[10px] font-bold shrink-0 transition-all cursor-pointer bg-slate-100 text-blue-600 hover:bg-blue-50 border border-dashed border-blue-300 flex items-center gap-1"
+                    title="Add or remove categories"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Categories</span>
+                  </button>
                 </div>
               </div>
 
@@ -1416,6 +1436,15 @@ export const AdminCatalogueStudio: React.FC = () => {
           showToast={showToast}
         />
       )}
+
+      {/* Category Manager Dialogue Box Modal */}
+      <AdminCategoryManagerModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        onSelectCategory={(cat) => {
+          setFilterCategory(cat);
+        }}
+      />
 
     </div>
   );

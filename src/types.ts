@@ -8,7 +8,8 @@ export type ProductCategory =
   | 'Branding'
   | 'Signage'
   | 'Flyers & Posters'
-  | 'Eulogies & Memorials';
+  | 'Eulogies & Memorials'
+  | (string & {});
 
 export interface Product {
   id: string;

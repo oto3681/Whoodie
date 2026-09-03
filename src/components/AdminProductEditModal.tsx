@@ -19,8 +19,10 @@ import {
   Tag,
   ShoppingBag,
   Layers,
-  FileCheck
+  FileCheck,
+  FolderPlus
 } from 'lucide-react';
+import { AdminCategoryManagerModal } from './AdminCategoryManagerModal';
 
 interface AdminProductEditModalProps {
   product: Product;
@@ -44,6 +46,7 @@ export const AdminProductEditModal: React.FC<AdminProductEditModalProps> = ({
   const [formData, setFormData] = useState<Product>({ ...product });
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
   const [imageUploadNotice, setImageUploadNotice] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -416,9 +419,20 @@ export const AdminProductEditModal: React.FC<AdminProductEditModalProps> = ({
 
               {/* Category */}
               <div>
-                <label className="text-slate-300 font-bold block mb-1.5">
-                  Category <span className="text-red-400">*</span>:
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-slate-300 font-bold block">
+                    Category <span className="text-red-400">*</span>:
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsCategoryManagerOpen(true)}
+                    className="text-[11px] text-purple-400 hover:text-purple-300 font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                    title="Add or remove categories from catalogue"
+                  >
+                    <FolderPlus className="w-3.5 h-3.5" />
+                    <span>Manage Categories</span>
+                  </button>
+                </div>
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value as ProductCategory }))}
@@ -662,6 +676,15 @@ export const AdminProductEditModal: React.FC<AdminProductEditModalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Embedded Category Manager Dialogue Box */}
+      <AdminCategoryManagerModal
+        isOpen={isCategoryManagerOpen}
+        onClose={() => setIsCategoryManagerOpen(false)}
+        onSelectCategory={(newCat) => {
+          setFormData(prev => ({ ...prev, category: newCat }));
+        }}
+      />
     </div>
   );
 };

@@ -23,6 +23,7 @@ import {
 export const PriceCatalogueModal: React.FC = () => {
   const { 
     products, 
+    categories,
     activeModal, 
     setActiveModal, 
     setSelectedProductForDetail, 
@@ -47,19 +48,6 @@ export const PriceCatalogueModal: React.FC = () => {
       p.description.toLowerCase().includes(catalogueSearch.toLowerCase());
     return matchesCat && matchesSearch;
   });
-
-  const categories: ProductCategory[] = [
-    'All',
-    'Printed T-Shirts',
-    'Hoodies',
-    'Caps',
-    'Reflectors & Aprons',
-    'Banners & Stickers',
-    'Branding',
-    'Signage',
-    'Flyers & Posters',
-    'Eulogies & Memorials'
-  ];
 
   const handlePrint = () => {
     openPrintableCatalogueWindow(filteredCatalogue, {

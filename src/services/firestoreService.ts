@@ -8,7 +8,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Product, Order, CustomerReview, WordPressSettings, ProductCategory, RegisteredMember } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_REVIEWS, MOCK_ORDERS, DEFAULT_WORDPRESS_SETTINGS, INITIAL_REGISTERED_MEMBERS, getProductFallbackImage } from '../data/initialData';
+import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_REVIEWS, MOCK_ORDERS, DEFAULT_WORDPRESS_SETTINGS, INITIAL_REGISTERED_MEMBERS, getProductFallbackImage } from '../data/initialData';
 
 const PRODUCTS_COL = 'products';
 const ORDERS_COL = 'orders';
@@ -430,3 +430,56 @@ export const restoreAllProductImages = async (): Promise<void> => {
     console.debug('Failed to restore all product images:', err);
   }
 };
+
+// Subscribe to Catalogue Categories with automatic fallback to INITIAL_CATEGORIES
+export const subscribeCategories = (onUpdate: (categories: ProductCategory[]) => void): Unsubscribe => {
+  try {
+    const docRef = doc(db, SETTINGS_COL, 'catalogueCategories');
+    return onSnapshot(
+      docRef,
+      (docSnap) => {
+        try {
+          if (!docSnap.exists()) {
+            const cached = safeGetLocalStorage<ProductCategory[]>('pixelprint_categories', INITIAL_CATEGORIES);
+            onUpdate(cached && cached.length > 0 ? cached : INITIAL_CATEGORIES);
+          } else {
+            const data = docSnap.data();
+            if (data && Array.isArray(data.list) && data.list.length > 0) {
+              safeSetLocalStorage('pixelprint_categories', data.list);
+              onUpdate(data.list);
+            } else {
+              onUpdate(INITIAL_CATEGORIES);
+            }
+          }
+        } catch (err) {
+          console.debug('Firestore categories snapshot processing caught:', err);
+          const cached = safeGetLocalStorage<ProductCategory[]>('pixelprint_categories', INITIAL_CATEGORIES);
+          onUpdate(cached && cached.length > 0 ? cached : INITIAL_CATEGORIES);
+        }
+      },
+      (error) => {
+        console.debug('Firestore categories snapshot notice:', error);
+        const cached = safeGetLocalStorage<ProductCategory[]>('pixelprint_categories', INITIAL_CATEGORIES);
+        onUpdate(cached && cached.length > 0 ? cached : INITIAL_CATEGORIES);
+      }
+    );
+  } catch (err) {
+    console.debug('Firestore subscribeCategories initialization error:', err);
+    const cached = safeGetLocalStorage<ProductCategory[]>('pixelprint_categories', INITIAL_CATEGORIES);
+    onUpdate(cached && cached.length > 0 ? cached : INITIAL_CATEGORIES);
+    return () => {};
+  }
+};
+
+export const saveCategoriesToFirestore = async (categories: ProductCategory[]): Promise<void> => {
+  try {
+    safeSetLocalStorage('pixelprint_categories', categories);
+    await setDoc(doc(db, SETTINGS_COL, 'catalogueCategories'), {
+      list: categories,
+      updatedAt: new Date().toISOString()
+    });
+  } catch (err) {
+    console.debug('Failed to save categories to Firestore (cached locally):', err);
+  }
+};
+

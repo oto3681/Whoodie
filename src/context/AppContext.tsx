@@ -29,6 +29,7 @@ import {
   INITIAL_REVIEWS, 
   MOCK_ORDERS, 
   DEFAULT_WORDPRESS_SETTINGS,
+  INITIAL_CATEGORIES,
   INITIAL_INQUIRIES,
   INITIAL_WHATSAPP_THREADS,
   INITIAL_BOT_RULES,
@@ -62,6 +63,8 @@ import {
   saveReviewToFirestore,
   subscribeWpSettings,
   saveWpSettingsToFirestore,
+  subscribeCategories,
+  saveCategoriesToFirestore,
   setAdminCustomProductImage,
   getAdminCustomProductImages,
 } from '../services/firestoreService';
@@ -131,6 +134,10 @@ interface AppContextType {
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
   deleteProduct: (productId: string) => void;
+  addCategory: (name: string) => boolean;
+  removeCategory: (name: string, reassignTo?: ProductCategory) => boolean;
+  renameCategory: (oldName: string, newName: string) => boolean;
+  resetCategories: () => void;
   
   // Reviews
   addReview: (review: Omit<CustomerReview, 'id' | 'date' | 'likes'>) => void;
@@ -382,6 +389,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return DEFAULT_ZOHO_SETTINGS;
   });
 
+  const [categories, setCategories] = useState<ProductCategory[]>(() => {
+    const cached = safeGetLocalStorage<ProductCategory[]>('pixelprint_categories', INITIAL_CATEGORIES);
+    return cached && cached.length > 0 ? cached : INITIAL_CATEGORIES;
+  });
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeModal, setActiveModal] = useState<AppContextType['activeModal']>(null);
@@ -482,19 +493,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
   }, []);
 
-  // Categories list
-  const categories: ProductCategory[] = [
-    'All',
-    'Printed T-Shirts',
-    'Hoodies',
-    'Caps',
-    'Reflectors & Aprons',
-    'Banners & Stickers',
-    'Branding',
-    'Signage',
-    'Flyers & Posters',
-    'Eulogies & Memorials'
-  ];
+  // Categories subscription from Firestore
+  useEffect(() => {
+    const unsubCategories = subscribeCategories((fetchedCategories) => {
+      if (fetchedCategories && fetchedCategories.length > 0) {
+        setCategories(fetchedCategories);
+      }
+    });
+
+    return () => {
+      unsubCategories();
+    };
+  }, []);
+
+  // Save categories to localStorage
+  useEffect(() => {
+    safeSetLocalStorage('pixelprint_categories', categories);
+  }, [categories]);
 
   // Save to localStorage as backup
   useEffect(() => {
@@ -1090,6 +1105,126 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
     deleteProductFromFirestore(id);
     showToast('Product Deleted', 'Item removed from catalog.', 'warning');
+  };
+
+  // Category Management (Admin)
+  const addCategory = (newCatName: string): boolean => {
+    const trimmed = newCatName.trim();
+    if (!trimmed) {
+      showToast('Invalid Name', 'Category name cannot be empty.', 'error');
+      return false;
+    }
+    if (categories.some(c => c.toLowerCase() === trimmed.toLowerCase())) {
+      showToast('Duplicate Category', `Category "${trimmed}" already exists in the catalogue.`, 'warning');
+      return false;
+    }
+    const updated = [...categories, trimmed as ProductCategory];
+    setCategories(updated);
+    safeSetLocalStorage('pixelprint_categories', updated);
+    saveCategoriesToFirestore(updated);
+    showToast('Category Added! 📁', `"${trimmed}" added to catalogue.`);
+    return true;
+  };
+
+  const removeCategory = (catToRemove: string, reassignTo?: ProductCategory): boolean => {
+    if (catToRemove === 'All') {
+      showToast('Action Blocked', '"All" is the default root view and cannot be removed.', 'error');
+      return false;
+    }
+
+    const remainingCategories = categories.filter(c => c !== catToRemove);
+    if (remainingCategories.length <= 1) {
+      showToast('Action Blocked', 'At least one category must remain in the catalogue.', 'warning');
+      return false;
+    }
+
+    const fallbackCat: ProductCategory = reassignTo && remainingCategories.includes(reassignTo)
+      ? reassignTo
+      : (remainingCategories.find(c => c !== 'All') || 'Printed T-Shirts');
+
+    // Update any products that used this category
+    const affectedCount = products.filter(p => p.category === catToRemove).length;
+    if (affectedCount > 0) {
+      setProducts(prev => {
+        const next = prev.map(p => p.category === catToRemove ? { ...p, category: fallbackCat } : p);
+        safeSetLocalStorage('pixelprint_products', next);
+        return next;
+      });
+      products.forEach(p => {
+        if (p.category === catToRemove) {
+          saveProductToFirestore({ ...p, category: fallbackCat });
+        }
+      });
+    }
+
+    setCategories(remainingCategories);
+    safeSetLocalStorage('pixelprint_categories', remainingCategories);
+    saveCategoriesToFirestore(remainingCategories);
+
+    if (selectedCategory === catToRemove) {
+      setSelectedCategory('All');
+    }
+
+    showToast(
+      'Category Removed! 🗑️',
+      affectedCount > 0 
+        ? `Removed "${catToRemove}". Reassigned ${affectedCount} product(s) to "${fallbackCat}".`
+        : `Removed "${catToRemove}" from catalogue.`
+    );
+    return true;
+  };
+
+  const renameCategory = (oldName: string, newName: string): boolean => {
+    const trimmed = newName.trim();
+    if (oldName === 'All') {
+      showToast('Action Blocked', '"All" is a system view and cannot be renamed.', 'error');
+      return false;
+    }
+    if (!trimmed) {
+      showToast('Invalid Name', 'Category name cannot be empty.', 'error');
+      return false;
+    }
+    if (oldName.toLowerCase() === trimmed.toLowerCase()) {
+      return true;
+    }
+    if (categories.some(c => c.toLowerCase() === trimmed.toLowerCase() && c.toLowerCase() !== oldName.toLowerCase())) {
+      showToast('Duplicate Category', `A category named "${trimmed}" already exists.`, 'warning');
+      return false;
+    }
+
+    const updatedCategories = categories.map(c => c === oldName ? (trimmed as ProductCategory) : c);
+    setCategories(updatedCategories);
+    safeSetLocalStorage('pixelprint_categories', updatedCategories);
+    saveCategoriesToFirestore(updatedCategories);
+
+    // Update products in this category
+    const affectedCount = products.filter(p => p.category === oldName).length;
+    if (affectedCount > 0) {
+      setProducts(prev => {
+        const next = prev.map(p => p.category === oldName ? { ...p, category: trimmed as ProductCategory } : p);
+        safeSetLocalStorage('pixelprint_products', next);
+        return next;
+      });
+      products.forEach(p => {
+        if (p.category === oldName) {
+          saveProductToFirestore({ ...p, category: trimmed as ProductCategory });
+        }
+      });
+    }
+
+    if (selectedCategory === oldName) {
+      setSelectedCategory(trimmed as ProductCategory);
+    }
+
+    showToast('Category Renamed! ✏️', `Renamed "${oldName}" to "${trimmed}".`);
+    return true;
+  };
+
+  const resetCategories = () => {
+    setCategories(INITIAL_CATEGORIES);
+    safeSetLocalStorage('pixelprint_categories', INITIAL_CATEGORIES);
+    saveCategoriesToFirestore(INITIAL_CATEGORIES);
+    showToast('Categories Reset 🔄', 'Restored default catalogue categories.');
   };
 
   // Reviews
@@ -2168,6 +2303,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addProduct,
         updateProduct,
         deleteProduct,
+        addCategory,
+        removeCategory,
+        renameCategory,
+        resetCategories,
         addReview,
         likeReview,
         updateWpSettings,

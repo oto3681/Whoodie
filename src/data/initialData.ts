@@ -1,5 +1,6 @@
 import { 
   Product, 
+  ProductCategory,
   CustomerReview, 
   Order, 
   WordPressSettings, 
@@ -11,6 +12,19 @@ import {
   ZohoSettings,
   RegisteredMember
 } from '../types';
+
+export const INITIAL_CATEGORIES: ProductCategory[] = [
+  'All',
+  'Printed T-Shirts',
+  'Hoodies',
+  'Caps',
+  'Reflectors & Aprons',
+  'Banners & Stickers',
+  'Branding',
+  'Signage',
+  'Flyers & Posters',
+  'Eulogies & Memorials'
+];
 
 export const INITIAL_PRODUCTS: Product[] = [
   // 1. Roll-up banner (large base @8500 and light base @6500)
