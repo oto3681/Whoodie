@@ -364,14 +364,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return Array.isArray(saved) ? saved.filter((n) => !n.id.startsWith('notif-ord-101') && !n.id.startsWith('notif-inq-102')) : [];
   });
 
-  // Zoho Quotations & Invoice Engine State
+  // Zoho Quotations & Invoice Engine State (Strictly holds ONLY quotations explicitly created by the Admin)
   const [zohoQuotations, setZohoQuotations] = useState<ZohoQuotation[]>(() => {
-    const saved = safeGetLocalStorage<ZohoQuotation[]>('pixelprint_zoho_quotations', INITIAL_ZOHO_QUOTATIONS);
-    const initial = Array.isArray(saved) && saved.length > 0 ? saved : INITIAL_ZOHO_QUOTATIONS;
-    return initial.map((q) => ({
-      ...q,
-      quoteNumber: q.quoteNumber ? q.quoteNumber.replace(/^(ZOHO-QT|WQ)/, 'WNAT') : 'WNAT-2026-0001'
-    }));
+    const saved = safeGetLocalStorage<ZohoQuotation[]>('pixelprint_zoho_quotations', []);
+    const initial = Array.isArray(saved) ? saved : [];
+    // Ensure no automatically generated mock quotes exist; only admin-generated quotes are retained
+    return initial
+      .filter((q) => !['quote-001', 'quote-002', 'quote-003'].includes(q.id))
+      .map((q) => ({
+        ...q,
+        quoteNumber: q.quoteNumber ? q.quoteNumber.replace(/^(ZOHO-QT|WQ)/, 'WNAT') : 'WNAT-2026-0001'
+      }));
   });
 
   // Registered Members Database State (Stores ONLY genuinely registered users or admin-created members)

@@ -653,16 +653,16 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
             <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto">
               <FileText className="w-7 h-7" />
             </div>
-            <h3 className="text-base font-bold text-slate-900">No Woody-Quotations Found</h3>
+            <h3 className="text-base font-bold text-slate-900">No Woody-Quotations Generated Yet</h3>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
-              No quotation records match the current filter. Create a new quotation to get started with instant PDF downloads and WhatsApp/Gmail dispatch.
+              Quotations are not generated automatically by the system. Click "+ Create Woody-Quote" below or select an incoming customer lead above to prepare and generate a verified quotation.
             </p>
             <button
               onClick={() => handleOpenNewQuote()}
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl text-xs inline-flex items-center gap-2 cursor-pointer shadow-md shadow-blue-600/20"
             >
               <Plus className="w-4 h-4" />
-              <span>Create First Woody-Quote</span>
+              <span>+ Create Woody-Quote</span>
             </button>
           </div>
         ) : (

@@ -95,7 +95,7 @@ export const AdminNotificationPanel: React.FC<AdminNotificationPanelProps> = ({ 
       if (notif.type === 'order_placed') {
         acceptOrderFromNotification(notif.id, notif.referenceId, 'Order verified and accepted by Admin. Production line activated.');
       } else {
-        acceptInquiryFromNotification(notif.id, notif.referenceId, 'Inquiry acknowledged and accepted. Quotation rate sheet prepared.');
+        acceptInquiryFromNotification(notif.id, notif.referenceId, 'Inquiry acknowledged and accepted. Quotation to be prepared by Admin.');
       }
       setIsAcceptingId(null);
     }, 400);
