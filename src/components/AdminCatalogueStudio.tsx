@@ -35,8 +35,11 @@ import {
   Phone,
   RefreshCw,
   X,
-  ExternalLink
+  ExternalLink,
+  Edit3,
+  Upload
 } from 'lucide-react';
+import { AdminProductEditModal } from './AdminProductEditModal';
 
 export const AdminCatalogueStudio: React.FC = () => {
   const { 
@@ -48,8 +51,14 @@ export const AdminCatalogueStudio: React.FC = () => {
     deleteInquiry, 
     wpSettings, 
     categories, 
+    updateProduct,
+    addProduct,
     showToast 
   } = useApp();
+
+  // Price Catalogue Product Edit Dialogue Box State
+  const [editingProductModal, setEditingProductModal] = useState<Product | null>(null);
+  const [isNewProductModal, setIsNewProductModal] = useState<boolean>(false);
 
   // Selected Products State
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>(() => 
@@ -474,6 +483,33 @@ export const AdminCatalogueStudio: React.FC = () => {
                   >
                     ⚡ Flash Deals
                   </button>
+                  <button
+                    id="catalogue-add-product-btn"
+                    onClick={() => {
+                      setEditingProductModal({
+                        id: `prod-custom-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                        name: '',
+                        category: (filterCategory !== 'All' ? filterCategory : 'Printed T-Shirts') as ProductCategory,
+                        price: 1500,
+                        originalPrice: 2000,
+                        priceDisplay: '',
+                        rating: 5.0,
+                        reviewCount: 1,
+                        image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80',
+                        description: '',
+                        features: ['High DPI Print Resolution', 'Premium Material & Finishing', 'Fast Delivery Option'],
+                        stockCount: 100,
+                        isFlashDeal: false,
+                        isQuoteOnly: false,
+                      });
+                      setIsNewProductModal(true);
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-2xs shrink-0"
+                    title="Add new product & upload images (Opens Dialogue Box)"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Add Product</span>
+                  </button>
                 </div>
               </div>
 
@@ -546,11 +582,24 @@ export const AdminCatalogueStudio: React.FC = () => {
                             )}
                           </div>
 
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-11 h-11 rounded-lg object-cover border border-slate-200 shrink-0 bg-white"
-                          />
+                          <div 
+                            className="relative group shrink-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingProductModal(product);
+                              setIsNewProductModal(false);
+                            }}
+                            title="Click to Upload/Change Product Image"
+                          >
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="w-11 h-11 rounded-lg object-cover border border-slate-200 shrink-0 bg-white cursor-pointer"
+                            />
+                            <div className="absolute inset-0 bg-slate-950/60 text-white rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
+                              <Upload className="w-3.5 h-3.5 text-amber-300" />
+                            </div>
+                          </div>
 
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
@@ -574,25 +623,42 @@ export const AdminCatalogueStudio: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="text-right shrink-0 pl-3">
-                          {product.isQuoteOnly || product.price === 0 ? (
-                            <span className="text-[11px] font-bold text-blue-600 bg-blue-100/60 px-2 py-0.5 rounded">
-                              Quote on Inquiry
-                            </span>
-                          ) : (
-                            <div>
-                              <div className="text-xs font-extrabold text-slate-900">
-                                KSh {discountPercentage > 0 
-                                  ? Math.round(product.price * (1 - discountPercentage / 100)).toLocaleString()
-                                  : product.price.toLocaleString()}
-                              </div>
-                              {discountPercentage > 0 && (
-                                <div className="text-[10px] text-slate-400 line-through">
-                                  KSh {product.price.toLocaleString()}
+                        <div className="flex items-center gap-2 shrink-0 pl-3">
+                          <div className="text-right">
+                            {product.isQuoteOnly || product.price === 0 ? (
+                              <span className="text-[11px] font-bold text-blue-600 bg-blue-100/60 px-2 py-0.5 rounded">
+                                Quote on Inquiry
+                              </span>
+                            ) : (
+                              <div>
+                                <div className="text-xs font-extrabold text-slate-900">
+                                  KSh {discountPercentage > 0 
+                                    ? Math.round(product.price * (1 - discountPercentage / 100)).toLocaleString()
+                                    : product.price.toLocaleString()}
                                 </div>
-                              )}
-                            </div>
-                          )}
+                                {discountPercentage > 0 && (
+                                  <div className="text-[10px] text-slate-400 line-through">
+                                    KSh {product.price.toLocaleString()}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          <button
+                            id={`edit-catalogue-item-btn-${product.id}`}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingProductModal(product);
+                              setIsNewProductModal(false);
+                            }}
+                            className="p-1.5 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white rounded-lg text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer border border-blue-200"
+                            title="Edit price & upload product images (Opens Dialogue Box)"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            <span>Edit</span>
+                          </button>
                         </div>
                       </div>
                     );
@@ -1323,6 +1389,32 @@ export const AdminCatalogueStudio: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Product Image Upload & Price Catalogue Edit Dialogue Box Modal */}
+      {editingProductModal && (
+        <AdminProductEditModal
+          isOpen={Boolean(editingProductModal)}
+          product={editingProductModal}
+          isNew={isNewProductModal}
+          categories={categories}
+          onClose={() => {
+            setEditingProductModal(null);
+            setIsNewProductModal(false);
+          }}
+          onSave={(savedProduct) => {
+            if (isNewProductModal) {
+              addProduct(savedProduct);
+              showToast('New Product Created! 🚀', `Published ${savedProduct.name} to live price catalogue.`);
+            } else {
+              updateProduct(savedProduct);
+              showToast('Price Catalogue Updated! ✏️', `Saved changes and image for ${savedProduct.name}.`);
+            }
+            setEditingProductModal(null);
+            setIsNewProductModal(false);
+          }}
+          showToast={showToast}
+        />
       )}
 
     </div>

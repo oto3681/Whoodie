@@ -17,6 +17,7 @@ import { AdminMpesaStudio } from './AdminMpesaStudio';
 import { AdminLogoManagerModal } from './AdminLogoManagerModal';
 import { AdminMembersDatabase } from './AdminMembersDatabase';
 import { AdminQrStudio } from './AdminQrStudio';
+import { AdminProductEditModal } from './AdminProductEditModal';
 import { 
   BarChart3, 
   Package, 
@@ -1306,396 +1307,30 @@ export const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Product Edit / Creation Form */}
+          {/* Product Image Upload & Price Catalogue Edit Dialogue Box Modal */}
           {editingProduct && (
-            <div className="bg-slate-900 text-white p-6 rounded-3xl space-y-5 border border-slate-800 shadow-xl animate-in fade-in duration-200">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white text-xs">
-                    {isCreatingNewProduct ? <Plus className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-sm text-white">
-                      {isCreatingNewProduct ? 'Create New Catalog Product' : `Editing: ${editingProduct.name}`}
-                    </h4>
-                    <p className="text-[11px] text-slate-400">Fill in product details, upload photos, and set prices below</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => { setEditingProduct(null); setIsCreatingNewProduct(false); }}
-                  className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 text-xs font-bold"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* SECTION 1: Product Picture Upload & Sample Presets */}
-              <div className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/80 space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <label className="text-xs font-extrabold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Upload className="w-4 h-4" />
-                    Product Picture / Photo Asset
-                  </label>
-                  <span className="text-[10px] text-slate-400 font-medium">
-                    Upload photo file, paste link, or pick a stock preset
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                  {/* Photo Preview Card */}
-                  <div className="relative aspect-16/10 bg-slate-950 rounded-xl overflow-hidden border border-slate-700 flex items-center justify-center group">
-                    {editingProduct.image ? (
-                      <img
-                        src={editingProduct.image}
-                        alt="Product preview"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src = getProductFallbackImage(editingProduct.name, editingProduct.category);
-                        }}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="text-center p-3 text-slate-500">
-                        <ImageIcon className="w-8 h-8 mx-auto mb-1 opacity-50" />
-                        <span className="text-[11px] block">No Photo Uploaded</span>
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 text-center text-xs font-bold text-white">
-                      Live Catalog Preview
-                    </div>
-                  </div>
-
-                  {/* Upload Controls & Quick Presets */}
-                  <div className="md:col-span-2 space-y-3">
-                    <div 
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        const file = e.dataTransfer.files?.[0];
-                        if (file) {
-                          processAndCompressImage(file, (compressedUrl) => {
-                            setEditingProduct({ ...editingProduct, image: compressedUrl });
-                          });
-                        }
-                      }}
-                      className="border-2 border-dashed border-slate-600 hover:border-blue-500 bg-slate-900/60 hover:bg-slate-900/90 rounded-2xl p-4 text-center cursor-pointer transition-all group"
-                    >
-                      <input
-                        type="file"
-                        accept="image/*"
-                        id="product-photo-upload"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            processAndCompressImage(file, (compressedUrl) => {
-                              setEditingProduct({ ...editingProduct, image: compressedUrl });
-                            });
-                          }
-                        }}
-                      />
-                      <label htmlFor="product-photo-upload" className="cursor-pointer block space-y-1">
-                        <div className="w-10 h-10 rounded-full bg-blue-600/20 text-blue-400 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center mx-auto transition-colors">
-                          <Upload className="w-5 h-5" />
-                        </div>
-                        <span className="text-xs font-bold text-slate-200 block">
-                          Click to Insert Picture from Device or Drag & Drop
-                        </span>
-                        <span className="text-[10px] text-slate-400 block">
-                          Supports PNG, JPG, WEBP (Instant Live Display)
-                        </span>
-                      </label>
-                    </div>
-
-                    {/* Quick Stock Sample Photo Presets & Reset */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase block">Or Choose Quick Sample Stock Picture:</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const defaultImg = INITIAL_PRODUCTS.find(p => p.id === editingProduct.id)?.image || getProductFallbackImage(editingProduct.name, editingProduct.category);
-                            setEditingProduct({ ...editingProduct, image: defaultImg });
-                            showToast('Template Photo Selected', 'Click "Save Product Changes" to apply.');
-                          }}
-                          className="text-[10px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 hover:underline cursor-pointer"
-                          title="Restore original default template image"
-                        >
-                          <RotateCcw className="w-3 h-3" /> Reset to Original Template Photo
-                        </button>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {[
-                          { label: '👕 T-Shirt', url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80' },
-                          { label: '🧥 Hoodie', url: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&auto=format&fit=crop&q=80' },
-                          { label: '🎽 Reflector', url: 'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?w=800&auto=format&fit=crop&q=80' },
-                          { label: '🚩 Rollup Banner', url: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop&q=80' },
-                          { label: '☕ Mug', url: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800&auto=format&fit=crop&q=80' },
-                          { label: '📄 Flyer / Poster', url: 'https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=800&auto=format&fit=crop&q=80' },
-                          { label: '🕊️ Funeral Program', url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=800&auto=format&fit=crop&q=80' },
-                        ].map((preset, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => setEditingProduct({ ...editingProduct, image: preset.url })}
-                            className="px-2.5 py-1 bg-slate-900 hover:bg-blue-600 text-slate-300 hover:text-white rounded-lg text-[11px] font-semibold transition-colors cursor-pointer border border-slate-700"
-                          >
-                            {preset.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Alternative Image URL Input */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase shrink-0">Or Image URL:</span>
-                      <input
-                        type="url"
-                        placeholder="https://example.com/photo.jpg"
-                        value={editingProduct.image}
-                        onChange={(e) => setEditingProduct({ ...editingProduct, image: e.target.value })}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 2: Product Information & Prices */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
-                <div>
-                  <label className="text-slate-300 font-bold block mb-1">Product Title / Name <span className="text-red-400">*</span>:</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Executive polo shirts, Roll-up banner, Mug branding..."
-                    value={editingProduct.name}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white font-bold focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-slate-300 font-bold block mb-1">Category <span className="text-red-400">*</span>:</label>
-                  <select
-                    value={editingProduct.category}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value as ProductCategory })}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white font-bold focus:border-blue-500 focus:outline-none"
-                  >
-                    {categories.filter(c => c !== 'All').map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-slate-300 font-bold block mb-1">Selling Price (KSh):</label>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    value={editingProduct.price}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, price: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-emerald-400 font-black text-sm focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-slate-300 font-bold block mb-1">Original Price (KSh strike-through):</label>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    value={editingProduct.originalPrice || ''}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, originalPrice: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-300 font-semibold focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-slate-300 font-bold block mb-1">Custom Price Label (Optional):</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. KSh 6,500 (Light) / KSh 8,500 (Large)"
-                    value={editingProduct.priceDisplay || ''}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, priceDisplay: e.target.value })}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-slate-300 font-bold block mb-1">Stock Quantity:</label>
-                  <input
-                    type="number"
-                    value={editingProduct.stockCount}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, stockCount: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white font-bold focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* SECTION 3: Customization Options (Sizes, Finishes, Min Quantity) */}
-              <div className="bg-slate-800/60 p-4 rounded-2xl border border-slate-700/60 space-y-3">
-                <label className="text-xs font-extrabold text-blue-400 uppercase tracking-wider block">
-                  Product Customization Options (Sizes & Finishes)
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                  <div>
-                    <label className="text-slate-300 font-bold block mb-1">Available Sizes (Comma separated):</label>
-                    <input
-                      type="text"
-                      placeholder="S, M, L, XL, XXL or A4, A3, A2"
-                      value={editingProduct.customizationOptions?.sizes?.join(', ') || ''}
-                      onChange={(e) => {
-                        const sizesArr = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-                        setEditingProduct({
-                          ...editingProduct,
-                          customizationOptions: {
-                            ...editingProduct.customizationOptions,
-                            sizes: sizesArr,
-                          }
-                        });
-                      }}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white font-mono text-xs focus:border-blue-500 focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-slate-300 font-bold block mb-1">Available Finishes (Comma separated):</label>
-                    <input
-                      type="text"
-                      placeholder="Screen Print, Embroidery, Sublimation, Glossy"
-                      value={editingProduct.customizationOptions?.finishes?.join(', ') || ''}
-                      onChange={(e) => {
-                        const finishesArr = e.target.value.split(',').map(f => f.trim()).filter(Boolean);
-                        setEditingProduct({
-                          ...editingProduct,
-                          customizationOptions: {
-                            ...editingProduct.customizationOptions,
-                            finishes: finishesArr,
-                          }
-                        });
-                      }}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white font-mono text-xs focus:border-blue-500 focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-slate-300 font-bold block mb-1">Min Order Quantity:</label>
-                    <input
-                      type="number"
-                      placeholder="1"
-                      value={editingProduct.customizationOptions?.minQuantity || 1}
-                      onChange={(e) => {
-                        const minQ = parseInt(e.target.value) || 1;
-                        setEditingProduct({
-                          ...editingProduct,
-                          customizationOptions: {
-                            ...editingProduct.customizationOptions,
-                            minQuantity: minQ,
-                          }
-                        });
-                      }}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white font-bold focus:border-blue-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 4: Description & Features */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <label className="text-slate-300 font-bold block mb-1">Full Product Description:</label>
-                  <textarea
-                    rows={4}
-                    placeholder="Write detailed specifications, fabric GSM, print quality, sizing options, or delivery notes..."
-                    value={editingProduct.description}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white leading-relaxed focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-slate-300 font-bold block mb-1">Key Features (One feature per line):</label>
-                  <textarea
-                    rows={4}
-                    placeholder={`High Resolution Full-Color Print\nFast Countrywide Delivery Option\nDurable Premium Material`}
-                    value={editingProduct.features.join('\n')}
-                    onChange={(e) => setEditingProduct({
-                      ...editingProduct,
-                      features: e.target.value.split('\n').filter(f => f.trim() !== '')
-                    })}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white leading-relaxed focus:border-blue-500 focus:outline-none font-mono text-[11px]"
-                  />
-                </div>
-              </div>
-
-              {/* SECTION 5: Toggles & Badges */}
-              <div className="flex flex-wrap gap-4 items-center pt-2">
-                <label className="flex items-center gap-2 cursor-pointer bg-slate-800 px-3 py-2 rounded-xl border border-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={editingProduct.isFlashDeal || false}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, isFlashDeal: e.target.checked })}
-                    className="w-4 h-4 rounded text-blue-600 bg-slate-900 border-slate-700 focus:ring-0"
-                  />
-                  <span className="text-xs font-bold text-amber-400 flex items-center gap-1">
-                    <Zap className="w-3.5 h-3.5 fill-amber-400" /> Flash Deal Banner
-                  </span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer bg-slate-800 px-3 py-2 rounded-xl border border-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={editingProduct.expressDeliveryAvailable || false}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, expressDeliveryAvailable: e.target.checked })}
-                    className="w-4 h-4 rounded text-blue-600 bg-slate-900 border-slate-700 focus:ring-0"
-                  />
-                  <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" /> 24h Express Printing Badge
-                  </span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer bg-slate-800 px-3 py-2 rounded-xl border border-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={editingProduct.isQuoteOnly || false}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, isQuoteOnly: e.target.checked })}
-                    className="w-4 h-4 rounded text-blue-600 bg-slate-900 border-slate-700 focus:ring-0"
-                  />
-                  <span className="text-xs font-bold text-slate-200">
-                    Quote-Only Item (Requires WhatsApp Quote)
-                  </span>
-                </label>
-              </div>
-
-              {/* SECTION 6: Save & Cancel Buttons */}
-              <div className="flex items-center gap-3 pt-3 border-t border-slate-800">
-                <button
-                  onClick={() => {
-                    if (!editingProduct.name.trim()) {
-                      alert('Please provide a product title.');
-                      return;
-                    }
-                    if (isCreatingNewProduct) {
-                      addProduct(editingProduct);
-                      showToast('New Product Created! 🚀', `Published ${editingProduct.name} to live catalogue.`);
-                    } else {
-                      updateProduct(editingProduct);
-                      showToast('Product Updated! ✏️', `Saved changes for ${editingProduct.name}.`);
-                    }
-                    setEditingProduct(null);
-                    setIsCreatingNewProduct(false);
-                  }}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg transition-all cursor-pointer"
-                >
-                  <Save className="w-4 h-4" /> Save Product & Publish Live
-                </button>
-                <button
-                  onClick={() => { setEditingProduct(null); setIsCreatingNewProduct(false); }}
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-5 py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+            <AdminProductEditModal
+              isOpen={Boolean(editingProduct)}
+              product={editingProduct}
+              isNew={isCreatingNewProduct}
+              categories={categories}
+              onClose={() => {
+                setEditingProduct(null);
+                setIsCreatingNewProduct(false);
+              }}
+              onSave={(savedProduct) => {
+                if (isCreatingNewProduct) {
+                  addProduct(savedProduct);
+                  showToast('New Product Created! 🚀', 'Published ' + savedProduct.name + ' to live price catalogue.');
+                } else {
+                  updateProduct(savedProduct);
+                  showToast('Price Catalogue Updated! ✏️', 'Saved changes and image for ' + savedProduct.name + '.');
+                }
+                setEditingProduct(null);
+                setIsCreatingNewProduct(false);
+              }}
+              showToast={showToast}
+            />
           )}
 
           {/* Product Catalog Live Table with Search & Category Filter */}
@@ -1765,29 +1400,16 @@ export const AdminDashboard: React.FC = () => {
                               }}
                               className="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-2xs" 
                             />
-                            {/* Quick Photo Change Overlay */}
-                            <label 
-                              htmlFor={`change-photo-${p.id}`}
-                              className="absolute inset-0 bg-slate-900/70 text-white opacity-0 group-hover:opacity-100 rounded-xl flex items-center justify-center cursor-pointer transition-opacity text-[9px] font-bold"
-                              title="Change Photo"
+                            {/* Quick Photo Upload & Edit Dialogue Overlay */}
+                            <button 
+                              type="button"
+                              onClick={() => { setEditingProduct(p); setIsCreatingNewProduct(false); }}
+                              className="absolute inset-0 bg-slate-900/75 text-white opacity-0 group-hover:opacity-100 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-opacity text-[8px] font-bold gap-0.5"
+                              title="Upload / Change Photo & Update Price"
                             >
-                              <Upload className="w-3.5 h-3.5" />
-                            </label>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              id={`change-photo-${p.id}`}
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  processAndCompressImage(file, (compressedUrl) => {
-                                    updateProduct({ ...p, image: compressedUrl });
-                                    showToast('Photo Updated! 📸', `Updated photo for ${p.name}.`);
-                                  });
-                                }
-                              }}
-                            />
+                              <Upload className="w-3.5 h-3.5 text-amber-300" />
+                              <span>Upload</span>
+                            </button>
                           </div>
                           <div>
                             <span className="font-extrabold text-slate-900 block text-xs line-clamp-1">{p.name}</span>
@@ -1822,9 +1444,10 @@ export const AdminDashboard: React.FC = () => {
                       <td className="p-3 text-right">
                         <div className="flex justify-end gap-1.5">
                           <button
+                            id={`edit-product-btn-${p.id}`}
                             onClick={() => { setEditingProduct(p); setIsCreatingNewProduct(false); }}
                             className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
-                            title="Edit Product Details & Price"
+                            title="Edit Product, Price & Upload Images (Opens Dialogue Box)"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                             <span>Edit</span>
