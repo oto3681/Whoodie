@@ -380,8 +380,8 @@ export interface WoodyQuoteItem {
   unit: string; // pcs, sets, rolls, books, etc.
   unitPrice: number; // KSh
   discountPercent: number; // 0 - 100
-  taxPercent: number; // 16 or 0
-  taxAmount: number;
+  taxPercent?: number;
+  taxAmount?: number;
   total: number;
   selectedSize?: string;
   selectedFinish?: string;
@@ -412,11 +412,11 @@ export interface WoodyQuotation {
   items: WoodyQuoteItem[];
   subtotal: number;
   discountTotal: number;
-  taxRate: number; // 16% VAT or 0%
-  taxTotal: number;
+  taxRate?: number;
+  taxTotal?: number;
   shippingCost: number;
   grandTotal: number;
-  isTaxInclusive: boolean;
+  isTaxInclusive?: boolean;
   notes: string;
   termsAndConditions: string;
   paybillNumber: string;
@@ -446,7 +446,7 @@ export interface WoodyQuoteSettings {
   defaultQuotePrefix: string;
   defaultPaymentTerms: 'Due on Receipt' | 'Net 15' | 'Net 30' | '50% Deposit, 50% on Delivery' | 'Cash on Delivery';
   defaultValidityDays: number;
-  defaultTaxRate: number;
+  defaultTaxRate?: number;
   defaultDeliveryTimeline: string;
   defaultNotes: string;
   defaultTerms: string;

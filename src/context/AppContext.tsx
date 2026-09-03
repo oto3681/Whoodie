@@ -1929,7 +1929,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         topic: lead.topic,
         category: lead.cat,
         requestedQuantity: lead.qty,
-        notes: 'Urgent quotation requested with official company stamp & KRA PIN.'
+        notes: 'Urgent quotation requested with official company stamp.'
       }
     };
 
@@ -1949,20 +1949,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const items = quoteData.items || [];
     const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
     const discountTotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice * (item.discountPercent / 100)), 0);
-    const netTaxable = subtotal - discountTotal;
-    const taxRate = quoteData.taxRate !== undefined ? quoteData.taxRate : zohoSettings.defaultTaxRate;
-    const taxTotal = quoteData.isTaxInclusive ? 0 : Math.round(netTaxable * (taxRate / 100));
+    const netAmount = subtotal - discountTotal;
     const shippingCost = quoteData.shippingCost || 0;
-    const grandTotal = netTaxable + taxTotal + shippingCost;
+    const grandTotal = netAmount + shippingCost;
 
     const newQuote: ZohoQuotation = {
-      id: `zoho-qt-${Date.now()}`,
+      id: `woody-qt-${Date.now()}`,
       quoteNumber,
       customerName: quoteData.customerName || 'Customer / Business Lead',
       customerPhone: quoteData.customerPhone || '0797939199',
       customerEmail: quoteData.customerEmail || 'client@example.com',
       companyName: quoteData.companyName || '',
-      customerKraPin: quoteData.customerKraPin || '',
+      customerKraPin: '',
       billingAddress: quoteData.billingAddress || 'Nairobi, Kenya',
       deliveryLocation: quoteData.deliveryLocation || 'Temple Road Gatkim complex building fourth floor wing B Room 4B1',
       deliveryType: quoteData.deliveryType || 'CBD Workshop Pickup',
@@ -1975,11 +1973,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       items,
       subtotal,
       discountTotal,
-      taxRate,
-      taxTotal,
+      taxRate: 0,
+      taxTotal: 0,
       shippingCost,
       grandTotal,
-      isTaxInclusive: quoteData.isTaxInclusive ?? false,
+      isTaxInclusive: false,
       notes: quoteData.notes || zohoSettings.defaultNotes,
       termsAndConditions: quoteData.termsAndConditions || zohoSettings.defaultTerms,
       paybillNumber: wpSettings.paybillNumber || '247247',
@@ -1993,7 +1991,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     setZohoQuotations((prev) => [newQuote, ...prev]);
-    showToast('Zoho Quotation Created!', `Quotation ${newQuote.quoteNumber} for ${newQuote.customerName} has been saved.`);
+    showToast('Woody-Quote Created!', `Quotation ${newQuote.quoteNumber} for ${newQuote.customerName} has been saved.`);
     return newQuote;
   };
 
@@ -2004,23 +2002,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const updated = { ...q, ...updates, updatedAt: new Date().toISOString() };
         
         // Recalculate totals if items or rates were modified
-        if (updates.items || updates.taxRate !== undefined || updates.shippingCost !== undefined || updates.isTaxInclusive !== undefined) {
+        if (updates.items || updates.shippingCost !== undefined) {
           const items = updated.items || [];
           const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
           const discountTotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice * (item.discountPercent / 100)), 0);
-          const netTaxable = subtotal - discountTotal;
-          const taxRate = updated.taxRate !== undefined ? updated.taxRate : 16;
-          const taxTotal = updated.isTaxInclusive ? 0 : Math.round(netTaxable * (taxRate / 100));
+          const netAmount = subtotal - discountTotal;
           const shippingCost = updated.shippingCost || 0;
           updated.subtotal = subtotal;
           updated.discountTotal = discountTotal;
-          updated.taxTotal = taxTotal;
-          updated.grandTotal = netTaxable + taxTotal + shippingCost;
+          updated.taxRate = 0;
+          updated.taxTotal = 0;
+          updated.grandTotal = netAmount + shippingCost;
         }
         return updated;
       })
     );
-    showToast('Quotation Updated', 'Zoho quotation changes have been saved.');
+    showToast('Woody-Quote Updated', 'Quotation changes have been saved.');
   };
 
   const deleteZohoQuotation = (id: string) => {

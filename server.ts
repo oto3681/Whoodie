@@ -2206,12 +2206,6 @@ app.post('/api/quote/send-email', async (req, res) => {
                   <td style="padding: 4px 0; text-align: right; font-family: monospace; font-weight: bold; color: #d97706;">-KSh ${Number(quote.discountTotal || 0).toLocaleString()}</td>
                 </tr>
               ` : ''}
-              ${quote.taxTotal > 0 ? `
-                <tr>
-                  <td style="padding: 4px 0; color: #64748b;">16% VAT:</td>
-                  <td style="padding: 4px 0; text-align: right; font-family: monospace; font-weight: bold;">+KSh ${Number(quote.taxTotal || 0).toLocaleString()}</td>
-                </tr>
-              ` : ''}
               ${quote.shippingCost > 0 ? `
                 <tr>
                   <td style="padding: 4px 0; color: #64748b;">Logistics / Delivery:</td>

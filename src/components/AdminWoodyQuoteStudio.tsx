@@ -100,8 +100,6 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
   const [paymentTerms, setPaymentTerms] = useState<WoodyQuotation['paymentTerms']>('50% Deposit, 50% on Delivery');
   const [deliveryTimeline, setDeliveryTimeline] = useState('24-48 Hours Express Delivery');
   const [currency, setCurrency] = useState<'KSh' | 'USD'>('KSh');
-  const [taxRate, setTaxRate] = useState(16);
-  const [isTaxInclusive, setIsTaxInclusive] = useState(false);
   const [shippingCost, setShippingCost] = useState(0);
   const [notes, setNotes] = useState(zohoSettings.defaultNotes);
   const [termsAndConditions, setTermsAndConditions] = useState(zohoSettings.defaultTerms);
@@ -167,8 +165,6 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
     setDeliveryType('CBD Workshop Pickup');
     setDeliveryLocation('Temple Road Gatkim complex building fourth floor wing B Room 4B1');
     setCurrency('KSh');
-    setTaxRate(zohoSettings.defaultTaxRate ?? 16);
-    setIsTaxInclusive(false);
     setShippingCost(0);
     setNotes(zohoSettings.defaultNotes);
     setTermsAndConditions(zohoSettings.defaultTerms);
@@ -201,8 +197,8 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
           unit: 'pcs',
           unitPrice: firstProd.price || 6500,
           discountPercent: 0,
-          taxPercent: 16,
-          taxAmount: Math.round((firstProd.price || 6500) * 0.16),
+          taxPercent: 0,
+          taxAmount: 0,
           total: firstProd.price || 6500,
           artworkNotes: 'Pre-press vector artwork sign-off required'
         }
@@ -230,8 +226,6 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
     setPaymentTerms(quote.paymentTerms);
     setDeliveryTimeline(quote.deliveryTimeline);
     setCurrency(quote.currency);
-    setTaxRate(quote.taxRate);
-    setIsTaxInclusive(quote.isTaxInclusive);
     setShippingCost(quote.shippingCost);
     setNotes(quote.notes);
     setTermsAndConditions(quote.termsAndConditions);
@@ -267,7 +261,6 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
     const qty = Number(customItemQty) || 1;
     const discount = Number(customItemDiscount) || 0;
     const lineNet = (price * qty) * (1 - discount / 100);
-    const lineTax = Math.round(lineNet * (taxRate / 100));
 
     const newItem: WoodyQuoteItem = {
       id: `item-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -279,8 +272,8 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
       unit: customItemUnit,
       unitPrice: price,
       discountPercent: discount,
-      taxPercent: taxRate,
-      taxAmount: lineTax,
+      taxPercent: 0,
+      taxAmount: 0,
       total: Math.round(lineNet),
       selectedSize: customItemSize || undefined,
       selectedFinish: customItemFinish || undefined,
@@ -319,18 +312,18 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
         const disc = next.discountPercent || 0;
         const net = (price * qty) * (1 - disc / 100);
         next.total = Math.round(net);
-        next.taxAmount = Math.round(net * ((next.taxPercent || 16) / 100));
+        next.taxPercent = 0;
+        next.taxAmount = 0;
         return next;
       })
     );
   };
 
-  // Calculate live summary in builder
+  // Calculate live summary in builder (Clean - No VAT)
   const editorSubtotal = quoteItems.reduce((acc, it) => acc + (it.quantity * it.unitPrice), 0);
   const editorDiscountTotal = quoteItems.reduce((acc, it) => acc + (it.quantity * it.unitPrice * (it.discountPercent / 100)), 0);
-  const editorNetTaxable = editorSubtotal - editorDiscountTotal;
-  const editorTaxTotal = isTaxInclusive ? 0 : Math.round(editorNetTaxable * (taxRate / 100));
-  const editorGrandTotal = editorNetTaxable + editorTaxTotal + Number(shippingCost);
+  const editorNetAmount = editorSubtotal - editorDiscountTotal;
+  const editorGrandTotal = editorNetAmount + Number(shippingCost);
 
   // Save Quote Action
   const handleSaveQuote = (e: React.FormEvent) => {
@@ -361,8 +354,9 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
       deliveryTimeline,
       currency,
       items: quoteItems,
-      taxRate,
-      isTaxInclusive,
+      taxRate: 0,
+      taxTotal: 0,
+      isTaxInclusive: false,
       shippingCost: Number(shippingCost) || 0,
       notes,
       termsAndConditions,
@@ -399,7 +393,6 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
       `--------------------------------------\n` +
       `*Subtotal:* KSh ${quote.subtotal.toLocaleString()}\n` +
       (quote.discountTotal > 0 ? `*Discount Saved:* -KSh ${quote.discountTotal.toLocaleString()}\n` : '') +
-      (quote.taxTotal > 0 ? `*16% VAT:* +KSh ${quote.taxTotal.toLocaleString()}\n` : '') +
       (quote.shippingCost > 0 ? `*Delivery / Logistics:* +KSh ${quote.shippingCost.toLocaleString()}\n` : '') +
       `*GRAND TOTAL:* *KSh ${quote.grandTotal.toLocaleString()}*\n\n` +
       `⏱️ *Turnaround Time:* ${quote.deliveryTimeline}\n` +
@@ -1266,37 +1259,23 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
                 </table>
               </div>
 
-              {/* Section 4: Taxes, Shipping & Grand Total (No KRA references) */}
+              {/* Section 4: Logistics, Order Notes & Grand Total (No VAT / KRA) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-slate-50 p-4 rounded-2xl border border-slate-200">
                 <div className="space-y-3">
                   <div className="text-xs font-extrabold text-blue-900 uppercase tracking-wider">
-                    Tax & Shipping Options
+                    Logistics & Customer Notes
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-600 mb-1">VAT Rate (%)</label>
-                      <select
-                        value={taxRate}
-                        onChange={(e) => setTaxRate(Number(e.target.value))}
-                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold"
-                      >
-                        <option value={16}>16% Standard VAT</option>
-                        <option value={0}>0% Tax Exempt</option>
-                        <option value={8}>8% Reduced VAT</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-600 mb-1">Logistics / Courier (KSh)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        value={shippingCost}
-                        onChange={(e) => setShippingCost(Number(e.target.value))}
-                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 font-bold"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Logistics / Courier (KSh)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={shippingCost}
+                      onChange={(e) => setShippingCost(Number(e.target.value))}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-900 font-bold"
+                      placeholder="0 for CBD workshop collection"
+                    />
                   </div>
 
                   <div>
@@ -1325,10 +1304,12 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="flex justify-between text-slate-600">
-                      <span>16% VAT:</span>
-                      <span className="font-mono font-bold">+KSh {editorTaxTotal.toLocaleString()}</span>
-                    </div>
+                    {editorDiscountTotal > 0 && (
+                      <div className="flex justify-between text-slate-700 font-semibold">
+                        <span>Net Amount:</span>
+                        <span className="font-mono font-bold">KSh {editorNetAmount.toLocaleString()}</span>
+                      </div>
+                    )}
 
                     {shippingCost > 0 && (
                       <div className="flex justify-between text-slate-600">
@@ -1555,13 +1536,6 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
                     <div className="flex justify-between text-amber-600">
                       <span>Total Discounts:</span>
                       <span className="font-mono font-bold">-KSh {selectedQuote.discountTotal.toLocaleString()}</span>
-                    </div>
-                  )}
-
-                  {selectedQuote.taxTotal > 0 && (
-                    <div className="flex justify-between text-slate-600">
-                      <span>16% VAT:</span>
-                      <span className="font-mono font-bold">+KSh {selectedQuote.taxTotal.toLocaleString()}</span>
                     </div>
                   )}
 

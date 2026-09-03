@@ -365,14 +365,6 @@ export const downloadWoodyQuotePdf = (
     doc.text(`-KSh ${quote.discountTotal.toLocaleString()}`, rightBoxX + totalsBoxWidth - 4, totY, { align: 'right' });
   }
 
-  if (quote.taxTotal > 0) {
-    totY += 5;
-    doc.setTextColor(SLATE_MUTED[0], SLATE_MUTED[1], SLATE_MUTED[2]);
-    doc.text('16% VAT:', rightBoxX + 4, totY);
-    doc.setTextColor(SLATE_DARK[0], SLATE_DARK[1], SLATE_DARK[2]);
-    doc.text(`+KSh ${quote.taxTotal.toLocaleString()}`, rightBoxX + totalsBoxWidth - 4, totY, { align: 'right' });
-  }
-
   if (quote.shippingCost > 0) {
     totY += 5;
     doc.setTextColor(SLATE_MUTED[0], SLATE_MUTED[1], SLATE_MUTED[2]);
