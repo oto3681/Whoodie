@@ -1453,7 +1453,7 @@ export const DEFAULT_ZOHO_SETTINGS: ZohoSettings = {
   environment: 'production',
   autoSyncToZoho: true,
   autoSyncWoodyQuote: true,
-  defaultQuotePrefix: 'WQ-2026',
+  defaultQuotePrefix: 'WNAT-2026',
   defaultPaymentTerms: '50% Deposit, 50% on Delivery',
   defaultValidityDays: 14,
   defaultTaxRate: 0,
@@ -1467,7 +1467,7 @@ export const DEFAULT_WOODY_QUOTE_SETTINGS = DEFAULT_ZOHO_SETTINGS;
 export const INITIAL_ZOHO_QUOTATIONS: ZohoQuotation[] = [
   {
     id: 'quote-001',
-    quoteNumber: 'WQ-2026-0041',
+    quoteNumber: 'WNAT-2026-0041',
     referenceInquiryId: 'inq-001',
     referenceChatId: 'chat-001',
     customerName: 'Jane Wambui',
@@ -1537,7 +1537,7 @@ export const INITIAL_ZOHO_QUOTATIONS: ZohoQuotation[] = [
   },
   {
     id: 'quote-002',
-    quoteNumber: 'WQ-2026-0042',
+    quoteNumber: 'WNAT-2026-0042',
     referenceInquiryId: 'inq-002',
     referenceChatId: 'chat-002',
     customerName: 'Peter Kamau',
@@ -1607,7 +1607,7 @@ export const INITIAL_ZOHO_QUOTATIONS: ZohoQuotation[] = [
   },
   {
     id: 'quote-003',
-    quoteNumber: 'WQ-2026-0043',
+    quoteNumber: 'WNAT-2026-0043',
     customerName: 'Marcus Otieno',
     customerPhone: '0733112233',
     customerEmail: 'm.otieno@apexlogistics.co.ke',

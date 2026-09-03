@@ -366,7 +366,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Zoho Quotations & Invoice Engine State
   const [zohoQuotations, setZohoQuotations] = useState<ZohoQuotation[]>(() => {
-    return safeGetLocalStorage<ZohoQuotation[]>('pixelprint_zoho_quotations', INITIAL_ZOHO_QUOTATIONS);
+    const saved = safeGetLocalStorage<ZohoQuotation[]>('pixelprint_zoho_quotations', INITIAL_ZOHO_QUOTATIONS);
+    const initial = Array.isArray(saved) && saved.length > 0 ? saved : INITIAL_ZOHO_QUOTATIONS;
+    return initial.map((q) => ({
+      ...q,
+      quoteNumber: q.quoteNumber ? q.quoteNumber.replace(/^(ZOHO-QT|WQ)/, 'WNAT') : 'WNAT-2026-0001'
+    }));
   });
 
   // Registered Members Database State (Stores ONLY genuinely registered users or admin-created members)
@@ -381,6 +386,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return {
         ...DEFAULT_ZOHO_SETTINGS,
         ...parsed,
+        defaultQuotePrefix: (parsed.defaultQuotePrefix || 'WNAT-2026').replace(/^(ZOHO-QT|WQ)/, 'WNAT'),
         accountEmail: parsed.accountEmail || 'woodynatdesigners12@gmail.com',
         notificationEmail: parsed.notificationEmail || 'woodynatdesigners12@gmail.com',
         senderName: parsed.senderName || 'Woodynat Designers Limited'
@@ -1942,7 +1948,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const createZohoQuotation = (quoteData: Partial<ZohoQuotation>): ZohoQuotation => {
     const quoteCount = zohoQuotations.length + 1;
     const padNumber = String(quoteCount).padStart(4, '0');
-    const quoteNumber = quoteData.quoteNumber || `${zohoSettings.defaultQuotePrefix || 'ZOHO-QT-2026'}-${padNumber}`;
+    const rawPrefix = zohoSettings.defaultQuotePrefix || 'WNAT-2026';
+    const prefix = rawPrefix.replace(/^(ZOHO-QT|WQ)/, 'WNAT');
+    const quoteNumber = quoteData.quoteNumber || `${prefix}-${padNumber}`;
     const today = new Date().toISOString().split('T')[0];
     const expiry = new Date(Date.now() + (quoteData.validityDays || zohoSettings.defaultValidityDays || 14) * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
@@ -2031,9 +2039,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       showToast('Error', 'Quotation record could not be found.', 'error');
       return null;
     }
+    const rawPrefix = zohoSettings.defaultQuotePrefix || 'WNAT-2026';
+    const prefix = rawPrefix.replace(/^(ZOHO-QT|WQ)/, 'WNAT');
     const newQuote = createZohoQuotation({
       ...original,
-      quoteNumber: `${zohoSettings.defaultQuotePrefix || 'ZOHO-QT-2026'}-${String(zohoQuotations.length + 1).padStart(4, '0')}`,
+      quoteNumber: `${prefix}-${String(zohoQuotations.length + 1).padStart(4, '0')}`,
       status: 'Draft',
       zohoSyncStatus: 'local_only',
       zohoEstimateId: undefined,

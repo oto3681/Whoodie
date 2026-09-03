@@ -128,7 +128,7 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
   const [tempRefreshToken, setTempRefreshToken] = useState(zohoSettings.refreshToken || 'rf_woodynat_live_auth');
   const [tempEnv, setTempEnv] = useState<'sandbox' | 'production'>(zohoSettings.environment || 'production');
   const [tempAutoSync, setTempAutoSync] = useState(zohoSettings.autoSyncToZoho ?? true);
-  const [tempPrefix, setTempPrefix] = useState(zohoSettings.defaultQuotePrefix || 'WQ-2026');
+  const [tempPrefix, setTempPrefix] = useState(zohoSettings.defaultQuotePrefix || 'WNAT-2026');
 
   // Filtered quotations
   const filteredQuotes = zohoQuotations.filter((q) => {
@@ -155,7 +155,8 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
   // Open New Quote Editor
   const handleOpenNewQuote = (presetLead?: { name: string; phone: string; email?: string; company?: string; topic?: string }) => {
     setEditingQuoteId(null);
-    const prefix = zohoSettings.defaultQuotePrefix || 'WQ-2026';
+    const rawPrefix = zohoSettings.defaultQuotePrefix || 'WNAT-2026';
+    const prefix = rawPrefix.replace(/^(ZOHO-QT|WQ)/, 'WNAT');
     const nextNum = `${prefix}-${String(zohoQuotations.length + 1).padStart(4, '0')}`;
     setQuoteNumber(nextNum);
     setQuoteDate(new Date().toISOString().split('T')[0]);
@@ -1793,8 +1794,8 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
 
             <div className="space-y-4 text-xs max-h-[75vh] overflow-y-auto">
               <div className="bg-blue-50/70 border border-blue-200 rounded-2xl p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-lg shrink-0">
-                  WQ
+                <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xs shrink-0 tracking-wider">
+                  WNAT
                 </div>
                 <div>
                   <div className="font-bold text-slate-900">Woody-Quote Integration Engine</div>

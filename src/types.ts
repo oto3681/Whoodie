@@ -392,7 +392,7 @@ export type WoodyQuoteStatus = 'Draft' | 'Sent' | 'Approved' | 'Invoiced' | 'Dec
 
 export interface WoodyQuotation {
   id: string;
-  quoteNumber: string; // e.g. WQ-2026-0042
+  quoteNumber: string; // e.g. WNAT-2026-0042
   referenceInquiryId?: string;
   referenceChatId?: string;
   customerName: string;
