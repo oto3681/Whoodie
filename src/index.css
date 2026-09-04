@@ -23,10 +23,29 @@
     visibility: hidden !important;
   }
   
-  /* Strictly isolate and show only the QR print container */
+  /* Strictly isolate and show QR print container or Woody-Quote Document */
   #woodynat-qr-print-target,
-  #woodynat-qr-print-target * {
+  #woodynat-qr-print-target *,
+  #woody-quote-official-document,
+  #woody-quote-official-document * {
     visibility: visible !important;
+  }
+  
+  #woody-quote-official-document {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    min-height: 100% !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 24px !important;
+    box-shadow: none !important;
+    border: none !important;
+    z-index: 999999 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   
   #woodynat-qr-print-target {

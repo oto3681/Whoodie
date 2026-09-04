@@ -9,13 +9,64 @@ export const formatKenyanShillingsToWords = (amount: number): string => {
 };
 
 /**
- * Generates and downloads a high-resolution, vector-accurate, branded
- * Woody-Quote commercial quotation PDF using jsPDF.
+ * Loads an image (dataUrl or HTTP/static path) and prepares it for jsPDF.
+ * Calculates natural dimensions to preserve proper aspect ratio.
  */
-export const downloadWoodyQuotePdf = (
+export const loadImageAsset = (
+  url: string
+): Promise<{ dataUrl: string; width: number; height: number } | null> => {
+  return new Promise((resolve) => {
+    if (!url) {
+      resolve(null);
+      return;
+    }
+    // If it's already a Data URL, calculate dimensions using an Image element
+    if (typeof window === 'undefined') {
+      resolve({ dataUrl: url, width: 400, height: 300 });
+      return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const w = img.naturalWidth || img.width || 400;
+        const h = img.naturalHeight || img.height || 300;
+        if (url.startsWith('data:image/')) {
+          resolve({ dataUrl: url, width: w, height: h });
+          return;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve({ dataUrl: url, width: w, height: h });
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        resolve({ dataUrl: canvas.toDataURL('image/png'), width: w, height: h });
+      } catch (err) {
+        console.warn('Canvas conversion failed, falling back to url:', err);
+        resolve({ dataUrl: url, width: 400, height: 300 });
+      }
+    };
+    img.onerror = () => {
+      console.warn('Failed to load image for PDF:', url);
+      resolve(null);
+    };
+    img.src = url;
+  });
+};
+
+/**
+ * Generates and downloads a high-resolution, vector-accurate, branded
+ * Woody-Quote commercial quotation or invoice PDF with letterhead & watermark photo support.
+ */
+export const downloadWoodyQuotePdf = async (
   quote: WoodyQuotation,
   settings?: Partial<WoodyQuoteSettings>
-): void => {
+): Promise<void> => {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -36,9 +87,44 @@ export const downloadWoodyQuotePdf = (
   const BG_LIGHT_BLUE = [240, 246, 255];  // #F0F6FF Soft Blue Tint
   const BORDER_LIGHT = [226, 232, 240];   // #E2E8F0 Slate 200
 
-  // Helper: Draw Header Banner
+  // Resolve branding options
+  const showLetterhead = quote.showLetterhead ?? settings?.defaultShowLetterhead ?? false;
+  const letterheadUrl = quote.letterheadUrl || settings?.defaultLetterheadUrl || '';
+
+  const showWatermark = quote.showWatermark ?? settings?.defaultShowWatermark ?? true;
+  const watermarkUrl = quote.watermarkUrl || settings?.defaultWatermarkUrl || '/logo.png';
+  const watermarkOpacity = quote.watermarkOpacity ?? settings?.defaultWatermarkOpacity ?? 0.12;
+  const watermarkSize = quote.watermarkSize || settings?.defaultWatermarkSize || 'medium';
+  const watermarkAngle = quote.watermarkAngle || settings?.defaultWatermarkAngle || 'tilted';
+  const watermarkText = quote.watermarkText || settings?.defaultWatermarkText || 'WOODYNAT DESIGNERS LIMITED';
+  const isInvoice = quote.documentType === 'invoice' || quote.status === 'Invoiced';
+
+  // Pre-load letterhead and watermark images asynchronously
+  const [loadedLetterhead, loadedWatermark] = await Promise.all([
+    showLetterhead && letterheadUrl ? loadImageAsset(letterheadUrl) : Promise.resolve(null),
+    showWatermark && watermarkUrl ? loadImageAsset(watermarkUrl) : Promise.resolve(null),
+  ]);
+
+  // Helper: Draw Header Banner (Supports custom letterhead photo or default vector banner)
   const drawHeaderBanner = (isFirstPage: boolean) => {
-    // Navy top bar
+    if (isFirstPage && showLetterhead && loadedLetterhead) {
+      try {
+        const aspect = loadedLetterhead.height / (loadedLetterhead.width || 1);
+        const letterheadHeight = Math.min(Math.max(contentWidth * aspect, 20), 40);
+        doc.addImage(loadedLetterhead.dataUrl, 'PNG', margin, y, contentWidth, letterheadHeight, undefined, 'FAST');
+
+        // Decorative Blue Accent underline
+        doc.setFillColor(BLUE_ACCENT[0], BLUE_ACCENT[1], BLUE_ACCENT[2]);
+        doc.rect(margin, y + letterheadHeight, contentWidth, 1.5, 'F');
+
+        y += letterheadHeight + 4;
+        return;
+      } catch (err) {
+        console.warn('Could not insert letterhead photo into PDF, falling back to vector banner:', err);
+      }
+    }
+
+    // Default Navy & Royal Blue vector header bar
     doc.setFillColor(NAVY_PRIMARY[0], NAVY_PRIMARY[1], NAVY_PRIMARY[2]);
     doc.rect(margin, y, contentWidth, isFirstPage ? 28 : 14, 'F');
 
@@ -71,25 +157,75 @@ export const downloadWoodyQuotePdf = (
         y + 22
       );
 
-      // Top Right Woody-Quote Tag
+      // Top Right Document Tag
       doc.setFillColor(BLUE_ACCENT[0], BLUE_ACCENT[1], BLUE_ACCENT[2]);
-      doc.roundedRect(pageWidth - margin - 44, y + 5, 38, 16, 2, 2, 'F');
+      doc.roundedRect(pageWidth - margin - 46, y + 5, 40, 16, 2, 2, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7.5);
-      doc.text('WOODY-QUOTE', pageWidth - margin - 25, y + 11, { align: 'center' });
+      doc.text(isInvoice ? 'COMMERCIAL INVOICE' : 'WOODY-QUOTE', pageWidth - margin - 26, y + 11, { align: 'center' });
       doc.setFontSize(6.5);
       doc.setFont('helvetica', 'normal');
-      doc.text('Commercial Edition', pageWidth - margin - 25, y + 16, { align: 'center' });
+      doc.text('Official Document', pageWidth - margin - 26, y + 16, { align: 'center' });
     }
 
     y += (isFirstPage ? 34 : 18);
   };
 
-  const drawFooter = () => {
+  const drawWatermarksAndFooters = () => {
     const totalPages = (doc.internal as any).getNumberOfPages ? (doc.internal as any).getNumberOfPages() : 1;
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
+
+      // 1. Watermark Photo / Stamp Layer
+      if (showWatermark) {
+        try {
+          if ((doc as any).GState) {
+            doc.setGState(new (doc as any).GState({ opacity: watermarkOpacity }));
+          }
+
+          if (loadedWatermark) {
+            const baseMm = watermarkSize === 'small' ? 70 : watermarkSize === 'large' ? 140 : 105;
+            const aspect = loadedWatermark.height / (loadedWatermark.width || 1);
+            const wmWidth = baseMm;
+            const wmHeight = Math.min(baseMm * aspect, 140);
+            const wmX = (pageWidth - wmWidth) / 2;
+            const wmY = (pageHeight - wmHeight) / 2;
+
+            doc.addImage(
+              loadedWatermark.dataUrl,
+              'PNG',
+              wmX,
+              wmY,
+              wmWidth,
+              wmHeight,
+              undefined,
+              'FAST',
+              watermarkAngle === 'tilted' ? -25 : 0
+            );
+          } else if (watermarkText) {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(watermarkSize === 'small' ? 24 : watermarkSize === 'large' ? 42 : 32);
+            doc.setTextColor(148, 163, 184); // Slate 400
+            doc.text(watermarkText, pageWidth / 2, pageHeight / 2, {
+              align: 'center',
+              angle: watermarkAngle === 'tilted' ? 35 : 0,
+            });
+          }
+
+          // Restore standard opacity
+          if ((doc as any).GState) {
+            doc.setGState(new (doc as any).GState({ opacity: 1.0 }));
+          }
+        } catch (err) {
+          console.warn('Error applying watermark to PDF:', err);
+          if ((doc as any).GState) {
+            doc.setGState(new (doc as any).GState({ opacity: 1.0 }));
+          }
+        }
+      }
+
+      // 2. Footer Layer
       doc.setFillColor(BORDER_LIGHT[0], BORDER_LIGHT[1], BORDER_LIGHT[2]);
       doc.rect(margin, pageHeight - 12, contentWidth, 0.4, 'F');
 
@@ -102,7 +238,7 @@ export const downloadWoodyQuotePdf = (
         pageHeight - 8
       );
       doc.text(
-        `Woody-Quote Ref: ${quote.quoteNumber} | Page ${i} of ${totalPages}`,
+        `${isInvoice ? 'Invoice' : 'Woody-Quote'} Ref: ${quote.quoteNumber} | Page ${i} of ${totalPages}`,
         pageWidth - margin,
         pageHeight - 8,
         { align: 'right' }
@@ -128,11 +264,11 @@ export const downloadWoodyQuotePdf = (
   doc.setDrawColor(BORDER_LIGHT[0], BORDER_LIGHT[1], BORDER_LIGHT[2]);
   doc.roundedRect(margin, y, contentWidth, metaHeight, 2, 2, 'S');
 
-  // Left: Commercial Quotation Title
+  // Left: Commercial Quotation or Invoice Title
   doc.setTextColor(NAVY_PRIMARY[0], NAVY_PRIMARY[1], NAVY_PRIMARY[2]);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
-  doc.text('OFFICIAL COMMERCIAL QUOTATION', margin + 6, y + 8);
+  doc.text(isInvoice ? 'OFFICIAL COMMERCIAL INVOICE' : 'OFFICIAL COMMERCIAL QUOTATION', margin + 6, y + 8);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
@@ -140,7 +276,7 @@ export const downloadWoodyQuotePdf = (
   doc.text(`Fulfillment: ${quote.deliveryType || 'Express Delivery'} | Location: ${quote.deliveryLocation || 'Nairobi'}`, margin + 6, y + 14);
   doc.text(`Timeline: ${quote.deliveryTimeline || '24-48 Hours Express'} | Terms: ${quote.paymentTerms || '50% Deposit, 50% on Delivery'}`, margin + 6, y + 19);
 
-  // Right: Quote Number and Dates
+  // Right: Quote/Invoice Number and Dates
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(BLUE_ACCENT[0], BLUE_ACCENT[1], BLUE_ACCENT[2]);
@@ -165,7 +301,7 @@ export const downloadWoodyQuotePdf = (
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(BLUE_ACCENT[0], BLUE_ACCENT[1], BLUE_ACCENT[2]);
-  doc.text('QUOTATION PREPARED FOR:', margin + 6, y + 6);
+  doc.text(isInvoice ? 'INVOICE BILLED TO:' : 'QUOTATION PREPARED FOR:', margin + 6, y + 6);
   doc.text('PAYMENT & PRODUCTION TERMS:', margin + (contentWidth / 2) + 4, y + 6);
 
   // Customer Info Left
@@ -234,7 +370,6 @@ export const downloadWoodyQuotePdf = (
   doc.setFontSize(7.5);
 
   quote.items.forEach((item, index) => {
-    // Estimate row height based on description length
     const descLines = doc.splitTextToSize(item.description || item.name, colW.name - 4);
     const hasExtras = Boolean(item.selectedSize || item.artworkNotes);
     const rowHeight = Math.max(7, descLines.length * 3.5 + (hasExtras ? 4 : 2));
@@ -445,10 +580,11 @@ export const downloadWoodyQuotePdf = (
   doc.setTextColor(SLATE_MUTED[0], SLATE_MUTED[1], SLATE_MUTED[2]);
   doc.text(`${quote.customerName} (${quote.companyName || 'Authorized Signatory'})`, clientSignX, y + 17);
 
-  // 7. Render Footers on all pages
-  drawFooter();
+  // 7. Render Watermarks and Footers across all pages
+  drawWatermarksAndFooters();
 
   // 8. Trigger Browser Download
-  const safeFilename = `WoodyQuote_${quote.quoteNumber.replace(/[^a-zA-Z0-9-_]/g, '_')}.pdf`;
+  const docPrefix = isInvoice ? 'Invoice' : 'WoodyQuote';
+  const safeFilename = `${docPrefix}_${quote.quoteNumber.replace(/[^a-zA-Z0-9-_]/g, '_')}.pdf`;
   doc.save(safeFilename);
 };

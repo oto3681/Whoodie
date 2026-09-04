@@ -427,6 +427,16 @@ export interface WoodyQuotation {
   woodyQuoteSyncStatus?: 'synced' | 'local_only' | 'pending';
   woodyQuoteEstimateId?: string;
   convertedOrderId?: string;
+  // Letterhead & Watermark Branding for Print / Invoice / PDF
+  letterheadUrl?: string; // Base64 dataUrl or image path
+  showLetterhead?: boolean;
+  watermarkUrl?: string; // Base64 dataUrl or image path for watermark photo
+  showWatermark?: boolean;
+  watermarkOpacity?: number; // 0.05 to 0.40, e.g. 0.12
+  watermarkSize?: 'small' | 'medium' | 'large';
+  watermarkAngle?: 'tilted' | 'flat';
+  watermarkText?: string;
+  documentType?: 'quotation' | 'invoice'; // Allow toggling document mode between Commercial Quotation and Commercial Invoice
   createdAt: string;
   updatedAt: string;
   preparedBy: string;
@@ -452,6 +462,15 @@ export interface WoodyQuoteSettings {
   defaultTerms: string;
   companyKraPin?: string;
   includeEtrQrCode?: boolean;
+  // Default Letterhead & Watermark Branding
+  defaultLetterheadUrl?: string;
+  defaultShowLetterhead?: boolean;
+  defaultWatermarkUrl?: string;
+  defaultShowWatermark?: boolean;
+  defaultWatermarkOpacity?: number;
+  defaultWatermarkSize?: 'small' | 'medium' | 'large';
+  defaultWatermarkAngle?: 'tilted' | 'flat';
+  defaultWatermarkText?: string;
 }
 
 // Backward-compatibility aliases

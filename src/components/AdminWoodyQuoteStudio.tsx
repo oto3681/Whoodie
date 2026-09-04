@@ -44,7 +44,12 @@ import {
   HelpCircle,
   Hash,
   ChevronDown,
-  Loader2
+  Loader2,
+  Image as ImageIcon,
+  Upload,
+  Sliders,
+  Stamp,
+  Layers
 } from 'lucide-react';
 
 export const AdminWoodyQuoteStudio: React.FC = () => {
@@ -81,6 +86,19 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
   const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null);
   const [isSyncingAll, setIsSyncingAll] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  // Document Customization (Letterhead & Watermark Photo) State for Preview & Print
+  const [docShowLetterhead, setDocShowLetterhead] = useState(zohoSettings.defaultShowLetterhead ?? false);
+  const [docLetterheadUrl, setDocLetterheadUrl] = useState(zohoSettings.defaultLetterheadUrl || '');
+  const [docShowWatermark, setDocShowWatermark] = useState(zohoSettings.defaultShowWatermark ?? true);
+  const [docWatermarkUrl, setDocWatermarkUrl] = useState(zohoSettings.defaultWatermarkUrl || '/logo.png');
+  const [docWatermarkOpacity, setDocWatermarkOpacity] = useState(zohoSettings.defaultWatermarkOpacity ?? 0.12);
+  const [docWatermarkSize, setDocWatermarkSize] = useState<'small' | 'medium' | 'large'>(zohoSettings.defaultWatermarkSize || 'medium');
+  const [docWatermarkAngle, setDocWatermarkAngle] = useState<'tilted' | 'flat'>(zohoSettings.defaultWatermarkAngle || 'tilted');
+  const [docWatermarkText, setDocWatermarkText] = useState(zohoSettings.defaultWatermarkText || 'WOODYNAT DESIGNERS LIMITED');
+  const [docDocumentType, setDocDocumentType] = useState<'quotation' | 'invoice'>('quotation');
+  const [isBrandingToolbarOpen, setIsBrandingToolbarOpen] = useState(true);
 
   // Email customization states inside email modal
   const [customRecipientEmail, setCustomRecipientEmail] = useState('');
@@ -130,6 +148,11 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
   const [tempEnv, setTempEnv] = useState<'sandbox' | 'production'>(zohoSettings.environment || 'production');
   const [tempAutoSync, setTempAutoSync] = useState(zohoSettings.autoSyncToZoho ?? true);
   const [tempPrefix, setTempPrefix] = useState(zohoSettings.defaultQuotePrefix || 'WNAT-2026');
+  const [tempDefShowLetterhead, setTempDefShowLetterhead] = useState(zohoSettings.defaultShowLetterhead ?? false);
+  const [tempDefLetterheadUrl, setTempDefLetterheadUrl] = useState(zohoSettings.defaultLetterheadUrl || '');
+  const [tempDefShowWatermark, setTempDefShowWatermark] = useState(zohoSettings.defaultShowWatermark ?? true);
+  const [tempDefWatermarkUrl, setTempDefWatermarkUrl] = useState(zohoSettings.defaultWatermarkUrl || '/logo.png');
+  const [tempDefWatermarkOpacity, setTempDefWatermarkOpacity] = useState(zohoSettings.defaultWatermarkOpacity ?? 0.12);
 
   // Filtered quotations
   const filteredQuotes = zohoQuotations.filter((q) => {
@@ -408,13 +431,118 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
       `_Reply *CONFIRM* to this message to approve vector design proofs & start production._`;
   };
 
-  // Download PDF Action using jsPDF
-  const handleDownloadPdf = (quote: WoodyQuotation) => {
+  // Open Preview Modal with Live Customization & Branding
+  const handleOpenPreview = (quote: WoodyQuotation) => {
+    setSelectedQuote(quote);
+    setDocShowLetterhead(quote.showLetterhead ?? zohoSettings.defaultShowLetterhead ?? false);
+    setDocLetterheadUrl(quote.letterheadUrl || zohoSettings.defaultLetterheadUrl || '');
+    setDocShowWatermark(quote.showWatermark ?? zohoSettings.defaultShowWatermark ?? true);
+    setDocWatermarkUrl(quote.watermarkUrl || zohoSettings.defaultWatermarkUrl || '/logo.png');
+    setDocWatermarkOpacity(quote.watermarkOpacity ?? zohoSettings.defaultWatermarkOpacity ?? 0.12);
+    setDocWatermarkSize(quote.watermarkSize || zohoSettings.defaultWatermarkSize || 'medium');
+    setDocWatermarkAngle(quote.watermarkAngle || zohoSettings.defaultWatermarkAngle || 'tilted');
+    setDocWatermarkText(quote.watermarkText || zohoSettings.defaultWatermarkText || 'WOODYNAT DESIGNERS LIMITED');
+    setDocDocumentType(quote.documentType || (quote.status === 'Invoiced' ? 'invoice' : 'quotation'));
+    setIsPreviewOpen(true);
+  };
+
+  // Letterhead Photo File Upload Handler
+  const handleLetterheadFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('Invalid File', 'Please select an image file (PNG, JPG, SVG, WebP) for the letterhead.', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setDocLetterheadUrl(dataUrl);
+      setDocShowLetterhead(true);
+      showToast('Letterhead Loaded', 'Custom company letterhead photo inserted into invoice/quotation.');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Watermark Photo File Upload Handler
+  const handleWatermarkFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('Invalid File', 'Please select an image file (PNG with transparency recommended) for the watermark.', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setDocWatermarkUrl(dataUrl);
+      setDocShowWatermark(true);
+      showToast('Watermark Loaded', 'Custom watermark photo inserted with transparency.');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Save branding settings to current active quote
+  const handleSaveBrandingToCurrentQuote = () => {
+    if (!selectedQuote) return;
+    const updatedPayload: Partial<WoodyQuotation> = {
+      showLetterhead: docShowLetterhead,
+      letterheadUrl: docLetterheadUrl,
+      showWatermark: docShowWatermark,
+      watermarkUrl: docWatermarkUrl,
+      watermarkOpacity: docWatermarkOpacity,
+      watermarkSize: docWatermarkSize,
+      watermarkAngle: docWatermarkAngle,
+      watermarkText: docWatermarkText,
+      documentType: docDocumentType,
+    };
+    updateZohoQuotation(selectedQuote.id, updatedPayload);
+    setSelectedQuote({ ...selectedQuote, ...updatedPayload });
+    showToast('Branding Saved', `Quotation #${selectedQuote.quoteNumber} custom letterhead & watermark saved.`);
+  };
+
+  // Save branding settings as default for all future quotes
+  const handleSaveAsDefaultBranding = () => {
+    updateZohoSettings({
+      defaultShowLetterhead: docShowLetterhead,
+      defaultLetterheadUrl: docLetterheadUrl,
+      defaultShowWatermark: docShowWatermark,
+      defaultWatermarkUrl: docWatermarkUrl,
+      defaultWatermarkOpacity: docWatermarkOpacity,
+      defaultWatermarkSize: docWatermarkSize,
+      defaultWatermarkAngle: docWatermarkAngle,
+      defaultWatermarkText: docWatermarkText,
+    });
+    showToast('Defaults Saved', 'Letterhead & Watermark configuration saved as global defaults.');
+  };
+
+  // Download PDF Action using jsPDF with Letterhead & Watermark Branding
+  const handleDownloadPdf = async (quote: WoodyQuotation) => {
     try {
-      downloadWoodyQuotePdf(quote, zohoSettings);
-      showToast('PDF Downloaded!', `Quotation #${quote.quoteNumber} downloaded to your device.`);
+      setIsGeneratingPdf(true);
+      const isSelected = selectedQuote && selectedQuote.id === quote.id;
+      const quoteWithBranding: WoodyQuotation = {
+        ...quote,
+        showLetterhead: isSelected ? docShowLetterhead : (quote.showLetterhead ?? docShowLetterhead),
+        letterheadUrl: isSelected ? docLetterheadUrl : (quote.letterheadUrl || docLetterheadUrl),
+        showWatermark: isSelected ? docShowWatermark : (quote.showWatermark ?? docShowWatermark),
+        watermarkUrl: isSelected ? docWatermarkUrl : (quote.watermarkUrl || docWatermarkUrl),
+        watermarkOpacity: isSelected ? docWatermarkOpacity : (quote.watermarkOpacity ?? docWatermarkOpacity),
+        watermarkSize: isSelected ? docWatermarkSize : (quote.watermarkSize || docWatermarkSize),
+        watermarkAngle: isSelected ? docWatermarkAngle : (quote.watermarkAngle || docWatermarkAngle),
+        watermarkText: isSelected ? docWatermarkText : (quote.watermarkText || docWatermarkText),
+        documentType: isSelected ? docDocumentType : (quote.documentType || docDocumentType),
+      };
+
+      await downloadWoodyQuotePdf(quoteWithBranding, zohoSettings);
+      showToast(
+        'PDF Downloaded!',
+        `${quoteWithBranding.documentType === 'invoice' ? 'Commercial Invoice' : 'Quotation'} #${quote.quoteNumber} downloaded with branding.`
+      );
     } catch (err: any) {
       showToast('PDF Error', err?.message || 'Failed to download PDF document.', 'error');
+    } finally {
+      setIsGeneratingPdf(false);
     }
   };
 
@@ -798,10 +926,7 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
 
                   {/* View Document Modal */}
                   <button
-                    onClick={() => {
-                      setSelectedQuote(quote);
-                      setIsPreviewOpen(true);
-                    }}
+                    onClick={() => handleOpenPreview(quote)}
                     className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Eye className="w-3.5 h-3.5 text-blue-600" />
@@ -1387,18 +1512,80 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
             <div className="bg-slate-900 text-white p-4 flex flex-wrap items-center justify-between gap-3 shrink-0 print:hidden">
               <div className="flex items-center gap-2.5">
                 <FileText className="w-5 h-5 text-blue-400" />
-                <span className="text-sm font-extrabold">Woody-Quote Official Quotation: {selectedQuote.quoteNumber}</span>
-                <span className="bg-blue-600 text-[10px] font-black px-2 py-0.5 rounded-md">Vector PDF</span>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-extrabold">
+                      {docDocumentType === 'invoice' ? 'Commercial Invoice' : 'Quotation'}: {selectedQuote.quoteNumber}
+                    </span>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${docDocumentType === 'invoice' ? 'bg-indigo-600' : 'bg-blue-600'}`}>
+                      {docDocumentType === 'invoice' ? 'Invoice Mode' : 'Quote Mode'}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-400">
+                    Woodynat Designers Limited • Official Commercial Desk
+                  </span>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Action Buttons & Document Type Switcher */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Switch Document Type */}
+                <div className="flex items-center bg-slate-800 rounded-xl p-0.5 border border-slate-700">
+                  <button
+                    type="button"
+                    onClick={() => setDocDocumentType('quotation')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      docDocumentType === 'quotation' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    Quotation
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDocDocumentType('invoice')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      docDocumentType === 'invoice' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    Invoice
+                  </button>
+                </div>
+
+                {/* Toggle Letterhead & Watermark Toolbar */}
+                <button
+                  type="button"
+                  onClick={() => setIsBrandingToolbarOpen(!isBrandingToolbarOpen)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
+                    isBrandingToolbarOpen
+                      ? 'bg-blue-600/30 border-blue-400/60 text-blue-200'
+                      : 'bg-white/10 hover:bg-white/20 border-white/10 text-white'
+                  }`}
+                  title="Insert Letterhead photo & Watermark photo before printing or downloading"
+                >
+                  <ImageIcon className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Letterhead & Watermark</span>
+                  <div className="flex items-center gap-1 ml-1">
+                    {docShowLetterhead && (
+                      <span className="w-2 h-2 rounded-full bg-blue-400" title="Letterhead Active" />
+                    )}
+                    {docShowWatermark && (
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" title="Watermark Active" />
+                    )}
+                  </div>
+                </button>
+
                 {/* Direct PDF Download */}
                 <button
+                  disabled={isGeneratingPdf}
                   onClick={() => handleDownloadPdf(selectedQuote)}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-extrabold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                  className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-extrabold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                 >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download PDF</span>
+                  {isGeneratingPdf ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Download className="w-3.5 h-3.5" />
+                  )}
+                  <span>{isGeneratingPdf ? 'Generating PDF...' : 'Download PDF'}</span>
                 </button>
 
                 {/* Print Browser Window */}
@@ -1437,173 +1624,483 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
               </div>
             </div>
 
+            {/* BRANDING CONTROL PANEL (INSERT LETTERHEAD & WATERMARK) */}
+            {isBrandingToolbarOpen && (
+              <div className="bg-slate-950 border-b border-slate-800 text-white p-4 sm:p-5 print:hidden space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-blue-400" />
+                    <span className="text-xs font-black uppercase tracking-wider text-blue-300">
+                      Document Customization: Insert Letterhead & Watermark Photo
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      (Configures print view and high-res vector PDF generation)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleSaveBrandingToCurrentQuote}
+                      className="px-3 py-1 bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-500/40 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Save to this Document
+                    </button>
+                    <button
+                      onClick={handleSaveAsDefaultBranding}
+                      className="px-3 py-1 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 border border-emerald-500/40 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Set as Default for All
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
+                  {/* 1. Letterhead Photo Insertion */}
+                  <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-2 font-black text-slate-100 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={docShowLetterhead}
+                          onChange={(e) => setDocShowLetterhead(e.target.checked)}
+                          className="w-4 h-4 rounded text-blue-600 accent-blue-600 cursor-pointer"
+                        />
+                        <span>Insert Letterhead Photo</span>
+                      </label>
+                      {docShowLetterhead && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                          Letterhead Active
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-200 font-bold cursor-pointer transition-colors text-xs">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload Letterhead Image</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleLetterheadFileUpload}
+                            className="hidden"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDocLetterheadUrl('/logo.png');
+                            setDocShowLetterhead(true);
+                            showToast('Preset Loaded', 'Official Woodynat header loaded as letterhead.');
+                          }}
+                          className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-medium text-[11px] transition-colors cursor-pointer border border-slate-700"
+                        >
+                          Woodynat Banner
+                        </button>
+                        {docLetterheadUrl && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDocLetterheadUrl('');
+                              setDocShowLetterhead(false);
+                            }}
+                            className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors cursor-pointer"
+                            title="Remove Letterhead"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Letterhead Preview Thumbnail */}
+                      {docLetterheadUrl ? (
+                        <div className="relative rounded-xl border border-slate-800 bg-black/40 p-2 flex items-center gap-3">
+                          <div className="w-24 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden border border-slate-700 shrink-0">
+                            <img src={docLetterheadUrl} alt="Letterhead" className="max-h-full max-w-full object-contain" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[11px] font-bold text-slate-200 truncate">Custom Letterhead Loaded</div>
+                            <div className="text-[10px] text-slate-400">Positioned across the top of invoice document</div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-[11px] text-slate-400 italic">
+                          Upload your corporate letterhead (PNG, JPG, SVG) to frame the top of the invoice.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 2. Watermark Photo & Stamp Insertion */}
+                  <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-2 font-black text-slate-100 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={docShowWatermark}
+                          onChange={(e) => setDocShowWatermark(e.target.checked)}
+                          className="w-4 h-4 rounded text-blue-600 accent-blue-600 cursor-pointer"
+                        />
+                        <span>Insert Watermark Photo / Stamp</span>
+                      </label>
+                      {docShowWatermark && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          Watermark Active ({Math.round(docWatermarkOpacity * 100)}%)
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="space-y-2.5">
+                      <div className="flex items-center gap-2">
+                        <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-200 font-bold cursor-pointer transition-colors text-xs">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload Watermark Photo</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleWatermarkFileUpload}
+                            className="hidden"
+                          />
+                        </label>
+                        {docWatermarkUrl && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDocWatermarkUrl('');
+                              setDocShowWatermark(false);
+                            }}
+                            className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors cursor-pointer"
+                            title="Remove Watermark Photo"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Quick Presets for Watermark */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        <span className="text-[10px] text-slate-400 font-semibold">Presets:</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDocWatermarkUrl('/logo.png');
+                            setDocShowWatermark(true);
+                            setDocWatermarkAngle('tilted');
+                            showToast('Preset Applied', 'Woodynat Crest logo loaded as watermark photo.');
+                          }}
+                          className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold transition-colors cursor-pointer border border-slate-700"
+                        >
+                          🛡️ Woodynat Crest
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDocWatermarkUrl('');
+                            setDocWatermarkText('ORIGINAL COMMERCIAL INVOICE');
+                            setDocShowWatermark(true);
+                            setDocWatermarkAngle('tilted');
+                          }}
+                          className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold transition-colors cursor-pointer border border-slate-700"
+                        >
+                          📋 Official Invoice
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDocWatermarkUrl('');
+                            setDocWatermarkText('APPROVED & SIGNED');
+                            setDocShowWatermark(true);
+                            setDocWatermarkAngle('tilted');
+                          }}
+                          className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold transition-colors cursor-pointer border border-slate-700"
+                        >
+                          ✅ Approved Stamp
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDocWatermarkUrl('');
+                            setDocWatermarkText('DRAFT ESTIMATE');
+                            setDocShowWatermark(true);
+                            setDocWatermarkAngle('tilted');
+                          }}
+                          className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold transition-colors cursor-pointer border border-slate-700"
+                        >
+                          📝 Draft Estimate
+                        </button>
+                      </div>
+
+                      {/* Sliders: Opacity, Size, Angle */}
+                      {docShowWatermark && (
+                        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800">
+                          <div>
+                            <div className="flex justify-between text-[10px] text-slate-400 font-medium">
+                              <span>Opacity</span>
+                              <span className="font-mono text-blue-300">{Math.round(docWatermarkOpacity * 100)}%</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0.04"
+                              max="0.35"
+                              step="0.01"
+                              value={docWatermarkOpacity}
+                              onChange={(e) => setDocWatermarkOpacity(parseFloat(e.target.value))}
+                              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                            />
+                          </div>
+
+                          <div>
+                            <div className="text-[10px] text-slate-400 font-medium mb-1">Size</div>
+                            <select
+                              value={docWatermarkSize}
+                              onChange={(e) => setDocWatermarkSize(e.target.value as 'small' | 'medium' | 'large')}
+                              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-white"
+                            >
+                              <option value="small">Small (70mm)</option>
+                              <option value="medium">Medium (105mm)</option>
+                              <option value="large">Large (140mm)</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <div className="text-[10px] text-slate-400 font-medium mb-1">Angle</div>
+                            <select
+                              value={docWatermarkAngle}
+                              onChange={(e) => setDocWatermarkAngle(e.target.value as 'tilted' | 'flat')}
+                              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-white"
+                            >
+                              <option value="tilted">Tilted (-25°)</option>
+                              <option value="flat">Flat (0°)</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* OFFICIAL WOODY-QUOTE DOCUMENT BODY */}
-            <div id="woody-quote-official-document" className="p-8 sm:p-12 space-y-8 bg-white text-slate-900 overflow-y-auto">
+            <div id="woody-quote-official-document" className="relative p-8 sm:p-12 bg-white text-slate-900 overflow-y-auto min-h-[842px]">
               
-              {/* Document Header (Blue Theme Accent, NO KRA) */}
-              <div className="flex flex-col sm:flex-row items-start justify-between gap-6 border-b-2 border-slate-900 pb-6">
-                <div>
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-10 h-10 bg-blue-950 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-xs">
-                      W
+              {/* Watermark Overlay (Screen & Print) */}
+              {docShowWatermark && (
+                <div
+                  className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center select-none overflow-hidden"
+                  style={{ opacity: docWatermarkOpacity }}
+                  aria-hidden="true"
+                >
+                  {docWatermarkUrl ? (
+                    <img
+                      src={docWatermarkUrl}
+                      alt="Watermark Photo"
+                      style={{
+                        transform: docWatermarkAngle === 'tilted' ? 'rotate(-25deg)' : 'none',
+                        width: docWatermarkSize === 'small' ? '240px' : docWatermarkSize === 'large' ? '540px' : '380px',
+                        maxHeight: '540px',
+                        objectFit: 'contain',
+                      }}
+                      className="select-none filter contrast-125"
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        transform: docWatermarkAngle === 'tilted' ? 'rotate(-28deg)' : 'none',
+                      }}
+                      className="text-3xl sm:text-5xl font-black text-slate-400 tracking-widest uppercase select-none text-center px-4 opacity-80"
+                    >
+                      {docWatermarkText || 'WOODYNAT DESIGNERS LIMITED'}
                     </div>
-                    <div>
-                      <h1 className="text-xl font-black text-slate-950 tracking-tight">Woodynat Designers Limited</h1>
-                      <p className="text-xs text-blue-600 font-bold">Branding, Commercial Printing & Signage Solutions</p>
-                    </div>
-                  </div>
-
-                  <div className="text-xs text-slate-600 space-y-0.5 mt-3">
-                    <p>📍 Temple Road Gatkim complex building fourth floor wing B Room 4B1</p>
-                    <p>🏢 Nairobi Central Business District (CBD), Kenya</p>
-                    <p>📞 Phone / WhatsApp: +254 797 939 199 | Email: {zohoSettings.accountEmail || 'woodynatdesigners12@gmail.com'}</p>
-                  </div>
-                </div>
-
-                <div className="text-right sm:min-w-48">
-                  <div className="text-2xl sm:text-3xl font-black text-blue-950 uppercase tracking-tight">COMMERCIAL QUOTATION</div>
-                  <div className="text-sm font-mono font-bold text-blue-600 mt-1">{selectedQuote.quoteNumber}</div>
-                  <div className="text-xs text-slate-500 mt-2 space-y-0.5">
-                    <p>Quote Date: <strong className="text-slate-800">{selectedQuote.quoteDate}</strong></p>
-                    <p>Valid Until: <strong className="text-slate-800">{selectedQuote.expiryDate}</strong></p>
-                    <p>Prepared By: <strong>{selectedQuote.preparedBy}</strong></p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bill To & Fulfillment Boxes (NO KRA) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-blue-50/40 p-4 rounded-2xl border border-blue-100">
-                <div className="space-y-1">
-                  <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">QUOTATION PREPARED FOR:</div>
-                  <div className="text-sm font-bold text-slate-900">{selectedQuote.customerName}</div>
-                  {selectedQuote.companyName && (
-                    <div className="text-xs font-semibold text-slate-700">{selectedQuote.companyName}</div>
                   )}
-                  <div className="text-xs text-slate-600">Tel: {selectedQuote.customerPhone}</div>
-                  <div className="text-xs text-slate-600">Email: {selectedQuote.customerEmail}</div>
-                  <div className="text-xs text-slate-600">Address: {selectedQuote.billingAddress || 'Nairobi, Kenya'}</div>
+                </div>
+              )}
+
+              {/* Document Content Layer */}
+              <div className="relative z-10 space-y-8">
+                {/* Inserted Letterhead Photo Banner (Screen & Print) */}
+                {docShowLetterhead && docLetterheadUrl && (
+                  <div className="w-full rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-2xs">
+                    <img
+                      src={docLetterheadUrl}
+                      alt="Company Letterhead"
+                      className="w-full max-h-36 object-contain sm:object-cover bg-white"
+                    />
+                  </div>
+                )}
+
+                {/* Document Header (Blue Theme Accent, NO KRA) */}
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-6 border-b-2 border-slate-900 pb-6">
+                  <div>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-10 h-10 bg-blue-950 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-xs">
+                        W
+                      </div>
+                      <div>
+                        <h1 className="text-xl font-black text-slate-950 tracking-tight">Woodynat Designers Limited</h1>
+                        <p className="text-xs text-blue-600 font-bold">Branding, Commercial Printing & Signage Solutions</p>
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-slate-600 space-y-0.5 mt-3">
+                      <p>📍 Temple Road Gatkim complex building fourth floor wing B Room 4B1</p>
+                      <p>🏢 Nairobi Central Business District (CBD), Kenya</p>
+                      <p>📞 Phone / WhatsApp: +254 797 939 199 | Email: {zohoSettings.accountEmail || 'woodynatdesigners12@gmail.com'}</p>
+                    </div>
+                  </div>
+
+                  <div className="text-right sm:min-w-48">
+                    <div className="text-2xl sm:text-3xl font-black text-blue-950 uppercase tracking-tight">
+                      {docDocumentType === 'invoice' ? 'COMMERCIAL INVOICE' : 'COMMERCIAL QUOTATION'}
+                    </div>
+                    <div className="text-sm font-mono font-bold text-blue-600 mt-1">
+                      {docDocumentType === 'invoice' ? (selectedQuote.quoteNumber.replace(/^WNAT-/, 'INV-') || selectedQuote.quoteNumber) : selectedQuote.quoteNumber}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-2 space-y-0.5">
+                      <p>{docDocumentType === 'invoice' ? 'Invoice Date' : 'Quote Date'}: <strong className="text-slate-800">{selectedQuote.quoteDate}</strong></p>
+                      <p>{docDocumentType === 'invoice' ? 'Payment Due' : 'Valid Until'}: <strong className="text-slate-800">{selectedQuote.expiryDate}</strong></p>
+                      <p>Prepared By: <strong>{selectedQuote.preparedBy}</strong></p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-1 sm:border-l sm:border-blue-200 sm:pl-6">
-                  <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">FULFILLMENT & PRODUCTION:</div>
-                  <div className="text-xs font-bold text-slate-800">Fulfillment Method: {selectedQuote.deliveryType}</div>
-                  <div className="text-xs text-slate-600">Destination: {selectedQuote.deliveryLocation}</div>
-                  <div className="text-xs text-slate-600">Turnaround Timeline: <strong>{selectedQuote.deliveryTimeline}</strong></div>
-                  <div className="text-xs text-slate-600">Payment Terms: <strong>{selectedQuote.paymentTerms}</strong></div>
-                </div>
-              </div>
+                {/* Bill To & Fulfillment Boxes (NO KRA) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-blue-50/40 p-4 rounded-2xl border border-blue-100">
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+                      {docDocumentType === 'invoice' ? 'INVOICE BILLED TO:' : 'QUOTATION PREPARED FOR:'}
+                    </div>
+                    <div className="text-sm font-bold text-slate-900">{selectedQuote.customerName}</div>
+                    {selectedQuote.companyName && (
+                      <div className="text-xs font-semibold text-slate-700">{selectedQuote.companyName}</div>
+                    )}
+                    <div className="text-xs text-slate-600">Tel: {selectedQuote.customerPhone}</div>
+                    <div className="text-xs text-slate-600">Email: {selectedQuote.customerEmail}</div>
+                    <div className="text-xs text-slate-600">Address: {selectedQuote.billingAddress || 'Nairobi, Kenya'}</div>
+                  </div>
 
-              {/* Items Table (Blue Theme Table Headers) */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-blue-950 text-white font-bold uppercase tracking-wider text-[10px]">
-                    <tr>
-                      <th className="py-3 px-4">#</th>
-                      <th className="py-3 px-4">Item & Description</th>
-                      <th className="py-3 px-4 text-center">Qty</th>
-                      <th className="py-3 px-4 text-right">Unit Price (KSh)</th>
-                      <th className="py-3 px-4 text-right">Discount</th>
-                      <th className="py-3 px-4 text-right">Total (KSh)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {selectedQuote.items.map((item, idx) => (
-                      <tr key={item.id || idx} className="text-slate-800 hover:bg-slate-50">
-                        <td className="py-3 px-4 font-mono text-slate-400">{idx + 1}</td>
-                        <td className="py-3 px-4">
-                          <div className="font-bold text-slate-900">{item.name}</div>
-                          <div className="text-[11px] text-slate-600 mt-0.5">{item.description}</div>
-                          {item.selectedSize && (
-                            <div className="text-[10px] text-blue-600 mt-0.5">Size/Specs: {item.selectedSize}</div>
-                          )}
-                          {item.artworkNotes && (
-                            <div className="text-[10px] text-blue-700 italic mt-0.5">Pre-Press: {item.artworkNotes}</div>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-center font-bold">{item.quantity} {item.unit}</td>
-                        <td className="py-3 px-4 text-right font-mono">{item.unitPrice.toLocaleString()}</td>
-                        <td className="py-3 px-4 text-right text-amber-600 font-bold">{item.discountPercent > 0 ? `${item.discountPercent}%` : '-'}</td>
-                        <td className="py-3 px-4 text-right font-mono font-bold">{item.total.toLocaleString()}</td>
+                  <div className="space-y-1 sm:border-l sm:border-blue-200 sm:pl-6">
+                    <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+                      {docDocumentType === 'invoice' ? 'DELIVERY & DISPATCH DETAILS:' : 'FULFILLMENT & PRODUCTION:'}
+                    </div>
+                    <div className="text-xs font-bold text-slate-800">Fulfillment Method: {selectedQuote.deliveryType}</div>
+                    <div className="text-xs text-slate-600">Destination: {selectedQuote.deliveryLocation}</div>
+                    <div className="text-xs text-slate-600">Turnaround Timeline: <strong>{selectedQuote.deliveryTimeline}</strong></div>
+                    <div className="text-xs text-slate-600">Payment Terms: <strong>{selectedQuote.paymentTerms}</strong></div>
+                  </div>
+                </div>
+
+                {/* Items Table (Blue Theme Table Headers) */}
+                <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-blue-950 text-white font-bold uppercase tracking-wider text-[10px]">
+                      <tr>
+                        <th className="py-3 px-4">#</th>
+                        <th className="py-3 px-4">Item & Description</th>
+                        <th className="py-3 px-4 text-center">Qty</th>
+                        <th className="py-3 px-4 text-right">Unit Price (KSh)</th>
+                        <th className="py-3 px-4 text-right">Discount</th>
+                        <th className="py-3 px-4 text-right">Total (KSh)</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Financial Totals (No KRA references) */}
-              <div className="flex flex-col sm:flex-row items-start justify-between gap-6 pt-2">
-                <div className="space-y-3 max-w-md">
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-950">
-                    <div className="font-bold uppercase tracking-wider text-[10px] text-blue-700 mb-1">M-Pesa Official Paybill Details:</div>
-                    <p>• <strong>Paybill Number:</strong> {selectedQuote.paybillNumber || '247247'}</p>
-                    <p>• <strong>Account Number:</strong> {selectedQuote.paybillAccount || '0797939199'}</p>
-                    <p>• <strong>Account Name:</strong> Woodynat Designers Limited</p>
-                  </div>
-
-                  {selectedQuote.notes && (
-                    <div className="text-xs text-slate-600">
-                      <strong className="text-slate-800">Special Notes:</strong> {selectedQuote.notes}
-                    </div>
-                  )}
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {selectedQuote.items.map((item, idx) => (
+                        <tr key={item.id || idx} className="text-slate-800 hover:bg-slate-50">
+                          <td className="py-3 px-4 font-mono text-slate-400">{idx + 1}</td>
+                          <td className="py-3 px-4">
+                            <div className="font-bold text-slate-900">{item.name}</div>
+                            <div className="text-[11px] text-slate-600 mt-0.5">{item.description}</div>
+                            {item.selectedSize && (
+                              <div className="text-[10px] text-blue-600 mt-0.5">Size/Specs: {item.selectedSize}</div>
+                            )}
+                            {item.artworkNotes && (
+                              <div className="text-[10px] text-blue-700 italic mt-0.5">Pre-Press: {item.artworkNotes}</div>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-center font-bold">{item.quantity} {item.unit}</td>
+                          <td className="py-3 px-4 text-right font-mono">{item.unitPrice.toLocaleString()}</td>
+                          <td className="py-3 px-4 text-right text-amber-600 font-bold">{item.discountPercent > 0 ? `${item.discountPercent}%` : '-'}</td>
+                          <td className="py-3 px-4 text-right font-mono font-bold">{item.total.toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
 
-                <div className="w-full sm:w-80 space-y-2 text-xs">
-                  <div className="flex justify-between text-slate-600">
-                    <span>Subtotal:</span>
-                    <span className="font-mono font-bold">KSh {selectedQuote.subtotal.toLocaleString()}</span>
+                {/* Financial Totals (No KRA references) */}
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-6 pt-2">
+                  <div className="space-y-3 max-w-md">
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-950">
+                      <div className="font-bold uppercase tracking-wider text-[10px] text-blue-700 mb-1">M-Pesa Official Paybill Details:</div>
+                      <p>• <strong>Paybill Number:</strong> {selectedQuote.paybillNumber || '247247'}</p>
+                      <p>• <strong>Account Number:</strong> {selectedQuote.paybillAccount || '0797939199'}</p>
+                      <p>• <strong>Account Name:</strong> Woodynat Designers Limited</p>
+                    </div>
+
+                    {selectedQuote.notes && (
+                      <div className="text-xs text-slate-600">
+                        <strong className="text-slate-800">Special Notes:</strong> {selectedQuote.notes}
+                      </div>
+                    )}
                   </div>
 
-                  {selectedQuote.discountTotal > 0 && (
-                    <div className="flex justify-between text-amber-600">
-                      <span>Total Discounts:</span>
-                      <span className="font-mono font-bold">-KSh {selectedQuote.discountTotal.toLocaleString()}</span>
-                    </div>
-                  )}
-
-                  {selectedQuote.shippingCost > 0 && (
+                  <div className="w-full sm:w-80 space-y-2 text-xs">
                     <div className="flex justify-between text-slate-600">
-                      <span>Logistics / Courier:</span>
-                      <span className="font-mono font-bold">+KSh {selectedQuote.shippingCost.toLocaleString()}</span>
+                      <span>Subtotal:</span>
+                      <span className="font-mono font-bold">KSh {selectedQuote.subtotal.toLocaleString()}</span>
                     </div>
-                  )}
 
-                  <div className="border-t-2 border-slate-900 pt-2 flex justify-between text-base font-black text-slate-950">
-                    <span>GRAND TOTAL:</span>
-                    <span className="font-mono text-blue-600">KSh {selectedQuote.grandTotal.toLocaleString()}</span>
-                  </div>
+                    {selectedQuote.discountTotal > 0 && (
+                      <div className="flex justify-between text-amber-600">
+                        <span>Total Discounts:</span>
+                        <span className="font-mono font-bold">-KSh {selectedQuote.discountTotal.toLocaleString()}</span>
+                      </div>
+                    )}
 
-                  <div className="text-[10px] text-slate-500 italic text-right mt-1">
-                    {formatKenyanShillingsToWords(selectedQuote.grandTotal)}
+                    {selectedQuote.shippingCost > 0 && (
+                      <div className="flex justify-between text-slate-600">
+                        <span>Logistics / Courier:</span>
+                        <span className="font-mono font-bold">+KSh {selectedQuote.shippingCost.toLocaleString()}</span>
+                      </div>
+                    )}
+
+                    <div className="border-t-2 border-slate-900 pt-2 flex justify-between text-base font-black text-slate-950">
+                      <span>GRAND TOTAL:</span>
+                      <span className="font-mono text-blue-600">KSh {selectedQuote.grandTotal.toLocaleString()}</span>
+                    </div>
+
+                    <div className="text-[10px] text-slate-500 italic text-right mt-1">
+                      {formatKenyanShillingsToWords(selectedQuote.grandTotal)}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Terms & Conditions & Sign-off */}
-              <div className="border-t border-slate-200 pt-6 space-y-4">
-                <div>
-                  <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Commercial Terms & Sign-off:</div>
-                  <pre className="text-[11px] text-slate-600 whitespace-pre-line font-sans leading-relaxed">
-                    {selectedQuote.termsAndConditions}
-                  </pre>
-                </div>
-
-                <div className="grid grid-cols-2 gap-8 pt-8 border-t border-dashed border-slate-300">
+                {/* Terms & Conditions & Sign-off */}
+                <div className="border-t border-slate-200 pt-6 space-y-4">
                   <div>
-                    <div className="border-b border-slate-400 pb-8 text-center text-xs font-bold text-slate-400">
-                      Authorised Woodynat Signature & Official Stamp
-                    </div>
-                    <div className="text-center text-[10px] text-slate-500 mt-1">Woodynat Commercial Accounts Desk</div>
+                    <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Commercial Terms & Sign-off:</div>
+                    <pre className="text-[11px] text-slate-600 whitespace-pre-line font-sans leading-relaxed">
+                      {selectedQuote.termsAndConditions}
+                    </pre>
                   </div>
 
-                  <div>
-                    <div className="border-b border-slate-400 pb-8 text-center text-xs font-bold text-slate-400">
-                      Client Acceptance Sign-off / LPO Reference
+                  <div className="grid grid-cols-2 gap-8 pt-8 border-t border-dashed border-slate-300">
+                    <div>
+                      <div className="border-b border-slate-400 pb-8 text-center text-xs font-bold text-slate-400">
+                        Authorised Woodynat Signature & Official Stamp
+                      </div>
+                      <div className="text-center text-[10px] text-slate-500 mt-1">Woodynat Commercial Accounts Desk</div>
                     </div>
-                    <div className="text-center text-[10px] text-slate-500 mt-1">{selectedQuote.customerName} ({selectedQuote.companyName || 'Authorized Signatory'})</div>
+
+                    <div>
+                      <div className="border-b border-slate-400 pb-8 text-center text-xs font-bold text-slate-400">
+                        Client Acceptance Sign-off / LPO Reference
+                      </div>
+                      <div className="text-center text-[10px] text-slate-500 mt-1">{selectedQuote.customerName} ({selectedQuote.companyName || 'Authorized Signatory'})</div>
+                    </div>
                   </div>
                 </div>
-              </div>
 
+              </div>
             </div>
 
           </div>
@@ -1893,6 +2390,68 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
                 </div>
               </div>
 
+              {/* Default Branding Configuration */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center gap-2 text-slate-900 font-bold text-xs border-b border-slate-200 pb-2">
+                  <ImageIcon className="w-4 h-4 text-blue-600" />
+                  <span>Default Invoice & Quotation Branding (Letterhead & Watermark Photo)</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Default Letterhead */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-800 text-[11px]">
+                      <input
+                        type="checkbox"
+                        checked={tempDefShowLetterhead}
+                        onChange={(e) => setTempDefShowLetterhead(e.target.checked)}
+                        className="rounded text-blue-600 focus:ring-blue-500"
+                      />
+                      <span>Enable Default Letterhead</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Letterhead Image URL or path (e.g. /logo.png)"
+                      value={tempDefLetterheadUrl}
+                      onChange={(e) => setTempDefLetterheadUrl(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900"
+                    />
+                  </div>
+
+                  {/* Default Watermark */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-800 text-[11px]">
+                      <input
+                        type="checkbox"
+                        checked={tempDefShowWatermark}
+                        onChange={(e) => setTempDefShowWatermark(e.target.checked)}
+                        className="rounded text-blue-600 focus:ring-blue-500"
+                      />
+                      <span>Enable Default Watermark</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Watermark Photo URL or path (e.g. /logo.png)"
+                      value={tempDefWatermarkUrl}
+                      onChange={(e) => setTempDefWatermarkUrl(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900"
+                    />
+                    <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                      <span>Opacity: {Math.round(tempDefWatermarkOpacity * 100)}%</span>
+                      <input
+                        type="range"
+                        min="0.04"
+                        max="0.35"
+                        step="0.01"
+                        value={tempDefWatermarkOpacity}
+                        onChange={(e) => setTempDefWatermarkOpacity(parseFloat(e.target.value))}
+                        className="w-28 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <label className="flex items-center gap-2 p-3 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer">
                 <input
                   type="checkbox"
@@ -1923,10 +2482,15 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
                     environment: tempEnv,
                     organizationId: tempOrgId,
                     autoSyncToZoho: tempAutoSync,
-                    autoSyncWoodyQuote: tempAutoSync
+                    autoSyncWoodyQuote: tempAutoSync,
+                    defaultShowLetterhead: tempDefShowLetterhead,
+                    defaultLetterheadUrl: tempDefLetterheadUrl,
+                    defaultShowWatermark: tempDefShowWatermark,
+                    defaultWatermarkUrl: tempDefWatermarkUrl,
+                    defaultWatermarkOpacity: tempDefWatermarkOpacity
                   });
                   setIsSettingsOpen(false);
-                  showToast('Configuration Saved', 'Woody-Quote engine parameters updated successfully.');
+                  showToast('Configuration Saved', 'Woody-Quote engine parameters & default branding updated.');
                 }}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-blue-600/30 cursor-pointer"
               >

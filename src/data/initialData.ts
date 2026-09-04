@@ -1460,6 +1460,15 @@ export const DEFAULT_ZOHO_SETTINGS: ZohoSettings = {
   defaultDeliveryTimeline: '24-48 Hours Express Delivery',
   defaultNotes: 'Thank you for choosing Woodynat Designers Limited for your branding and printing needs. High-resolution digital vector proofs will be provided for sign-off before mass production begins.',
   defaultTerms: '1. 50% advance deposit is required before commencement of production; remaining 50% balance payable upon dispatch or shop collection.\n2. Digital vector proof approval is mandatory for all personalized and corporate apparel/signage.\n3. Turnaround time commences after design approval & deposit confirmation.\n4. Official M-Pesa Paybill: 247247 | Account: 0797939199.',
+  // Default Document Branding
+  defaultLetterheadUrl: '',
+  defaultShowLetterhead: false,
+  defaultWatermarkUrl: '/logo.png',
+  defaultShowWatermark: true,
+  defaultWatermarkOpacity: 0.12,
+  defaultWatermarkSize: 'medium',
+  defaultWatermarkAngle: 'tilted',
+  defaultWatermarkText: 'WOODYNAT DESIGNERS LIMITED',
 };
 
 export const DEFAULT_WOODY_QUOTE_SETTINGS = DEFAULT_ZOHO_SETTINGS;
