@@ -106,7 +106,7 @@ export const AdminNotificationPanel: React.FC<AdminNotificationPanelProps> = ({ 
     setCustomActionNote(
       notif.type === 'order_placed'
         ? `Order #${notif.referenceId} accepted by Admin. Assigned to WoodyNat pre-press queue at Gatkim Complex 4th Floor.`
-        : `Quote inquiry for ${notif.referenceData.customerName} accepted. Official 2026 catalogue & pricing prepared.`
+        : `Quote inquiry for ${notif.referenceData.customerName} acknowledged. Admin to review specifications and prepare quotation.`
     );
   };
 
@@ -589,7 +589,7 @@ export const AdminNotificationPanel: React.FC<AdminNotificationPanelProps> = ({ 
                         ) : (
                           <CheckCircle2 className="w-4 h-4" />
                         )}
-                        <span>{isOrder ? 'Accept Order (Assign Production)' : 'Accept Inquiry (Approve Quote)'}</span>
+                        <span>{isOrder ? 'Accept Order (Assign Production)' : 'Acknowledge Inquiry (Lead)'}</span>
                       </button>
                     ) : (
                       <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl flex items-center gap-1">
@@ -634,7 +634,7 @@ export const AdminNotificationPanel: React.FC<AdminNotificationPanelProps> = ({ 
                       href={`https://wa.me/${intlPhone}?text=${encodeURIComponent(
                         isOrder
                           ? `Hi ${notif.referenceData.customerName}, this is Woodynat Designers Limited (Gatkim Complex, CBD). Your Order #${notif.referenceId} has been officially ACCEPTED and is now in production! Total: KSh ${(notif.referenceData.amount || 0).toLocaleString()}. Feel free to reply here if you have any artwork questions.`
-                          : `Hi ${notif.referenceData.customerName}, thank you for your inquiry regarding "${notif.referenceData.topic || 'commercial printing'}" with Woodynat Designers Limited. Your inquiry has been ACCEPTED by our design desk and we have prepared your rate card quotation. When is a good time to review?`
+                          : `Hi ${notif.referenceData.customerName}, thank you for your inquiry regarding "${notif.referenceData.topic || 'commercial printing'}" with Woodynat Designers Limited. Our design desk has acknowledged your request. Our Admin will review your specifications to prepare your customized quotation. When is a good time to review?`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -707,7 +707,7 @@ export const AdminNotificationPanel: React.FC<AdminNotificationPanelProps> = ({ 
                 </div>
                 <div>
                   <h3 className="font-extrabold text-slate-900 text-base">
-                    Accept {selectedNotifForModal.type === 'order_placed' ? 'Customer Order' : 'Quote Inquiry'}
+                    {selectedNotifForModal.type === 'order_placed' ? 'Accept Customer Order' : 'Acknowledge Quote Inquiry'}
                   </h3>
                   <span className="text-xs text-slate-500 font-mono">Ref: {selectedNotifForModal.referenceId}</span>
                 </div>
