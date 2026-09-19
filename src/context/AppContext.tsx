@@ -22,8 +22,11 @@ import {
   ZohoQuoteItem,
   ZohoSettings,
   ZohoQuoteStatus,
-  RegisteredMember
+  RegisteredMember,
+  WoodyQuoteDataSource,
+  WoodyExcelDataset
 } from '../types';
+import { extractCatalogAndClientsFromQuotes } from '../utils/woodyQuoteExcelHandler';
 import { 
   INITIAL_PRODUCTS, 
   INITIAL_REVIEWS, 
@@ -233,6 +236,14 @@ interface AppContextType {
   updateZohoSettings: (newSettings: Partial<ZohoSettings>) => void;
   syncQuoteToZoho: (quoteId: string) => Promise<boolean>;
   importZohoQuotations: (quotesList: ZohoQuotation[], mode?: 'append' | 'replace') => { added: number; updated: number; total: number };
+  
+  // WoodyQuote Excel Data Engine (Enables running Woody-Quote from uploaded Excel instead of system)
+  woodyQuoteSource: WoodyQuoteDataSource;
+  woodyExcelDataset: WoodyExcelDataset | null;
+  setWoodyQuoteSource: (source: WoodyQuoteDataSource) => void;
+  loadWoodyQuoteExcelDataset: (dataset: WoodyExcelDataset, setActive?: boolean) => void;
+  clearWoodyQuoteExcelDataset: () => void;
+  syncExcelQuotesToSystem: () => void;
 
   // Registered Members Database & Management
   registeredMembers: RegisteredMember[];
@@ -377,6 +388,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         ...q,
         quoteNumber: q.quoteNumber ? q.quoteNumber.replace(/^(ZOHO-QT|WQ)/, 'WNAT') : 'WNAT-2026-0001'
       }));
+  });
+
+  // WoodyQuote Data Source & Uploaded Excel Dataset State
+  const [woodyQuoteSource, setWoodyQuoteSourceState] = useState<WoodyQuoteDataSource>(() => {
+    return safeGetLocalStorage<WoodyQuoteDataSource>('pixelprint_woody_data_source', 'system');
+  });
+
+  const [woodyExcelDataset, setWoodyExcelDataset] = useState<WoodyExcelDataset | null>(() => {
+    return safeGetLocalStorage<WoodyExcelDataset | null>('pixelprint_woody_excel_dataset', null);
   });
 
   // Registered Members Database State (Stores ONLY genuinely registered users or admin-created members)
@@ -582,6 +602,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     safeSetLocalStorage('pixelprint_zoho_quotations', zohoQuotations);
   }, [zohoQuotations]);
+
+  useEffect(() => {
+    safeSetLocalStorage('pixelprint_woody_data_source', woodyQuoteSource);
+  }, [woodyQuoteSource]);
+
+  useEffect(() => {
+    safeSetLocalStorage('pixelprint_woody_excel_dataset', woodyExcelDataset);
+  }, [woodyExcelDataset]);
 
   useEffect(() => {
     safeSetLocalStorage('pixelprint_zoho_settings', zohoSettings);
@@ -2004,6 +2032,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     setZohoQuotations((prev) => [newQuote, ...prev]);
+
+    if (woodyQuoteSource === 'excel' && woodyExcelDataset) {
+      setWoodyExcelDataset((prev) => {
+        if (!prev) return null;
+        const newQuotes = [newQuote, ...prev.quotes];
+        const { itemsCatalog, clientsCatalog } = extractCatalogAndClientsFromQuotes(newQuotes);
+        const updated: WoodyExcelDataset = {
+          ...prev,
+          quotes: newQuotes,
+          itemsCatalog,
+          clientsCatalog
+        };
+        safeSetLocalStorage('pixelprint_woody_excel_dataset', updated);
+        return updated;
+      });
+    }
+
     showToast('Woody-Quote Created!', `Quotation ${newQuote.quoteNumber} for ${newQuote.customerName} has been saved.`);
     return newQuote;
   };
@@ -2030,12 +2075,101 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return updated;
       })
     );
+
+    if (woodyQuoteSource === 'excel' && woodyExcelDataset) {
+      setWoodyExcelDataset((prev) => {
+        if (!prev) return null;
+        const newQuotes = prev.quotes.map((q) => {
+          if (q.id !== id) return q;
+          const updated = { ...q, ...updates, updatedAt: new Date().toISOString() };
+          if (updates.items || updates.shippingCost !== undefined) {
+            const items = updated.items || [];
+            const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+            const discountTotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice * (item.discountPercent / 100)), 0);
+            const netAmount = subtotal - discountTotal;
+            const shippingCost = updated.shippingCost || 0;
+            updated.subtotal = subtotal;
+            updated.discountTotal = discountTotal;
+            updated.taxRate = 0;
+            updated.taxTotal = 0;
+            updated.grandTotal = netAmount + shippingCost;
+          }
+          return updated;
+        });
+        const { itemsCatalog, clientsCatalog } = extractCatalogAndClientsFromQuotes(newQuotes);
+        const updated: WoodyExcelDataset = {
+          ...prev,
+          quotes: newQuotes,
+          itemsCatalog,
+          clientsCatalog
+        };
+        safeSetLocalStorage('pixelprint_woody_excel_dataset', updated);
+        return updated;
+      });
+    }
+
     showToast('Woody-Quote Updated', 'Quotation changes have been saved.');
   };
 
   const deleteZohoQuotation = (id: string) => {
     setZohoQuotations((prev) => prev.filter((q) => q.id !== id));
+
+    if (woodyQuoteSource === 'excel' && woodyExcelDataset) {
+      setWoodyExcelDataset((prev) => {
+        if (!prev) return null;
+        const newQuotes = prev.quotes.filter((q) => q.id !== id);
+        const { itemsCatalog, clientsCatalog } = extractCatalogAndClientsFromQuotes(newQuotes);
+        const updated: WoodyExcelDataset = {
+          ...prev,
+          quotes: newQuotes,
+          itemsCatalog,
+          clientsCatalog
+        };
+        safeSetLocalStorage('pixelprint_woody_excel_dataset', updated);
+        return updated;
+      });
+    }
+
     showToast('Quotation Deleted', 'Zoho quotation record was removed.', 'info');
+  };
+
+  const setWoodyQuoteSource = (source: WoodyQuoteDataSource) => {
+    setWoodyQuoteSourceState(source);
+    safeSetLocalStorage('pixelprint_woody_data_source', source);
+    if (source === 'excel' && !woodyExcelDataset) {
+      showToast('Excel Data Mode', 'No Excel file loaded yet. Upload your spreadsheet to use Excel data.', 'info');
+    } else if (source === 'excel') {
+      showToast('Live Excel Active', `Woody-Quote is now using data from ${woodyExcelDataset?.fileName || 'uploaded Excel file'}.`);
+    } else {
+      showToast('System Database Active', 'Woody-Quote switched to the system database.');
+    }
+  };
+
+  const loadWoodyQuoteExcelDataset = (dataset: WoodyExcelDataset, setActive: boolean = true) => {
+    setWoodyExcelDataset(dataset);
+    safeSetLocalStorage('pixelprint_woody_excel_dataset', dataset);
+    if (setActive) {
+      setWoodyQuoteSourceState('excel');
+      safeSetLocalStorage('pixelprint_woody_data_source', 'excel');
+    }
+    showToast('Excel Dataset Loaded', `Woody-Quote is now using ${dataset.quotes.length} quotes from ${dataset.fileName}.`);
+  };
+
+  const clearWoodyQuoteExcelDataset = () => {
+    setWoodyExcelDataset(null);
+    safeSetLocalStorage('pixelprint_woody_excel_dataset', null);
+    setWoodyQuoteSourceState('system');
+    safeSetLocalStorage('pixelprint_woody_data_source', 'system');
+    showToast('Excel Data Disconnected', 'Switched Woody-Quote back to system database.', 'info');
+  };
+
+  const syncExcelQuotesToSystem = () => {
+    if (!woodyExcelDataset || woodyExcelDataset.quotes.length === 0) {
+      showToast('Sync Notice', 'No Excel quotation records to sync.', 'info');
+      return;
+    }
+    importZohoQuotations(woodyExcelDataset.quotes, 'append');
+    showToast('Synced to System', `Copied ${woodyExcelDataset.quotes.length} quotes from Excel into system database.`);
   };
 
   const clearAllQuotations = () => {
@@ -2439,6 +2573,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateZohoSettings,
         syncQuoteToZoho,
         importZohoQuotations,
+        woodyQuoteSource,
+        woodyExcelDataset,
+        setWoodyQuoteSource,
+        loadWoodyQuoteExcelDataset,
+        clearWoodyQuoteExcelDataset,
+        syncExcelQuotesToSystem,
         sendOrderConfirmationEmail,
         sendOrderStatusUpdateEmail,
         theme,

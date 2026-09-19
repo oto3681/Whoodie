@@ -1,14 +1,74 @@
 import * as XLSX from 'xlsx';
-import { ZohoQuotation as WoodyQuotation, ZohoQuoteItem as WoodyQuoteItem, ZohoSettings as WoodyQuoteSettings, ZohoQuoteStatus as WoodyQuoteStatus } from '../types';
+import { 
+  ZohoQuotation as WoodyQuotation, 
+  ZohoQuoteItem as WoodyQuoteItem, 
+  ZohoSettings as WoodyQuoteSettings, 
+  ZohoQuoteStatus as WoodyQuoteStatus,
+  WoodyExcelCatalogItem,
+  WoodyExcelClientItem,
+  WoodyExcelDataset
+} from '../types';
 
 export interface ParsedExcelQuoteResult {
   quotes: WoodyQuotation[];
   totalRows: number;
   totalItems: number;
   detectedSheets: string[];
+  itemsCatalog: WoodyExcelCatalogItem[];
+  clientsCatalog: WoodyExcelClientItem[];
   warnings: string[];
   errors: string[];
 }
+
+/**
+ * Extracts unique product catalog items and unique clients from parsed quotations
+ */
+export const extractCatalogAndClientsFromQuotes = (quotes: WoodyQuotation[]): {
+  itemsCatalog: WoodyExcelCatalogItem[];
+  clientsCatalog: WoodyExcelClientItem[];
+} => {
+  const itemsMap = new Map<string, WoodyExcelCatalogItem>();
+  const clientsMap = new Map<string, WoodyExcelClientItem>();
+
+  quotes.forEach((q) => {
+    // Collect client
+    const clientKey = `${(q.customerName || '').trim().toLowerCase()}_${(q.customerPhone || '').trim()}`;
+    if (clientKey && !clientsMap.has(clientKey) && q.customerName && q.customerName.trim()) {
+      clientsMap.set(clientKey, {
+        name: q.customerName.trim(),
+        phone: q.customerPhone.trim(),
+        email: q.customerEmail?.trim() || undefined,
+        companyName: q.companyName?.trim() || undefined,
+        billingAddress: q.billingAddress?.trim() || undefined,
+        deliveryLocation: q.deliveryLocation?.trim() || undefined,
+        deliveryType: q.deliveryType || undefined,
+      });
+    }
+
+    // Collect items
+    (q.items || []).forEach((item) => {
+      const itemKey = `${(item.name || '').trim().toLowerCase()}_${(item.category || '').trim().toLowerCase()}`;
+      if (itemKey && !itemsMap.has(itemKey) && item.name && item.name.trim()) {
+        itemsMap.set(itemKey, {
+          id: `excel-cat-${itemsMap.size + 1}`,
+          name: item.name.trim(),
+          category: item.category?.trim() || 'Branding & Commercial Printing',
+          description: item.description?.trim() || '',
+          unitPrice: item.unitPrice || 0,
+          unit: item.unit || 'pcs',
+          selectedSize: item.selectedSize || undefined,
+          selectedFinish: item.selectedFinish || undefined,
+          artworkNotes: item.artworkNotes || undefined,
+        });
+      }
+    });
+  });
+
+  return {
+    itemsCatalog: Array.from(itemsMap.values()),
+    clientsCatalog: Array.from(clientsMap.values()),
+  };
+};
 
 /**
  * Normalizes a header string for case-insensitive and flexible key matching
@@ -86,6 +146,8 @@ export const parseWoodyQuoteExcel = (
     totalRows: 0,
     totalItems: 0,
     detectedSheets: [],
+    itemsCatalog: [],
+    clientsCatalog: [],
     warnings: [],
     errors: [],
   };
@@ -543,6 +605,10 @@ export const parseWoodyQuoteExcel = (
     if (result.quotes.length === 0) {
       result.errors.push('No valid quotation rows could be parsed from the Excel file. Please ensure column headers match the template.');
     }
+
+    const { itemsCatalog, clientsCatalog } = extractCatalogAndClientsFromQuotes(result.quotes);
+    result.itemsCatalog = itemsCatalog;
+    result.clientsCatalog = clientsCatalog;
 
   } catch (err: any) {
     result.errors.push(`Excel parsing failed: ${err?.message || 'Unsupported or corrupted spreadsheet file.'}`);

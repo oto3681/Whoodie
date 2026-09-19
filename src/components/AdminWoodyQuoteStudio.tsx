@@ -5,7 +5,11 @@ import {
   ZohoQuoteItem as WoodyQuoteItem, 
   ZohoQuoteStatus as WoodyQuoteStatus, 
   Product, 
-  ProductCategory 
+  ProductCategory,
+  WoodyQuoteDataSource,
+  WoodyExcelDataset,
+  WoodyExcelCatalogItem,
+  WoodyExcelClientItem
 } from '../types';
 import { safeCopyToClipboard } from '../utils/clipboard';
 import { downloadWoodyQuotePdf, formatKenyanShillingsToWords } from '../utils/woodyQuotePdfGenerator';
@@ -81,6 +85,12 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
     updateZohoSettings, 
     syncQuoteToZoho,
     importZohoQuotations,
+    woodyQuoteSource,
+    woodyExcelDataset,
+    setWoodyQuoteSource,
+    loadWoodyQuoteExcelDataset,
+    clearWoodyQuoteExcelDataset,
+    syncExcelQuotesToSystem,
     showToast 
   } = useApp();
 
@@ -123,6 +133,9 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
   const [excelFileName, setExcelFileName] = useState('');
   const [parsedExcelResult, setParsedExcelResult] = useState<ParsedExcelQuoteResult | null>(null);
   const [excelImportMode, setExcelImportMode] = useState<'append' | 'replace'>('append');
+  const [setActiveDataSourceOnImport, setSetActiveDataSourceOnImport] = useState(true);
+  const [selectedExcelClientKey, setSelectedExcelClientKey] = useState('');
+  const [selectedExcelItemId, setSelectedExcelItemId] = useState('');
   const [previewExpandedQuoteId, setPreviewExpandedQuoteId] = useState<string | null>(null);
   const [excelSearchFilter, setExcelSearchFilter] = useState('');
   const excelFileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -160,7 +173,26 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
       return;
     }
 
-    importZohoQuotations(parsedExcelResult.quotes, excelImportMode);
+    const newDataset: WoodyExcelDataset = {
+      fileName: excelFileName || 'woody_quotations.xlsx',
+      uploadedAt: new Date().toISOString(),
+      quotes: parsedExcelResult.quotes,
+      itemsCatalog: parsedExcelResult.itemsCatalog || [],
+      clientsCatalog: parsedExcelResult.clientsCatalog || [],
+      totalRows: parsedExcelResult.totalRows,
+      detectedSheets: parsedExcelResult.detectedSheets || [],
+    };
+
+    // Load dataset and switch WoodyQuote to use this Excel file's data
+    loadWoodyQuoteExcelDataset(newDataset, setActiveDataSourceOnImport);
+
+    // Also persist to system quotes if requested in mode
+    if (excelImportMode === 'replace') {
+      importZohoQuotations(parsedExcelResult.quotes, 'replace');
+    } else if (excelImportMode === 'append') {
+      importZohoQuotations(parsedExcelResult.quotes, 'append');
+    }
+
     setIsExcelModalOpen(false);
     setParsedExcelResult(null);
     setExcelFileName('');
@@ -215,8 +247,11 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
   const [tempDefWatermarkUrl, setTempDefWatermarkUrl] = useState(zohoSettings.defaultWatermarkUrl || '/logo.png');
   const [tempDefWatermarkOpacity, setTempDefWatermarkOpacity] = useState(zohoSettings.defaultWatermarkOpacity ?? 0.12);
 
-  // Filtered quotations
-  const filteredQuotes = zohoQuotations.filter((q) => {
+  // Active quotations dataset depending on active data source (Excel file vs System database)
+  const activeQuotes = woodyQuoteSource === 'excel' && woodyExcelDataset ? woodyExcelDataset.quotes : zohoQuotations;
+
+  // Filtered quotations (runs on active data source)
+  const filteredQuotes = activeQuotes.filter((q) => {
     const matchesSearch = 
       q.quoteNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       q.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -228,21 +263,21 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // Financial Stats
-  const totalQuotesCount = zohoQuotations.length;
-  const approvedQuotesCount = zohoQuotations.filter((q) => q.status === 'Approved' || q.status === 'Converted to Order').length;
-  const totalApprovedValue = zohoQuotations
+  // Financial Stats (calculated from activeQuotes)
+  const totalQuotesCount = activeQuotes.length;
+  const approvedQuotesCount = activeQuotes.filter((q) => q.status === 'Approved' || q.status === 'Converted to Order').length;
+  const totalApprovedValue = activeQuotes
     .filter((q) => q.status === 'Approved' || q.status === 'Converted to Order')
     .reduce((sum, q) => sum + q.grandTotal, 0);
-  const draftQuotesCount = zohoQuotations.filter((q) => q.status === 'Draft').length;
-  const convertedOrdersCount = zohoQuotations.filter((q) => q.status === 'Converted to Order').length;
+  const draftQuotesCount = activeQuotes.filter((q) => q.status === 'Draft').length;
+  const convertedOrdersCount = activeQuotes.filter((q) => q.status === 'Converted to Order').length;
 
   // Open New Quote Editor
   const handleOpenNewQuote = (presetLead?: { name: string; phone: string; email?: string; company?: string; topic?: string }) => {
     setEditingQuoteId(null);
     const rawPrefix = zohoSettings.defaultQuotePrefix || 'WNAT-2026';
     const prefix = rawPrefix.replace(/^(ZOHO-QT|WQ)/, 'WNAT');
-    const nextNum = `${prefix}-${String(zohoQuotations.length + 1).padStart(4, '0')}`;
+    const nextNum = `${prefix}-${String(activeQuotes.length + 1).padStart(4, '0')}`;
     setQuoteNumber(nextNum);
     setQuoteDate(new Date().toISOString().split('T')[0]);
     setValidityDays(zohoSettings.defaultValidityDays || 14);
@@ -333,6 +368,43 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
       setCustomItemSize(prod.customizationOptions?.sizes?.[0] || '');
       setCustomItemFinish(prod.customizationOptions?.finishes?.[0] || '');
       setCustomItemArtworkNotes('Pre-press vector artwork approval included');
+    }
+  };
+
+  // Autofill client info from uploaded Excel dataset
+  const handleSelectExcelClient = (clientKey: string) => {
+    setSelectedExcelClientKey(clientKey);
+    if (!woodyExcelDataset || !clientKey) return;
+    const client = woodyExcelDataset.clientsCatalog.find(
+      (c) => `${c.name}_${c.phone}` === clientKey
+    );
+    if (client) {
+      if (client.name) setCustomerName(client.name);
+      if (client.phone) setCustomerPhone(client.phone);
+      if (client.email) setCustomerEmail(client.email);
+      if (client.companyName) setCompanyName(client.companyName);
+      if (client.billingAddress) setBillingAddress(client.billingAddress);
+      if (client.deliveryLocation) setDeliveryLocation(client.deliveryLocation);
+      if (client.deliveryType) setDeliveryType(client.deliveryType);
+      showToast('Client Auto-Filled', `Applied customer details for ${client.name} from Excel.`);
+    }
+  };
+
+  // Autofill line item details from uploaded Excel catalog
+  const handleSelectExcelItem = (itemId: string) => {
+    setSelectedExcelItemId(itemId);
+    if (!woodyExcelDataset || !itemId) return;
+    const itm = woodyExcelDataset.itemsCatalog.find((i) => i.id === itemId);
+    if (itm) {
+      setCustomItemName(itm.name);
+      setCustomItemPrice(itm.unitPrice || 0);
+      setCustomItemUnit(itm.unit || 'pcs');
+      if (itm.category) setCustomItemCategory(itm.category as any);
+      if (itm.description) setCustomItemDesc(itm.description);
+      if (itm.selectedSize) setCustomItemSize(itm.selectedSize);
+      if (itm.selectedFinish) setCustomItemFinish(itm.selectedFinish);
+      if (itm.artworkNotes) setCustomItemArtworkNotes(itm.artworkNotes);
+      showToast('Excel Product Loaded', `Applied "${itm.name}" (KSh ${itm.unitPrice?.toLocaleString()}) from Excel.`);
     }
   };
 
@@ -767,32 +839,38 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
             </button>
 
             {/* Export Excel Button */}
-            {zohoQuotations.length > 0 && (
+            {activeQuotes.length > 0 && (
               <button
                 onClick={() => {
-                  exportWoodyQuotesToExcel(zohoQuotations);
-                  showToast('Excel Exported', `Generated Excel spreadsheet with ${zohoQuotations.length} Woody-Quote records.`);
+                  exportWoodyQuotesToExcel(activeQuotes);
+                  showToast('Excel Exported', `Generated Excel spreadsheet with ${activeQuotes.length} Woody-Quote records.`);
                 }}
                 className="bg-emerald-800/40 hover:bg-emerald-700/50 text-emerald-200 border border-emerald-500/30 font-bold px-3 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-                title="Download complete quotations database as Excel workbook (.xlsx)"
+                title="Download active quotations dataset as Excel workbook (.xlsx)"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Export Excel</span>
+                <span>Export Excel ({activeQuotes.length})</span>
               </button>
             )}
 
-            {zohoQuotations.length > 0 && (
+            {activeQuotes.length > 0 && (
               <button
                 onClick={() => {
-                  if (window.confirm('Are you sure you want to clear all quotations? Quotations are not automatically generated and will only appear when created by an Admin.')) {
-                    clearAllQuotations();
+                  if (woodyQuoteSource === 'excel') {
+                    if (window.confirm('Disconnect and clear the uploaded Excel dataset from Woody-Quote? The system will return to using the internal database.')) {
+                      clearWoodyQuoteExcelDataset();
+                    }
+                  } else {
+                    if (window.confirm('Are you sure you want to clear all quotations from the system database? Quotations will only reappear when created or imported.')) {
+                      clearAllQuotations();
+                    }
                   }
                 }}
                 className="bg-red-500/20 hover:bg-red-500/30 text-red-200 border border-red-400/30 font-bold px-3 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-                title="Clear all quotations"
+                title={woodyQuoteSource === 'excel' ? 'Disconnect and clear active Excel data' : 'Clear all system quotations'}
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Clear All</span>
+                <span>{woodyQuoteSource === 'excel' ? 'Clear Excel' : 'Clear All'}</span>
               </button>
             )}
 
@@ -876,6 +954,157 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* Active Woody-Quote Data Source Banner: Uploaded Excel File vs System Database */}
+      {/* ========================================================================= */}
+      <div 
+        className={`rounded-2xl p-4 sm:p-5 border transition-all shadow-sm ${
+          woodyQuoteSource === 'excel' && woodyExcelDataset
+            ? 'bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 border-emerald-500/40 text-white'
+            : 'bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 border-blue-500/30 text-white'
+        }`}
+      >
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-300">
+                Active Woody-Quote Engine Data Source:
+              </span>
+              {woodyQuoteSource === 'excel' && woodyExcelDataset ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30">
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>USING UPLOADED EXCEL DATA (SYSTEM BYPASSED)</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-blue-500 text-white shadow-sm shadow-blue-500/30">
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>USING SYSTEM DATABASE</span>
+                </span>
+              )}
+            </div>
+
+            <div className="text-sm font-bold text-white flex flex-wrap items-center gap-2">
+              {woodyQuoteSource === 'excel' && woodyExcelDataset ? (
+                <>
+                  <span className="text-emerald-300 font-extrabold flex items-center gap-1.5">
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{woodyExcelDataset.fileName}</span>
+                  </span>
+                  <span className="text-slate-400">•</span>
+                  <span className="text-emerald-100/90 text-xs">
+                    {woodyExcelDataset.quotes.length} quotations loaded • {woodyExcelDataset.itemsCatalog.length} catalog items • {woodyExcelDataset.clientsCatalog.length} clients
+                  </span>
+                  <span className="text-slate-400 text-xs hidden md:inline">
+                    (Quotes & products shown below are sourced directly from your uploaded Excel sheet)
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-blue-200">
+                    Internal System Database ({zohoQuotations.length} records).
+                  </span>
+                  {woodyExcelDataset ? (
+                    <span className="text-xs text-slate-300 bg-white/10 px-2.5 py-0.5 rounded-lg border border-white/10">
+                      Excel file ready: {woodyExcelDataset.fileName} ({woodyExcelDataset.quotes.length} quotes)
+                    </span>
+                  ) : (
+                    <span className="text-xs text-slate-400">
+                      Upload an Excel spreadsheet to switch Woody-Quote to run entirely from Excel data.
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Source Toggle & Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {/* Toggle to Excel if dataset loaded but currently on system */}
+            {woodyQuoteSource === 'system' && woodyExcelDataset && (
+              <button
+                type="button"
+                onClick={() => {
+                  setWoodyQuoteSource('excel');
+                  showToast('Excel Data Active', `Woody-Quote is now using data from ${woodyExcelDataset.fileName}.`);
+                }}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/30 transition-all cursor-pointer"
+                title="Switch Woody-Quote to use data from the loaded Excel spreadsheet"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                <span>Switch to Excel Data ({woodyExcelDataset.quotes.length} quotes)</span>
+              </button>
+            )}
+
+            {/* Toggle to System if currently on Excel */}
+            {woodyQuoteSource === 'excel' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setWoodyQuoteSource('system');
+                  showToast('System Data Active', `Woody-Quote is now using the system database (${zohoQuotations.length} quotes).`);
+                }}
+                className="bg-white/15 hover:bg-white/25 text-white border border-white/25 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Switch Woody-Quote back to system internal database"
+              >
+                <Building2 className="w-3.5 h-3.5 text-blue-300" />
+                <span>Switch to System Data ({zohoQuotations.length})</span>
+              </button>
+            )}
+
+            {/* Upload / Replace Excel Button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (excelFileInputRef.current) {
+                  excelFileInputRef.current.click();
+                } else {
+                  setIsExcelModalOpen(true);
+                }
+              }}
+              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-500/25 transition-all cursor-pointer"
+              title="Upload new or updated Excel file"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>{woodyExcelDataset ? 'Upload New Excel' : 'Upload Excel File'}</span>
+            </button>
+
+            {/* Sync Excel to System Button (if on Excel mode) */}
+            {woodyQuoteSource === 'excel' && woodyExcelDataset && woodyExcelDataset.quotes.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`Copy and sync all ${woodyExcelDataset.quotes.length} quotations from "${woodyExcelDataset.fileName}" into the permanent system database?`)) {
+                    syncExcelQuotesToSystem();
+                  }
+                }}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                title="Save all Excel quotations into system database for persistence"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Sync to System DB</span>
+              </button>
+            )}
+
+            {/* Disconnect Excel Dataset Button */}
+            {woodyExcelDataset && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('Disconnect and clear the uploaded Excel dataset from memory? Woody-Quote will return to using the system database.')) {
+                    clearWoodyQuoteExcelDataset();
+                  }
+                }}
+                className="bg-red-500/20 hover:bg-red-500/30 text-red-200 border border-red-400/30 font-bold px-2.5 py-2 rounded-xl text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                title="Clear uploaded Excel data"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Disconnect Excel</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* ========================================================================= */}
       {/* Controls Bar: Search & Status Filter Tabs (BLUE THEME) */}
@@ -1151,10 +1380,42 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
             <form onSubmit={handleSaveQuote} className="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
               {/* Section 1: Customer & Quotation Reference */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                <div className="text-xs font-extrabold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <Building2 className="w-4 h-4 text-blue-600" />
-                  <span>1. Client Information & Reference</span>
+                <div className="text-xs font-extrabold text-blue-900 uppercase tracking-wider flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-blue-600" />
+                    <span>1. Client Information & Reference</span>
+                  </div>
+                  {woodyQuoteSource === 'excel' && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                      <FileSpreadsheet className="w-3 h-3" />
+                      <span>Excel Mode Active</span>
+                    </span>
+                  )}
                 </div>
+
+                {/* Quick Client Auto-fill from Uploaded Excel Dataset */}
+                {woodyExcelDataset && woodyExcelDataset.clientsCatalog.length > 0 && (
+                  <div className="bg-emerald-50/80 border border-emerald-300 rounded-xl p-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="text-[11px] font-bold text-emerald-950">
+                        Auto-fill from Excel Clients ({woodyExcelDataset.clientsCatalog.length} contacts found):
+                      </span>
+                    </div>
+                    <select
+                      value={selectedExcelClientKey}
+                      onChange={(e) => handleSelectExcelClient(e.target.value)}
+                      className="bg-white border border-emerald-300 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full sm:w-auto"
+                    >
+                      <option value="">-- Choose Client from {woodyExcelDataset.fileName} --</option>
+                      {woodyExcelDataset.clientsCatalog.map((c, idx) => (
+                        <option key={idx} value={`${c.name}_${c.phone}`}>
+                          {c.name} {c.companyName ? `(${c.companyName})` : ''} - {c.phone}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
@@ -1322,6 +1583,28 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
                     Auto-fills Woodynat catalog pricing
                   </span>
                 </div>
+
+                {/* Quick Excel Catalog Selector if Excel dataset loaded */}
+                {woodyExcelDataset && woodyExcelDataset.itemsCatalog.length > 0 && (
+                  <div className="bg-emerald-50/80 border border-emerald-300 rounded-xl p-2.5">
+                    <label className="block text-[11px] font-bold text-emerald-950 mb-1 flex items-center gap-1.5">
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Choose from Uploaded Excel Items Catalog ({woodyExcelDataset.itemsCatalog.length} items from {woodyExcelDataset.fileName}):</span>
+                    </label>
+                    <select
+                      value={selectedExcelItemId}
+                      onChange={(e) => handleSelectExcelItem(e.target.value)}
+                      className="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2 text-slate-900 font-bold focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="">-- Choose Item from Uploaded Excel --</option>
+                      {woodyExcelDataset.itemsCatalog.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} {item.unitPrice ? `(KSh ${item.unitPrice.toLocaleString()}/${item.unit || 'pcs'})` : ''} {item.category ? `[${item.category}]` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 {/* Quick Catalog Selector */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2809,6 +3092,29 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Active Data Source Selection Option */}
+                  <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-4 flex items-start gap-3 shadow-2xs">
+                    <input
+                      type="checkbox"
+                      id="setActiveSourceCheckbox"
+                      checked={setActiveDataSourceOnImport}
+                      onChange={(e) => setSetActiveDataSourceOnImport(e.target.checked)}
+                      className="mt-1 h-4 w-4 rounded text-emerald-600 focus:ring-emerald-500 border-emerald-300 cursor-pointer"
+                    />
+                    <label htmlFor="setActiveSourceCheckbox" className="cursor-pointer">
+                      <div className="text-xs font-black text-emerald-950 flex items-center gap-1.5">
+                        <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700" />
+                        <span>Use this Excel file directly as the active data source for Woody-Quote</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 bg-emerald-200 text-emerald-900 rounded">
+                          Active Mode
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-emerald-800 mt-0.5">
+                        When enabled, Woody-Quote will immediately display and operate using data strictly from this uploaded Excel file ({parsedExcelResult.quotes.length} quotes, {parsedExcelResult.itemsCatalog?.length || 0} catalog items, and {parsedExcelResult.clientsCatalog?.length || 0} clients), bypassing the internal system database.
+                      </p>
+                    </label>
+                  </div>
+
                   {/* Import Mode Selector */}
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
                     <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
@@ -3079,11 +3385,14 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleConfirmExcelImport}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-6 py-2 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-emerald-600/30 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-emerald-600/30 transition-all cursor-pointer hover:scale-105 active:scale-95"
                   >
                     <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
                     <span>
-                      {excelImportMode === 'replace' ? 'Replace Database & Import' : 'Merge & Import'} ({parsedExcelResult.quotes.length} Quotes)
+                      {setActiveDataSourceOnImport 
+                        ? `Apply & Use Excel Data (${parsedExcelResult.quotes.length} Quotes)`
+                        : `${excelImportMode === 'replace' ? 'Replace Database & Import' : 'Merge & Import'} (${parsedExcelResult.quotes.length} Quotes)`
+                      }
                     </span>
                   </button>
                 )}

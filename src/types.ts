@@ -479,3 +479,37 @@ export type ZohoQuoteStatus = WoodyQuoteStatus;
 export type ZohoQuotation = WoodyQuotation;
 export type ZohoSettings = WoodyQuoteSettings;
 
+export type WoodyQuoteDataSource = 'excel' | 'system';
+
+export interface WoodyExcelCatalogItem {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  unitPrice: number;
+  unit: string;
+  selectedSize?: string;
+  selectedFinish?: string;
+  artworkNotes?: string;
+}
+
+export interface WoodyExcelClientItem {
+  name: string;
+  phone: string;
+  email?: string;
+  companyName?: string;
+  billingAddress?: string;
+  deliveryLocation?: string;
+  deliveryType?: 'Pickup Station' | 'Express Home Delivery' | 'CBD Workshop Pickup';
+}
+
+export interface WoodyExcelDataset {
+  fileName: string;
+  uploadedAt: string;
+  quotes: WoodyQuotation[];
+  itemsCatalog: WoodyExcelCatalogItem[];
+  clientsCatalog: WoodyExcelClientItem[];
+  totalRows: number;
+  detectedSheets: string[];
+}
+
