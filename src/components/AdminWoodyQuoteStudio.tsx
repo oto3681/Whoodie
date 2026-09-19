@@ -63,9 +63,11 @@ import {
 import { 
   parseWoodyQuoteExcel, 
   downloadWoodyQuoteExcelTemplate, 
-  exportWoodyQuotesToExcel, 
+  exportWoodyQuotesToExcel,
+  exportWoodyDatasetToExcel,
   ParsedExcelQuoteResult 
 } from '../utils/woodyQuoteExcelHandler';
+import { WoodyExcelEditorModal } from './WoodyExcelEditorModal';
 
 export const AdminWoodyQuoteStudio: React.FC = () => {
   const { 
@@ -91,12 +93,24 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
     loadWoodyQuoteExcelDataset,
     clearWoodyQuoteExcelDataset,
     syncExcelQuotesToSystem,
+    updateWoodyExcelCatalogItem,
+    addWoodyExcelCatalogItem,
+    deleteWoodyExcelCatalogItem,
+    updateWoodyExcelClient,
+    addWoodyExcelClient,
+    deleteWoodyExcelClient,
+    updateWoodyExcelDatasetMeta,
+    loadInitialWoodynatExcelDataset,
     showToast 
   } = useApp();
 
   // Filter & Search states
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | WoodyQuoteStatus>('All');
+  
+  // In-App Excel Data Editor modal states
+  const [isExcelEditorModalOpen, setIsExcelEditorModalOpen] = useState(false);
+  const [excelEditorTab, setExcelEditorTab] = useState<'catalog' | 'clients' | 'quotes' | 'settings'>('catalog');
   
   // Modals & Active Quote states
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -1020,6 +1034,53 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
 
           {/* Quick Source Toggle & Action Buttons */}
           <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {/* Edit Excel Data In-App Button (Available whenever Excel dataset is loaded) */}
+            {woodyExcelDataset && (
+              <button
+                type="button"
+                onClick={() => {
+                  setExcelEditorTab('catalog');
+                  setIsExcelEditorModalOpen(true);
+                }}
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/25 transition-all cursor-pointer"
+                title="Edit Excel catalog items, pricing, clients directory, and quotations directly inside Woody-Quote"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Edit Excel Data</span>
+              </button>
+            )}
+
+            {/* Export Current Excel File Button */}
+            {woodyExcelDataset && (
+              <button
+                type="button"
+                onClick={() => {
+                  exportWoodyDatasetToExcel(woodyExcelDataset);
+                  showToast('Excel Exported', `Downloaded updated workbook "${woodyExcelDataset.fileName}"`);
+                }}
+                className="bg-emerald-700/80 hover:bg-emerald-600 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm border border-emerald-500/40 transition-colors cursor-pointer"
+                title="Download the updated Excel file with all your in-app edits and new quotes preserved"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Export Excel</span>
+              </button>
+            )}
+
+            {/* If no Excel file uploaded yet, offer 1-click Official Template Loader */}
+            {!woodyExcelDataset && (
+              <button
+                type="button"
+                onClick={() => {
+                  loadInitialWoodynatExcelDataset();
+                }}
+                className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-500/30 transition-all cursor-pointer"
+                title="Immediately activate Woody-Quote with Woodynat's official commercial products & clients Excel dataset"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Load Woodynat Excel Template</span>
+              </button>
+            )}
+
             {/* Toggle to Excel if dataset loaded but currently on system */}
             {woodyQuoteSource === 'system' && woodyExcelDataset && (
               <button
@@ -1402,18 +1463,31 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
                         Auto-fill from Excel Clients ({woodyExcelDataset.clientsCatalog.length} contacts found):
                       </span>
                     </div>
-                    <select
-                      value={selectedExcelClientKey}
-                      onChange={(e) => handleSelectExcelClient(e.target.value)}
-                      className="bg-white border border-emerald-300 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full sm:w-auto"
-                    >
-                      <option value="">-- Choose Client from {woodyExcelDataset.fileName} --</option>
-                      {woodyExcelDataset.clientsCatalog.map((c, idx) => (
-                        <option key={idx} value={`${c.name}_${c.phone}`}>
-                          {c.name} {c.companyName ? `(${c.companyName})` : ''} - {c.phone}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <select
+                        value={selectedExcelClientKey}
+                        onChange={(e) => handleSelectExcelClient(e.target.value)}
+                        className="bg-white border border-emerald-300 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 flex-1 sm:w-auto"
+                      >
+                        <option value="">-- Choose Client from {woodyExcelDataset.fileName} --</option>
+                        {woodyExcelDataset.clientsCatalog.map((c, idx) => (
+                          <option key={idx} value={`${c.name}_${c.phone}`}>
+                            {c.name} {c.companyName ? `(${c.companyName})` : ''} - {c.phone}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsExcelEditorModalOpen(true);
+                          setExcelEditorTab('clients');
+                        }}
+                        className="shrink-0 text-[10px] font-bold text-emerald-800 hover:text-emerald-950 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                        title="Add or edit clients in uploaded Excel sheet"
+                      >
+                        Edit Clients
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -1584,61 +1658,98 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
                   </span>
                 </div>
 
-                {/* Quick Excel Catalog Selector if Excel dataset loaded */}
-                {woodyExcelDataset && woodyExcelDataset.itemsCatalog.length > 0 && (
-                  <div className="bg-emerald-50/80 border border-emerald-300 rounded-xl p-2.5">
-                    <label className="block text-[11px] font-bold text-emerald-950 mb-1 flex items-center gap-1.5">
-                      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Choose from Uploaded Excel Items Catalog ({woodyExcelDataset.itemsCatalog.length} items from {woodyExcelDataset.fileName}):</span>
-                    </label>
-                    <select
-                      value={selectedExcelItemId}
-                      onChange={(e) => handleSelectExcelItem(e.target.value)}
-                      className="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2 text-slate-900 font-bold focus:ring-2 focus:ring-emerald-500"
-                    >
-                      <option value="">-- Choose Item from Uploaded Excel --</option>
-                      {woodyExcelDataset.itemsCatalog.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.name} {item.unitPrice ? `(KSh ${item.unitPrice.toLocaleString()}/${item.unit || 'pcs'})` : ''} {item.category ? `[${item.category}]` : ''}
-                        </option>
-                      ))}
-                    </select>
+                {/* Restriction Mode: Excel Catalog vs System Catalog */}
+                {woodyQuoteSource === 'excel' && woodyExcelDataset ? (
+                  <div className="bg-emerald-50/90 border-2 border-emerald-400/80 rounded-2xl p-3.5 space-y-3 shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <label className="text-xs font-black text-emerald-950 flex items-center gap-1.5">
+                          <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
+                          <span>RESTRICTED TO EXCEL DATA: Choose Item from "{woodyExcelDataset.fileName}"</span>
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsExcelEditorModalOpen(true);
+                          setExcelEditorTab('catalog');
+                        }}
+                        className="text-[11px] font-bold text-emerald-800 hover:text-emerald-950 underline flex items-center gap-1 cursor-pointer bg-emerald-100/80 hover:bg-emerald-200/80 px-2 py-0.5 rounded-md transition-colors"
+                      >
+                        <Edit3 className="w-3 h-3" />
+                        <span>Manage Excel Items ({woodyExcelDataset.itemsCatalog.length})</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-emerald-950 mb-1">
+                          Select from Uploaded Excel Items Catalog:
+                        </label>
+                        <select
+                          value={selectedExcelItemId}
+                          onChange={(e) => handleSelectExcelItem(e.target.value)}
+                          className="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2 text-slate-900 font-bold focus:ring-2 focus:ring-emerald-500 text-xs shadow-2xs"
+                        >
+                          <option value="">-- Choose Item from {woodyExcelDataset.fileName} --</option>
+                          {woodyExcelDataset.itemsCatalog.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name} — KSh {item.unitPrice.toLocaleString()}/{item.unit || 'pcs'} {item.category ? `[${item.category}]` : ''}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-emerald-950 mb-1">
+                          Or Add / Type Custom Item Title:
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 500x Custom Branded Rigid Gift Boxes"
+                          value={customItemName}
+                          onChange={(e) => setCustomItemName(e.target.value)}
+                          className="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2 text-slate-900 font-bold text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* System Product Catalog Selector */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Choose from Live Product Catalog:
+                      </label>
+                      <select
+                        value={selectedProductId}
+                        onChange={(e) => handleSelectProduct(e.target.value)}
+                        className="w-full bg-white border border-blue-300 rounded-xl px-3 py-2 text-slate-900 font-bold"
+                      >
+                        <option value="">-- Choose Existing Woodynat Product --</option>
+                        {products.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} (KSh {p.price.toLocaleString()}) [{p.category}]
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Or Type Custom Item Title:
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 500x Embroidered Corporate Polo Shirts"
+                        value={customItemName}
+                        onChange={(e) => setCustomItemName(e.target.value)}
+                        className="w-full bg-white border border-blue-300 rounded-xl px-3 py-2 text-slate-900 font-bold"
+                      />
+                    </div>
                   </div>
                 )}
-
-                {/* Quick Catalog Selector */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      Choose from Live Product Catalog:
-                    </label>
-                    <select
-                      value={selectedProductId}
-                      onChange={(e) => handleSelectProduct(e.target.value)}
-                      className="w-full bg-white border border-blue-300 rounded-xl px-3 py-2 text-slate-900 font-bold"
-                    >
-                      <option value="">-- Choose Existing Woodynat Product --</option>
-                      {products.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} (KSh {p.price.toLocaleString()}) [{p.category}]
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      Or Type Custom Item Title:
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 500x Embroidered Corporate Polo Shirts"
-                      value={customItemName}
-                      onChange={(e) => setCustomItemName(e.target.value)}
-                      className="w-full bg-white border border-blue-300 rounded-xl px-3 py-2 text-slate-900 font-bold"
-                    />
-                  </div>
-                </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   <div>
@@ -3401,6 +3512,19 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* 6. IN-APP WOODY-QUOTE EXCEL DATA EDITOR MODAL */}
+      <WoodyExcelEditorModal
+        isOpen={isExcelEditorModalOpen}
+        onClose={() => setIsExcelEditorModalOpen(false)}
+        onEditQuote={(quoteId) => {
+          const q = woodyExcelDataset?.quotes.find(item => item.id === quoteId) || zohoQuotations.find(item => item.id === quoteId);
+          if (q) {
+            handleOpenEditQuote(q);
+          }
+        }}
+        defaultTab={excelEditorTab}
+      />
 
     </div>
   );

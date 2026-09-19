@@ -602,13 +602,97 @@ export const parseWoodyQuoteExcel = (
       });
     }
 
-    if (result.quotes.length === 0) {
-      result.errors.push('No valid quotation rows could be parsed from the Excel file. Please ensure column headers match the template.');
-    }
-
     const { itemsCatalog, clientsCatalog } = extractCatalogAndClientsFromQuotes(result.quotes);
     result.itemsCatalog = itemsCatalog;
     result.clientsCatalog = clientsCatalog;
+
+    // Also scan all sheets for dedicated "Catalog", "Products", "Items", "Price List", or "Clients" sheets
+    workbook.SheetNames.forEach((sheetName) => {
+      const isCatalogSheet = /item|product|catalog|pricelist|price|service|pricing/i.test(sheetName) && sheetName !== quoteSheetName;
+      const isClientSheet = /client|customer|contact|lead/i.test(sheetName) && sheetName !== quoteSheetName;
+
+      if (isCatalogSheet) {
+        const catWs = workbook.Sheets[sheetName];
+        const catRows = XLSX.utils.sheet_to_json<Record<string, any>>(catWs, { defval: '' });
+        catRows.forEach((row, idx) => {
+          const rowMap = new Map<string, any>();
+          Object.keys(row).forEach((k) => rowMap.set(cleanHeaderKey(k), row[k]));
+
+          const itemName = String(
+            rowMap.get('itemname') || rowMap.get('name') || rowMap.get('product') || rowMap.get('productname') || rowMap.get('item') || ''
+          ).trim();
+          if (!itemName) return;
+
+          const unitPrice = Math.max(0, parseFloat(rowMap.get('unitprice') || rowMap.get('price') || rowMap.get('rate') || rowMap.get('unitcost') || '0') || 0);
+          const category = String(rowMap.get('category') || rowMap.get('productcategory') || 'Branding & Commercial Printing').trim() || 'Branding & Commercial Printing';
+          const unit = String(rowMap.get('unit') || rowMap.get('uom') || 'pcs').trim() || 'pcs';
+          const description = String(rowMap.get('itemdescription') || rowMap.get('description') || rowMap.get('details') || '').trim();
+          const selectedSize = String(rowMap.get('selectedsize') || rowMap.get('size') || '').trim() || undefined;
+          const selectedFinish = String(rowMap.get('selectedfinish') || rowMap.get('finish') || '').trim() || undefined;
+
+          const exists = result.itemsCatalog.some(
+            (it) => it.name.toLowerCase() === itemName.toLowerCase()
+          );
+          if (!exists) {
+            result.itemsCatalog.push({
+              id: `excel-item-${result.itemsCatalog.length + 1}`,
+              name: itemName,
+              category,
+              description,
+              unitPrice,
+              unit,
+              selectedSize,
+              selectedFinish,
+            });
+          }
+        });
+      }
+
+      if (isClientSheet) {
+        const clientWs = workbook.Sheets[sheetName];
+        const clientRows = XLSX.utils.sheet_to_json<Record<string, any>>(clientWs, { defval: '' });
+        clientRows.forEach((row) => {
+          const rowMap = new Map<string, any>();
+          Object.keys(row).forEach((k) => rowMap.set(cleanHeaderKey(k), row[k]));
+
+          const clientName = String(
+            rowMap.get('customername') || rowMap.get('clientname') || rowMap.get('name') || rowMap.get('customer') || ''
+          ).trim();
+          if (!clientName) return;
+
+          const phone = normalizePhone(rowMap.get('customerphone') || rowMap.get('phone') || rowMap.get('tel') || rowMap.get('mobile'));
+          const email = String(rowMap.get('customeremail') || rowMap.get('email') || '').trim() || undefined;
+          const companyName = String(rowMap.get('companyname') || rowMap.get('company') || '').trim() || undefined;
+          const billingAddress = String(rowMap.get('billingaddress') || rowMap.get('address') || '').trim() || undefined;
+          const deliveryLocation = String(rowMap.get('deliverylocation') || rowMap.get('location') || '').trim() || undefined;
+
+          const exists = result.clientsCatalog.some(
+            (c) => c.name.toLowerCase() === clientName.toLowerCase() && c.phone === phone
+          );
+          if (!exists) {
+            result.clientsCatalog.push({
+              name: clientName,
+              phone,
+              email,
+              companyName,
+              billingAddress,
+              deliveryLocation,
+            });
+          }
+        });
+      }
+    });
+
+    // If no quotes were found, but items were found in catalog
+    if (result.quotes.length === 0) {
+      if (result.itemsCatalog.length > 0) {
+        result.warnings.push(`Extracted ${result.itemsCatalog.length} catalog items from spreadsheet. You can now use these items directly to make quotations.`);
+        // Remove the fatal error so the dataset can still be used to make quotations!
+        result.errors = [];
+      } else {
+        result.errors.push('No valid quotation rows or product catalog items could be parsed from the Excel file. Please ensure column headers match the template.');
+      }
+    }
 
   } catch (err: any) {
     result.errors.push(`Excel parsing failed: ${err?.message || 'Unsupported or corrupted spreadsheet file.'}`);
@@ -896,3 +980,412 @@ export const exportWoodyQuotesToExcel = (quotes: WoodyQuotation[]) => {
   const fileName = `Woody_Quotations_Database_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
   XLSX.writeFile(wb, fileName);
 };
+
+/**
+ * Generates an authentic, preloaded Woodynat Master Pricing Excel Dataset
+ * containing official Woodynat branding & print products, prices, clients, and quotations.
+ */
+export const getInitialWoodynatExcelDataset = (): WoodyExcelDataset => {
+  const nowIso = new Date().toISOString();
+  const today = nowIso.split('T')[0];
+  const expiry = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0];
+
+  const itemsCatalog: WoodyExcelCatalogItem[] = [
+    {
+      id: 'item-cat-1',
+      name: 'Reflective Safety High-Vis Vests',
+      category: 'Branding & Commercial Printing',
+      description: 'Neon green/orange high-visibility vest with double horizontal silver reflector tape & chest embroidery',
+      unitPrice: 850,
+      unit: 'pcs',
+      selectedSize: 'XL / L Mixed',
+      selectedFinish: 'Embroidered Logo'
+    },
+    {
+      id: 'item-cat-2',
+      name: 'Corporate Reflective Bomber Jackets',
+      category: 'Branding & Commercial Printing',
+      description: 'Heavyweight padded waterproof jacket with dual Scotchlite reflector stripes, storm collar & custom embroidery',
+      unitPrice: 3800,
+      unit: 'pcs',
+      selectedSize: 'Large',
+      selectedFinish: 'Double Reflector Tape + Embroidered Crest'
+    },
+    {
+      id: 'item-cat-3',
+      name: 'Retractable Luxury Pull-Up Banner (Broad Base)',
+      category: 'Branding & Commercial Printing',
+      description: 'High-resolution vibrant canvas banner with aluminium luxury broad base stand & padded carry bag',
+      unitPrice: 4500,
+      unit: 'sets',
+      selectedSize: '85cm x 200cm',
+      selectedFinish: 'Matte Anti-Glare Lamination'
+    },
+    {
+      id: 'item-cat-4',
+      name: 'Outdoor Teardrop Advertising Flag',
+      category: 'Branding & Commercial Printing',
+      description: 'Durable polyester warp-knit flag with reinforced fibreglass pole & heavy square steel base',
+      unitPrice: 6500,
+      unit: 'sets',
+      selectedSize: '3.2 Metres',
+      selectedFinish: 'Sublimation Double-Sided Print'
+    },
+    {
+      id: 'item-cat-5',
+      name: 'Custom Printed Heavyweight Hoodies 320gsm',
+      category: 'Custom Apparel',
+      description: 'Super soft fleece lined hoodie with pouch pocket and high density DTF chest & back print',
+      unitPrice: 2400,
+      unit: 'pcs',
+      selectedSize: 'Medium / Large',
+      selectedFinish: 'DTF Multi-Color Full Front + Back'
+    },
+    {
+      id: 'item-cat-6',
+      name: 'Heavy Pique Cotton Branded Polo Shirts',
+      category: 'Custom Apparel',
+      description: '220gsm 100% pique cotton polo with contrast ribbed collar and embroidered corporate logo',
+      unitPrice: 1250,
+      unit: 'pcs',
+      selectedSize: 'Mixed S / M / L / XL',
+      selectedFinish: 'Precision Chest Embroidery'
+    },
+    {
+      id: 'item-cat-7',
+      name: 'Executive Business Cards (Spot UV + Soft Touch)',
+      category: 'Branding & Commercial Printing',
+      description: '450gsm ultra heavy silk card with velvet soft-touch lamination & raised glossy Spot UV highlights',
+      unitPrice: 1500,
+      unit: 'boxes (100pcs)',
+      selectedSize: '85mm x 55mm',
+      selectedFinish: 'Velvet Soft Touch + Raised Spot UV'
+    },
+    {
+      id: 'item-cat-8',
+      name: 'SUV / 4x4 Branded Spare Wheel Cover',
+      category: 'Vehicle Branding',
+      description: 'Heavy duty weather-resistant UV marine vinyl with elasticized hem & full-color fade-resistant UV print',
+      unitPrice: 3200,
+      unit: 'pcs',
+      selectedSize: 'Standard 15"-17" Tyre',
+      selectedFinish: 'Fade-Resistant UV Print + Gloss Lamination'
+    },
+    {
+      id: 'item-cat-9',
+      name: 'Acrylic 3D LED Backlit Channel Letter Signage',
+      category: 'Signage & Displays',
+      description: 'Precision laser cut cast acrylic letters with internal high-output waterproof Samsung LEDs and power supply',
+      unitPrice: 18500,
+      unit: 'sets',
+      selectedSize: '180cm x 60cm Overall',
+      selectedFinish: 'Warm White LED Halo Glow'
+    },
+    {
+      id: 'item-cat-10',
+      name: 'NCR Carbonless Duplicate Invoice / Receipt Books',
+      category: 'Commercial Stationery',
+      description: '50 sets per book, numbered sequentially in red, perforated top copy, hard backing board with wrap-around shield',
+      unitPrice: 850,
+      unit: 'books',
+      selectedSize: 'A5 Size',
+      selectedFinish: 'Duplicated 2-Part (White/Pink)'
+    }
+  ];
+
+  const clientsCatalog: WoodyExcelClientItem[] = [
+    {
+      name: 'Sarah Mwangi',
+      phone: '0797939199',
+      email: 'sarah.mwangi@safarioutdoors.co.ke',
+      companyName: 'Safari Outdoors Kenya',
+      billingAddress: 'Upper Hill Road, Nairobi',
+      deliveryLocation: 'Safari Centre 2nd Floor, Upper Hill',
+      deliveryType: 'Express Home Delivery'
+    },
+    {
+      name: 'David Kiprono',
+      phone: '0712345678',
+      email: 'david@apexlogistics.com',
+      companyName: 'Apex Logistics Ltd',
+      billingAddress: 'Mombasa Road, Nairobi',
+      deliveryLocation: 'Temple Road Gatkim complex building fourth floor wing B Room 4B1',
+      deliveryType: 'CBD Workshop Pickup'
+    },
+    {
+      name: 'Grace Wanjiru',
+      phone: '0722998877',
+      email: 'grace@starlawkenya.com',
+      companyName: 'Star Law Advocates',
+      billingAddress: 'Kaunda Street, CBD Nairobi',
+      deliveryLocation: 'Star Plaza Suite 501, CBD Nairobi',
+      deliveryType: 'Express Home Delivery'
+    },
+    {
+      name: 'Peter Omondi',
+      phone: '0733445566',
+      email: 'peter@greenleaf.co.ke',
+      companyName: 'Green Leaf Agribusiness',
+      billingAddress: 'Commercial Street, Industrial Area',
+      deliveryLocation: 'Temple Road Gatkim complex building fourth floor wing B Room 4B1',
+      deliveryType: 'CBD Workshop Pickup'
+    }
+  ];
+
+  const quotes: WoodyQuotation[] = [
+    {
+      id: 'woody-excel-init-001',
+      quoteNumber: 'WNAT-2026-0001',
+      customerName: 'Sarah Mwangi',
+      customerPhone: '0797939199',
+      customerEmail: 'sarah.mwangi@safarioutdoors.co.ke',
+      companyName: 'Safari Outdoors Kenya',
+      billingAddress: 'Upper Hill Road, Nairobi',
+      deliveryLocation: 'Safari Centre 2nd Floor, Upper Hill',
+      deliveryType: 'Express Home Delivery',
+      quoteDate: today,
+      expiryDate: expiry,
+      validityDays: 14,
+      paymentTerms: '50% Deposit, 50% on Delivery',
+      deliveryTimeline: '24-48 Hours Express Delivery',
+      currency: 'KSh',
+      items: [
+        {
+          id: 'item-init-1',
+          name: 'Reflective Safety High-Vis Vests',
+          category: 'Branding & Commercial Printing',
+          description: 'Neon green with double horizontal silver reflector tape & chest embroidery',
+          quantity: 50,
+          unit: 'pcs',
+          unitPrice: 850,
+          discountPercent: 5,
+          total: 40375,
+          selectedSize: 'XL / L Mixed',
+          selectedFinish: 'Embroidered Logo'
+        },
+        {
+          id: 'item-init-2',
+          name: 'Heavy Pique Cotton Branded Polo Shirts',
+          category: 'Custom Apparel',
+          description: '220gsm 100% pique cotton polo with contrast ribbed collar and embroidered corporate logo',
+          quantity: 30,
+          unit: 'pcs',
+          unitPrice: 1250,
+          discountPercent: 0,
+          total: 37500,
+          selectedSize: 'Mixed S / M / L / XL',
+          selectedFinish: 'Precision Chest Embroidery'
+        }
+      ],
+      subtotal: 80000,
+      discountTotal: 2125,
+      taxRate: 0,
+      taxTotal: 0,
+      shippingCost: 350,
+      grandTotal: 78225,
+      isTaxInclusive: false,
+      notes: 'Vector artwork proof confirmed via WhatsApp. Production commences immediately upon deposit verification.',
+      termsAndConditions: '1. Validity: 14 days from quote date.\n2. Payment: 50% deposit before production, 50% upon delivery sign-off.\n3. Goods remain property of Woodynat Designers Limited until paid in full.',
+      paybillNumber: '247247',
+      paybillAccount: '0797939199',
+      status: 'Approved',
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      preparedBy: 'Woodynat Commercial Desk'
+    },
+    {
+      id: 'woody-excel-init-002',
+      quoteNumber: 'WNAT-2026-0002',
+      customerName: 'David Kiprono',
+      customerPhone: '0712345678',
+      customerEmail: 'david@apexlogistics.com',
+      companyName: 'Apex Logistics Ltd',
+      billingAddress: 'Mombasa Road, Nairobi',
+      deliveryLocation: 'Temple Road Gatkim complex building fourth floor wing B Room 4B1',
+      deliveryType: 'CBD Workshop Pickup',
+      quoteDate: today,
+      expiryDate: expiry,
+      validityDays: 14,
+      paymentTerms: '50% Deposit, 50% on Delivery',
+      deliveryTimeline: 'Same Day Express (4-6 Hours)',
+      currency: 'KSh',
+      items: [
+        {
+          id: 'item-init-3',
+          name: 'Retractable Luxury Pull-Up Banner (Broad Base)',
+          category: 'Branding & Commercial Printing',
+          description: 'High-resolution vibrant canvas banner with aluminium luxury broad base stand & padded carry bag',
+          quantity: 2,
+          unit: 'sets',
+          unitPrice: 4500,
+          discountPercent: 10,
+          total: 8100,
+          selectedSize: '85cm x 200cm',
+          selectedFinish: 'Matte Anti-Glare Lamination'
+        },
+        {
+          id: 'item-init-4',
+          name: 'SUV / 4x4 Branded Spare Wheel Cover',
+          category: 'Vehicle Branding',
+          description: 'Heavy duty weather-resistant UV marine vinyl with elasticized hem & full-color fade-resistant UV print',
+          quantity: 1,
+          unit: 'pcs',
+          unitPrice: 3200,
+          discountPercent: 0,
+          total: 3200,
+          selectedSize: 'Standard 15"-17" Tyre',
+          selectedFinish: 'Fade-Resistant UV Print + Gloss Lamination'
+        }
+      ],
+      subtotal: 12200,
+      discountTotal: 900,
+      taxRate: 0,
+      taxTotal: 0,
+      shippingCost: 0,
+      grandTotal: 11300,
+      isTaxInclusive: false,
+      notes: 'Express turnaround for trade expo display. Workshop collection scheduled for 3:30 PM.',
+      termsAndConditions: '1. Validity: 14 days from quote date.\n2. Payment: 50% deposit before production, 50% upon delivery sign-off.',
+      paybillNumber: '247247',
+      paybillAccount: '0797939199',
+      status: 'Sent',
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      preparedBy: 'Woodynat Commercial Desk'
+    }
+  ];
+
+  return {
+    fileName: 'Woodynat_Official_Commercial_Master.xlsx',
+    uploadedAt: nowIso,
+    quotes,
+    itemsCatalog,
+    clientsCatalog,
+    totalRows: 16,
+    detectedSheets: ['Quotations Master', 'Items Catalog & Pricing', 'Clients Directory', 'Line Items Breakdown']
+  };
+};
+
+/**
+ * Exports the entire live Woody-Quote Excel dataset (Quotes, Catalog Items, Clients)
+ * into a complete multi-sheet Excel file (.xlsx) so the admin can backup or share anytime.
+ */
+export const exportWoodyDatasetToExcel = (dataset: WoodyExcelDataset) => {
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Quotations Master
+  const quoteRows = dataset.quotes.map((q) => ({
+    'Quote Number': q.quoteNumber,
+    'Status': q.status,
+    'Quote Date': q.quoteDate,
+    'Expiry Date': q.expiryDate,
+    'Customer Name': q.customerName,
+    'Customer Phone': q.customerPhone,
+    'Customer Email': q.customerEmail,
+    'Company Name': q.companyName || '',
+    'Delivery Location': q.deliveryLocation,
+    'Delivery Type': q.deliveryType,
+    'Delivery Timeline': q.deliveryTimeline,
+    'Payment Terms': q.paymentTerms,
+    'Currency': q.currency,
+    'Items Count': q.items.length,
+    'Subtotal (KSh)': q.subtotal,
+    'Discount Total (KSh)': q.discountTotal,
+    'Shipping Cost (KSh)': q.shippingCost,
+    'Grand Total (KSh)': q.grandTotal,
+    'Prepared By': q.preparedBy,
+    'Notes': q.notes,
+    'Terms': q.termsAndConditions,
+  }));
+
+  const quoteWs = XLSX.utils.json_to_sheet(quoteRows.length > 0 ? quoteRows : [{
+    'Quote Number': 'WNAT-2026-0001',
+    'Customer Name': 'Sample Customer',
+    'Subtotal (KSh)': 0,
+    'Grand Total (KSh)': 0
+  }]);
+  quoteWs['!cols'] = [
+    { wch: 18 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
+    { wch: 22 }, { wch: 15 }, { wch: 26 }, { wch: 22 },
+    { wch: 35 }, { wch: 22 }, { wch: 26 }, { wch: 26 },
+    { wch: 10 }, { wch: 12 }, { wch: 15 }, { wch: 18 },
+    { wch: 16 }, { wch: 16 }, { wch: 22 }, { wch: 35 }, { wch: 35 }
+  ];
+  XLSX.utils.book_append_sheet(wb, quoteWs, 'Quotations Master');
+
+  // Sheet 2: Items Catalog & Pricing
+  const catalogRows = dataset.itemsCatalog.map((item, idx) => ({
+    'Item ID': item.id || `ITEM-${idx + 1}`,
+    'Item Name': item.name,
+    'Category': item.category,
+    'Unit Price (KSh)': item.unitPrice,
+    'Unit': item.unit,
+    'Selected Size': item.selectedSize || '',
+    'Selected Finish': item.selectedFinish || '',
+    'Description': item.description || '',
+    'Artwork Notes': item.artworkNotes || ''
+  }));
+
+  const catalogWs = XLSX.utils.json_to_sheet(catalogRows);
+  catalogWs['!cols'] = [
+    { wch: 16 }, { wch: 35 }, { wch: 28 }, { wch: 16 },
+    { wch: 12 }, { wch: 20 }, { wch: 28 }, { wch: 45 }, { wch: 25 }
+  ];
+  XLSX.utils.book_append_sheet(wb, catalogWs, 'Items Catalog & Pricing');
+
+  // Sheet 3: Clients Directory
+  const clientRows = dataset.clientsCatalog.map((c) => ({
+    'Client Name': c.name,
+    'Phone / WhatsApp': c.phone,
+    'Email Address': c.email || '',
+    'Company Name': c.companyName || '',
+    'Billing Address': c.billingAddress || '',
+    'Delivery Location': c.deliveryLocation || '',
+    'Delivery Type': c.deliveryType || 'CBD Workshop Pickup'
+  }));
+
+  const clientWs = XLSX.utils.json_to_sheet(clientRows);
+  clientWs['!cols'] = [
+    { wch: 24 }, { wch: 18 }, { wch: 28 }, { wch: 26 },
+    { wch: 30 }, { wch: 35 }, { wch: 24 }
+  ];
+  XLSX.utils.book_append_sheet(wb, clientWs, 'Clients Directory');
+
+  // Sheet 4: All Quote Line Items Breakdown
+  const lineItemRows: any[] = [];
+  dataset.quotes.forEach((q) => {
+    q.items.forEach((it, idx) => {
+      lineItemRows.push({
+        'Quote Number': q.quoteNumber,
+        'Customer Name': q.customerName,
+        'Item #': idx + 1,
+        'Item Name': it.name,
+        'Description': it.description,
+        'Quantity': it.quantity,
+        'Unit': it.unit,
+        'Unit Price (KSh)': it.unitPrice,
+        'Discount %': it.discountPercent,
+        'Total (KSh)': it.total,
+        'Selected Size': it.selectedSize || '',
+        'Selected Finish': it.selectedFinish || '',
+        'Artwork Notes': it.artworkNotes || '',
+        'Status': q.status
+      });
+    });
+  });
+
+  if (lineItemRows.length > 0) {
+    const lineItemWs = XLSX.utils.json_to_sheet(lineItemRows);
+    lineItemWs['!cols'] = [
+      { wch: 18 }, { wch: 20 }, { wch: 8 }, { wch: 30 },
+      { wch: 45 }, { wch: 10 }, { wch: 12 }, { wch: 15 },
+      { wch: 12 }, { wch: 15 }, { wch: 18 }, { wch: 22 },
+      { wch: 25 }, { wch: 14 }
+    ];
+    XLSX.utils.book_append_sheet(wb, lineItemWs, 'Line Items Breakdown');
+  }
+
+  const exportName = dataset.fileName ? dataset.fileName.replace(/\.[^/.]+$/, "") + `_Updated_${new Date().toISOString().split('T')[0]}.xlsx` : `Woody_Quote_Excel_Master_${new Date().toISOString().split('T')[0]}.xlsx`;
+  XLSX.writeFile(wb, exportName);
+};
+

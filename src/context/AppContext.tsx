@@ -24,9 +24,11 @@ import {
   ZohoQuoteStatus,
   RegisteredMember,
   WoodyQuoteDataSource,
-  WoodyExcelDataset
+  WoodyExcelDataset,
+  WoodyExcelCatalogItem,
+  WoodyExcelClientItem
 } from '../types';
-import { extractCatalogAndClientsFromQuotes } from '../utils/woodyQuoteExcelHandler';
+import { extractCatalogAndClientsFromQuotes, getInitialWoodynatExcelDataset } from '../utils/woodyQuoteExcelHandler';
 import { 
   INITIAL_PRODUCTS, 
   INITIAL_REVIEWS, 
@@ -68,6 +70,8 @@ import {
   saveWpSettingsToFirestore,
   subscribeCategories,
   saveCategoriesToFirestore,
+  subscribeWoodyExcelDataset,
+  saveWoodyExcelDatasetToFirestore,
   setAdminCustomProductImage,
   getAdminCustomProductImages,
 } from '../services/firestoreService';
@@ -244,6 +248,14 @@ interface AppContextType {
   loadWoodyQuoteExcelDataset: (dataset: WoodyExcelDataset, setActive?: boolean) => void;
   clearWoodyQuoteExcelDataset: () => void;
   syncExcelQuotesToSystem: () => void;
+  updateWoodyExcelCatalogItem: (item: WoodyExcelCatalogItem) => void;
+  addWoodyExcelCatalogItem: (item: Omit<WoodyExcelCatalogItem, 'id'>) => WoodyExcelCatalogItem;
+  deleteWoodyExcelCatalogItem: (itemId: string) => void;
+  updateWoodyExcelClient: (oldClientKey: string, client: WoodyExcelClientItem) => void;
+  addWoodyExcelClient: (client: WoodyExcelClientItem) => void;
+  deleteWoodyExcelClient: (clientKey: string) => void;
+  updateWoodyExcelDatasetMeta: (updates: Partial<WoodyExcelDataset>) => void;
+  loadInitialWoodynatExcelDataset: () => void;
 
   // Registered Members Database & Management
   registeredMembers: RegisteredMember[];
@@ -534,6 +546,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     return () => {
       unsubCategories();
+    };
+  }, []);
+
+  // Woody-Quote Excel Dataset subscription from Firestore for permanent cross-session storage
+  useEffect(() => {
+    const unsubExcel = subscribeWoodyExcelDataset((fetchedDataset) => {
+      if (fetchedDataset) {
+        setWoodyExcelDataset(fetchedDataset);
+        setWoodyQuoteSourceState('excel');
+        safeSetLocalStorage('pixelprint_woody_data_source', 'excel');
+      }
+    });
+
+    return () => {
+      unsubExcel();
     };
   }, []);
 
@@ -2037,14 +2064,35 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setWoodyExcelDataset((prev) => {
         if (!prev) return null;
         const newQuotes = [newQuote, ...prev.quotes];
-        const { itemsCatalog, clientsCatalog } = extractCatalogAndClientsFromQuotes(newQuotes);
+        const { itemsCatalog: extractedItems, clientsCatalog: extractedClients } = extractCatalogAndClientsFromQuotes(newQuotes);
+        
+        // Preserve all existing catalog items that the admin may have added or edited
+        const itemMap = new Map<string, WoodyExcelCatalogItem>();
+        (prev.itemsCatalog || []).forEach((it) => itemMap.set(it.name.toLowerCase().trim(), it));
+        extractedItems.forEach((it) => {
+          const key = it.name.toLowerCase().trim();
+          if (!itemMap.has(key)) {
+            itemMap.set(key, it);
+          }
+        });
+
+        const clientMap = new Map<string, WoodyExcelClientItem>();
+        (prev.clientsCatalog || []).forEach((c) => clientMap.set(c.name.toLowerCase().trim(), c));
+        extractedClients.forEach((c) => {
+          const key = c.name.toLowerCase().trim();
+          if (!clientMap.has(key)) {
+            clientMap.set(key, c);
+          }
+        });
+
         const updated: WoodyExcelDataset = {
           ...prev,
           quotes: newQuotes,
-          itemsCatalog,
-          clientsCatalog
+          itemsCatalog: Array.from(itemMap.values()),
+          clientsCatalog: Array.from(clientMap.values())
         };
         safeSetLocalStorage('pixelprint_woody_excel_dataset', updated);
+        saveWoodyExcelDatasetToFirestore(updated);
         return updated;
       });
     }
@@ -2096,14 +2144,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           }
           return updated;
         });
-        const { itemsCatalog, clientsCatalog } = extractCatalogAndClientsFromQuotes(newQuotes);
+
+        const { itemsCatalog: extractedItems, clientsCatalog: extractedClients } = extractCatalogAndClientsFromQuotes(newQuotes);
+        const itemMap = new Map<string, WoodyExcelCatalogItem>();
+        (prev.itemsCatalog || []).forEach((it) => itemMap.set(it.name.toLowerCase().trim(), it));
+        extractedItems.forEach((it) => {
+          const key = it.name.toLowerCase().trim();
+          if (!itemMap.has(key)) {
+            itemMap.set(key, it);
+          }
+        });
+
+        const clientMap = new Map<string, WoodyExcelClientItem>();
+        (prev.clientsCatalog || []).forEach((c) => clientMap.set(c.name.toLowerCase().trim(), c));
+        extractedClients.forEach((c) => {
+          const key = c.name.toLowerCase().trim();
+          if (!clientMap.has(key)) {
+            clientMap.set(key, c);
+          }
+        });
+
         const updated: WoodyExcelDataset = {
           ...prev,
           quotes: newQuotes,
-          itemsCatalog,
-          clientsCatalog
+          itemsCatalog: Array.from(itemMap.values()),
+          clientsCatalog: Array.from(clientMap.values())
         };
         safeSetLocalStorage('pixelprint_woody_excel_dataset', updated);
+        saveWoodyExcelDatasetToFirestore(updated);
         return updated;
       });
     }
@@ -2118,14 +2186,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setWoodyExcelDataset((prev) => {
         if (!prev) return null;
         const newQuotes = prev.quotes.filter((q) => q.id !== id);
-        const { itemsCatalog, clientsCatalog } = extractCatalogAndClientsFromQuotes(newQuotes);
+        const { itemsCatalog: extractedItems, clientsCatalog: extractedClients } = extractCatalogAndClientsFromQuotes(newQuotes);
+        
+        const itemMap = new Map<string, WoodyExcelCatalogItem>();
+        (prev.itemsCatalog || []).forEach((it) => itemMap.set(it.name.toLowerCase().trim(), it));
+        extractedItems.forEach((it) => {
+          const key = it.name.toLowerCase().trim();
+          if (!itemMap.has(key)) {
+            itemMap.set(key, it);
+          }
+        });
+
+        const clientMap = new Map<string, WoodyExcelClientItem>();
+        (prev.clientsCatalog || []).forEach((c) => clientMap.set(c.name.toLowerCase().trim(), c));
+        extractedClients.forEach((c) => {
+          const key = c.name.toLowerCase().trim();
+          if (!clientMap.has(key)) {
+            clientMap.set(key, c);
+          }
+        });
+
         const updated: WoodyExcelDataset = {
           ...prev,
           quotes: newQuotes,
-          itemsCatalog,
-          clientsCatalog
+          itemsCatalog: Array.from(itemMap.values()),
+          clientsCatalog: Array.from(clientMap.values())
         };
         safeSetLocalStorage('pixelprint_woody_excel_dataset', updated);
+        saveWoodyExcelDatasetToFirestore(updated);
         return updated;
       });
     }
@@ -2148,16 +2236,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const loadWoodyQuoteExcelDataset = (dataset: WoodyExcelDataset, setActive: boolean = true) => {
     setWoodyExcelDataset(dataset);
     safeSetLocalStorage('pixelprint_woody_excel_dataset', dataset);
+    saveWoodyExcelDatasetToFirestore(dataset);
     if (setActive) {
       setWoodyQuoteSourceState('excel');
       safeSetLocalStorage('pixelprint_woody_data_source', 'excel');
     }
-    showToast('Excel Dataset Loaded', `Woody-Quote is now using ${dataset.quotes.length} quotes from ${dataset.fileName}.`);
+    showToast('Excel Dataset Loaded', `Woody-Quote is now using ${dataset.quotes.length} quotes & ${dataset.itemsCatalog.length} catalog items from ${dataset.fileName}.`);
   };
 
   const clearWoodyQuoteExcelDataset = () => {
     setWoodyExcelDataset(null);
     safeSetLocalStorage('pixelprint_woody_excel_dataset', null);
+    saveWoodyExcelDatasetToFirestore(null);
     setWoodyQuoteSourceState('system');
     safeSetLocalStorage('pixelprint_woody_data_source', 'system');
     showToast('Excel Data Disconnected', 'Switched Woody-Quote back to system database.', 'info');
@@ -2170,6 +2260,120 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
     importZohoQuotations(woodyExcelDataset.quotes, 'append');
     showToast('Synced to System', `Copied ${woodyExcelDataset.quotes.length} quotes from Excel into system database.`);
+  };
+
+  // In-App Excel Dataset Item & Client Editing Methods
+  const updateWoodyExcelCatalogItem = (item: WoodyExcelCatalogItem) => {
+    if (!woodyExcelDataset) return;
+    const updatedCatalog = woodyExcelDataset.itemsCatalog.map((it) => it.id === item.id ? item : it);
+    const updatedDataset: WoodyExcelDataset = {
+      ...woodyExcelDataset,
+      itemsCatalog: updatedCatalog
+    };
+    setWoodyExcelDataset(updatedDataset);
+    safeSetLocalStorage('pixelprint_woody_excel_dataset', updatedDataset);
+    saveWoodyExcelDatasetToFirestore(updatedDataset);
+    showToast('Catalog Item Updated', `Updated "${item.name}" (KSh ${item.unitPrice.toLocaleString()}) in Excel dataset.`);
+  };
+
+  const addWoodyExcelCatalogItem = (item: Omit<WoodyExcelCatalogItem, 'id'>): WoodyExcelCatalogItem => {
+    const newItem: WoodyExcelCatalogItem = {
+      ...item,
+      id: `item-cat-${Date.now()}`
+    };
+    const prevCatalog = woodyExcelDataset?.itemsCatalog || [];
+    const updatedDataset: WoodyExcelDataset = {
+      fileName: woodyExcelDataset?.fileName || 'Woodynat_Quotations_Master.xlsx',
+      uploadedAt: woodyExcelDataset?.uploadedAt || new Date().toISOString(),
+      quotes: woodyExcelDataset?.quotes || [],
+      itemsCatalog: [newItem, ...prevCatalog.filter(it => it.name.toLowerCase() !== newItem.name.toLowerCase())],
+      clientsCatalog: woodyExcelDataset?.clientsCatalog || [],
+      totalRows: (woodyExcelDataset?.totalRows || 0) + 1,
+      detectedSheets: woodyExcelDataset?.detectedSheets || ['Items Catalog & Pricing']
+    };
+    setWoodyExcelDataset(updatedDataset);
+    safeSetLocalStorage('pixelprint_woody_excel_dataset', updatedDataset);
+    saveWoodyExcelDatasetToFirestore(updatedDataset);
+    showToast('Item Added to Excel Catalog', `"${newItem.name}" added to Excel pricing catalog.`);
+    return newItem;
+  };
+
+  const deleteWoodyExcelCatalogItem = (itemId: string) => {
+    if (!woodyExcelDataset) return;
+    const updatedCatalog = woodyExcelDataset.itemsCatalog.filter((it) => it.id !== itemId);
+    const updatedDataset: WoodyExcelDataset = {
+      ...woodyExcelDataset,
+      itemsCatalog: updatedCatalog
+    };
+    setWoodyExcelDataset(updatedDataset);
+    safeSetLocalStorage('pixelprint_woody_excel_dataset', updatedDataset);
+    saveWoodyExcelDatasetToFirestore(updatedDataset);
+    showToast('Item Removed', 'Catalog item removed from Excel dataset.', 'info');
+  };
+
+  const updateWoodyExcelClient = (oldClientKey: string, client: WoodyExcelClientItem) => {
+    if (!woodyExcelDataset) return;
+    const updatedClients = woodyExcelDataset.clientsCatalog.map((c) => 
+      (`${c.name}_${c.phone}` === oldClientKey || c.name === oldClientKey) ? client : c
+    );
+    const updatedDataset: WoodyExcelDataset = {
+      ...woodyExcelDataset,
+      clientsCatalog: updatedClients
+    };
+    setWoodyExcelDataset(updatedDataset);
+    safeSetLocalStorage('pixelprint_woody_excel_dataset', updatedDataset);
+    saveWoodyExcelDatasetToFirestore(updatedDataset);
+    showToast('Client Updated', `Updated "${client.name}" in Excel directory.`);
+  };
+
+  const addWoodyExcelClient = (client: WoodyExcelClientItem) => {
+    const prevClients = woodyExcelDataset?.clientsCatalog || [];
+    const updatedDataset: WoodyExcelDataset = {
+      fileName: woodyExcelDataset?.fileName || 'Woodynat_Quotations_Master.xlsx',
+      uploadedAt: woodyExcelDataset?.uploadedAt || new Date().toISOString(),
+      quotes: woodyExcelDataset?.quotes || [],
+      itemsCatalog: woodyExcelDataset?.itemsCatalog || [],
+      clientsCatalog: [client, ...prevClients.filter(c => c.name.toLowerCase() !== client.name.toLowerCase())],
+      totalRows: (woodyExcelDataset?.totalRows || 0) + 1,
+      detectedSheets: woodyExcelDataset?.detectedSheets || ['Clients Directory']
+    };
+    setWoodyExcelDataset(updatedDataset);
+    safeSetLocalStorage('pixelprint_woody_excel_dataset', updatedDataset);
+    saveWoodyExcelDatasetToFirestore(updatedDataset);
+    showToast('Client Added', `"${client.name}" added to Excel clients directory.`);
+  };
+
+  const deleteWoodyExcelClient = (clientKey: string) => {
+    if (!woodyExcelDataset) return;
+    const updatedClients = woodyExcelDataset.clientsCatalog.filter((c) => 
+      `${c.name}_${c.phone}` !== clientKey && c.name !== clientKey
+    );
+    const updatedDataset: WoodyExcelDataset = {
+      ...woodyExcelDataset,
+      clientsCatalog: updatedClients
+    };
+    setWoodyExcelDataset(updatedDataset);
+    safeSetLocalStorage('pixelprint_woody_excel_dataset', updatedDataset);
+    saveWoodyExcelDatasetToFirestore(updatedDataset);
+    showToast('Client Removed', 'Client removed from Excel directory.', 'info');
+  };
+
+  const updateWoodyExcelDatasetMeta = (updates: Partial<WoodyExcelDataset>) => {
+    if (!woodyExcelDataset) return;
+    const updatedDataset: WoodyExcelDataset = {
+      ...woodyExcelDataset,
+      ...updates
+    };
+    setWoodyExcelDataset(updatedDataset);
+    safeSetLocalStorage('pixelprint_woody_excel_dataset', updatedDataset);
+    saveWoodyExcelDatasetToFirestore(updatedDataset);
+    showToast('Excel Details Updated', 'Dataset metadata saved.');
+  };
+
+  const loadInitialWoodynatExcelDataset = () => {
+    const masterDataset = getInitialWoodynatExcelDataset();
+    loadWoodyQuoteExcelDataset(masterDataset, true);
+    showToast('Woodynat Master Template Loaded', 'Activated Woodynat official pricing & quotations Excel dataset.');
   };
 
   const clearAllQuotations = () => {
@@ -2579,6 +2783,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         loadWoodyQuoteExcelDataset,
         clearWoodyQuoteExcelDataset,
         syncExcelQuotesToSystem,
+        updateWoodyExcelCatalogItem,
+        addWoodyExcelCatalogItem,
+        deleteWoodyExcelCatalogItem,
+        updateWoodyExcelClient,
+        addWoodyExcelClient,
+        deleteWoodyExcelClient,
+        updateWoodyExcelDatasetMeta,
+        loadInitialWoodynatExcelDataset,
         sendOrderConfirmationEmail,
         sendOrderStatusUpdateEmail,
         theme,

@@ -7,7 +7,7 @@ import {
   Unsubscribe 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Product, Order, CustomerReview, WordPressSettings, ProductCategory, RegisteredMember } from '../types';
+import { Product, Order, CustomerReview, WordPressSettings, ProductCategory, RegisteredMember, WoodyExcelDataset } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_REVIEWS, MOCK_ORDERS, DEFAULT_WORDPRESS_SETTINGS, INITIAL_REGISTERED_MEMBERS, getProductFallbackImage } from '../data/initialData';
 
 const PRODUCTS_COL = 'products';
@@ -482,4 +482,66 @@ export const saveCategoriesToFirestore = async (categories: ProductCategory[]): 
     console.debug('Failed to save categories to Firestore (cached locally):', err);
   }
 };
+
+// Subscribe to permanent Woody-Quote Excel dataset
+export const subscribeWoodyExcelDataset = (onUpdate: (dataset: WoodyExcelDataset | null) => void): Unsubscribe => {
+  try {
+    const docRef = doc(db, SETTINGS_COL, 'woodyExcelDataset');
+    return onSnapshot(
+      docRef,
+      (docSnap) => {
+        try {
+          if (!docSnap.exists()) {
+            const cached = safeGetLocalStorage<WoodyExcelDataset | null>('pixelprint_woody_excel_dataset', null);
+            onUpdate(cached);
+          } else {
+            const data = docSnap.data();
+            if (data && data.dataset) {
+              safeSetLocalStorage('pixelprint_woody_excel_dataset', data.dataset);
+              onUpdate(data.dataset as WoodyExcelDataset);
+            } else if (data && data.fileName && Array.isArray(data.quotes)) {
+              safeSetLocalStorage('pixelprint_woody_excel_dataset', data as WoodyExcelDataset);
+              onUpdate(data as WoodyExcelDataset);
+            } else {
+              const cached = safeGetLocalStorage<WoodyExcelDataset | null>('pixelprint_woody_excel_dataset', null);
+              onUpdate(cached);
+            }
+          }
+        } catch (err) {
+          console.debug('Firestore woodyExcelDataset snapshot processing caught:', err);
+          const cached = safeGetLocalStorage<WoodyExcelDataset | null>('pixelprint_woody_excel_dataset', null);
+          onUpdate(cached);
+        }
+      },
+      (error) => {
+        console.debug('Firestore woodyExcelDataset snapshot notice:', error);
+        const cached = safeGetLocalStorage<WoodyExcelDataset | null>('pixelprint_woody_excel_dataset', null);
+        onUpdate(cached);
+      }
+    );
+  } catch (err) {
+    console.debug('Firestore subscribeWoodyExcelDataset initialization error:', err);
+    const cached = safeGetLocalStorage<WoodyExcelDataset | null>('pixelprint_woody_excel_dataset', null);
+    onUpdate(cached);
+    return () => {};
+  }
+};
+
+export const saveWoodyExcelDatasetToFirestore = async (dataset: WoodyExcelDataset | null): Promise<void> => {
+  try {
+    safeSetLocalStorage('pixelprint_woody_excel_dataset', dataset);
+    const docRef = doc(db, SETTINGS_COL, 'woodyExcelDataset');
+    if (!dataset) {
+      await deleteDoc(docRef);
+    } else {
+      await setDoc(docRef, {
+        dataset,
+        updatedAt: new Date().toISOString()
+      });
+    }
+  } catch (err) {
+    console.debug('Failed to save woodyExcelDataset to Firestore (persisted locally):', err);
+  }
+};
+
 
