@@ -9,10 +9,14 @@ import {
   WoodyQuoteDataSource,
   WoodyExcelDataset,
   WoodyExcelCatalogItem,
-  WoodyExcelClientItem
+  WoodyExcelClientItem,
+  WoodyItemPriceTier,
+  WoodyUploadedSourceFile
 } from '../types';
 import { safeCopyToClipboard } from '../utils/clipboard';
 import { downloadWoodyQuotePdf, formatKenyanShillingsToWords } from '../utils/woodyQuotePdfGenerator';
+import { saveWoodyUploadedFilesToFirestore } from '../services/firestoreService';
+import { safeSetLocalStorage } from '../utils/storage';
 import { 
   FileText, 
   Plus, 
@@ -62,6 +66,7 @@ import {
 } from 'lucide-react';
 import { 
   parseWoodyQuoteExcel, 
+  parseWoodyQuoteFile,
   downloadWoodyQuoteExcelTemplate, 
   exportWoodyQuotesToExcel,
   exportWoodyDatasetToExcel,
@@ -89,6 +94,11 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
     importZohoQuotations,
     woodyQuoteSource,
     woodyExcelDataset,
+    woodyUploadedFiles,
+    activeWoodyFileId,
+    uploadWoodySourceFiles,
+    deleteWoodyUploadedFile,
+    setActiveWoodyFile,
     setWoodyQuoteSource,
     loadWoodyQuoteExcelDataset,
     clearWoodyQuoteExcelDataset,
@@ -155,9 +165,24 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
   const excelFileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const handleExcelFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    await processExcelFile(file);
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
+
+    if (files.length === 1) {
+      await processExcelFile(files[0]);
+    } else {
+      setIsParsingExcel(true);
+      try {
+        const res = await uploadWoodySourceFiles(files);
+        if (res.errors.length > 0) {
+          showToast('Upload Notices', res.errors.join('; '), 'error');
+        }
+      } catch (err: any) {
+        showToast('Upload Error', err?.message || 'Failed to process files', 'error');
+      } finally {
+        setIsParsingExcel(false);
+      }
+    }
     e.target.value = '';
   };
 
@@ -165,40 +190,88 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
     setIsParsingExcel(true);
     setExcelFileName(file.name);
     try {
-      const buffer = await file.arrayBuffer();
-      const parsed = parseWoodyQuoteExcel(buffer, zohoSettings);
+      const parsed = await parseWoodyQuoteFile(file, zohoSettings, zohoSettings.defaultQuotePrefix);
       setParsedExcelResult(parsed);
       setIsExcelModalOpen(true);
-      if (parsed.errors.length > 0) {
-        showToast('Spreadsheet Warning', `${parsed.errors.length} issue(s) detected. Please check preview below.`, 'error');
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      const typeLabel = ext === 'pdf' ? 'PDF' : 'Excel';
+      if (parsed.errors.length > 0 && parsed.quotes.length === 0 && parsed.itemsCatalog.length === 0) {
+        showToast('File Notice', parsed.errors.join('; '), 'error');
+      } else if (parsed.warnings.length > 0) {
+        showToast(`${typeLabel} Warning`, `${parsed.warnings.length} notice(s) detected. Please check preview below.`, 'error');
       } else {
-        showToast('Excel Processed', `Loaded ${parsed.quotes.length} quotations with ${parsed.totalItems} line items.`);
+        showToast(
+          `${typeLabel} Processed`,
+          `Loaded ${parsed.quotes.length} quotations with ${parsed.totalItems} line items & ${parsed.itemsCatalog.length} catalog items.`
+        );
       }
     } catch (err: any) {
-      showToast('Upload Error', err?.message || 'Failed to parse Excel file', 'error');
+      showToast('Upload Error', err?.message || 'Failed to parse file', 'error');
     } finally {
       setIsParsingExcel(false);
     }
   };
 
-  const handleConfirmExcelImport = () => {
-    if (!parsedExcelResult || parsedExcelResult.quotes.length === 0) {
-      showToast('No Quotes', 'There are no quotations to import.', 'error');
+  const handleConfirmExcelImport = async () => {
+    if (!parsedExcelResult || (parsedExcelResult.quotes.length === 0 && parsedExcelResult.itemsCatalog.length === 0)) {
+      showToast('No Data', 'There are no quotations or catalog items to import.', 'error');
       return;
     }
 
+    const ext = excelFileName.split('.').pop()?.toLowerCase();
+    const fileType: 'excel' | 'pdf' = ext === 'pdf' ? 'pdf' : 'excel';
+
     const newDataset: WoodyExcelDataset = {
-      fileName: excelFileName || 'woody_quotations.xlsx',
+      fileName: excelFileName || (fileType === 'pdf' ? 'woody_document.pdf' : 'woody_quotations.xlsx'),
+      fileType,
       uploadedAt: new Date().toISOString(),
       quotes: parsedExcelResult.quotes,
       itemsCatalog: parsedExcelResult.itemsCatalog || [],
       clientsCatalog: parsedExcelResult.clientsCatalog || [],
       totalRows: parsedExcelResult.totalRows,
       detectedSheets: parsedExcelResult.detectedSheets || [],
+      detectedPriceNames: parsedExcelResult.detectedPriceNames || [],
     };
 
-    // Load dataset and switch WoodyQuote to use this Excel file's data
-    loadWoodyQuoteExcelDataset(newDataset, setActiveDataSourceOnImport);
+    // Add to woodyUploadedFiles (maximum 5 files)
+    const currentFiles = [...(woodyUploadedFiles || [])];
+    const existingIndex = currentFiles.findIndex((f) => f.fileName === newDataset.fileName);
+    const newSourceFile: WoodyUploadedSourceFile = {
+      id: existingIndex >= 0 ? currentFiles[existingIndex].id : `woody-file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      fileName: newDataset.fileName,
+      fileType,
+      fileSize: 0,
+      uploadedAt: new Date().toISOString(),
+      uploadedBy: 'Admin',
+      totalItems: newDataset.itemsCatalog.length,
+      totalQuotes: newDataset.quotes.length,
+      detectedPriceNames: newDataset.detectedPriceNames,
+      dataset: newDataset,
+    };
+
+    let updatedList: WoodyUploadedSourceFile[];
+    if (existingIndex >= 0) {
+      updatedList = [...currentFiles];
+      updatedList[existingIndex] = newSourceFile;
+    } else {
+      if (currentFiles.length >= 5) {
+        showToast('Limit Reached', 'Maximum 5 files stored. Replacing oldest file with the new upload.', 'warning');
+        updatedList = [...currentFiles.slice(1), newSourceFile];
+      } else {
+        updatedList = [...currentFiles, newSourceFile];
+      }
+    }
+
+    // Persist permanently in Firestore and localStorage
+    safeSetLocalStorage('pixelprint_woody_uploaded_files', updatedList);
+    await saveWoodyUploadedFilesToFirestore(updatedList);
+
+    // Load dataset and switch WoodyQuote to use this file's data
+    if (setActiveDataSourceOnImport) {
+      setActiveWoodyFile(newSourceFile.id);
+    } else {
+      loadWoodyQuoteExcelDataset(newDataset, false);
+    }
 
     // Also persist to system quotes if requested in mode
     if (excelImportMode === 'replace') {
@@ -210,6 +283,7 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
     setIsExcelModalOpen(false);
     setParsedExcelResult(null);
     setExcelFileName('');
+    showToast('File Saved Permanently', `"${newDataset.fileName}" is stored in Woody-Quote until deleted by admin.`);
   };
 
   // Form State for Quotation Builder (KRA removed)
@@ -801,12 +875,13 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            {/* Hidden Excel File Input */}
+            {/* Hidden File Input (Supports Excel and PDF files, up to 5 files maximum) */}
             <input
               type="file"
               ref={excelFileInputRef}
               onChange={handleExcelFileSelect}
-              accept=".xlsx, .xls, .csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+              multiple
+              accept=".xlsx, .xls, .csv, .pdf, application/pdf, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
               className="hidden"
             />
 
@@ -818,9 +893,13 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
               <span>+ Create Woody-Quote</span>
             </button>
 
-            {/* Upload Excel Button */}
+            {/* Upload Excel / PDF Button */}
             <button
               onClick={() => {
+                if (woodyUploadedFiles.length >= 5) {
+                  showToast('Upload Limit Reached', 'Maximum 5 files stored in Woody-Quote. Please delete an existing file before uploading a new one.', 'warning');
+                  return;
+                }
                 if (excelFileInputRef.current) {
                   excelFileInputRef.current.click();
                 } else {
@@ -829,14 +908,16 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
               }}
               disabled={isParsingExcel}
               className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-emerald-600/25 transition-all cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-50"
-              title="Upload an Excel file (.xlsx, .xls, .csv) with Woody-Quote records & line items"
+              title="Upload Excel (.xlsx, .xls, .csv) or PDF (.pdf) files with exact names and prices into Woody-Quote"
             >
               {isParsingExcel ? (
                 <Loader2 className="w-4 h-4 animate-spin text-emerald-200" />
               ) : (
                 <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
               )}
-              <span>{isParsingExcel ? 'Parsing...' : 'Upload Excel'}</span>
+              <span>
+                {isParsingExcel ? 'Parsing...' : `Upload Excel / PDF (${woodyUploadedFiles.length}/5)`}
+              </span>
             </button>
 
             {/* Excel Template Button */}
@@ -970,71 +1051,69 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* Active Woody-Quote Data Source Banner: Uploaded Excel File vs System Database */}
+      {/* Woody-Quote Multi-File Data Engine & Shelf (Up to 5 Excel or PDF files) */}
       {/* ========================================================================= */}
-      <div 
-        className={`rounded-2xl p-4 sm:p-5 border transition-all shadow-sm ${
-          woodyQuoteSource === 'excel' && woodyExcelDataset
-            ? 'bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 border-emerald-500/40 text-white'
-            : 'bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 border-blue-500/30 text-white'
-        }`}
-      >
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-300">
-                Active Woody-Quote Engine Data Source:
-              </span>
-              {woodyQuoteSource === 'excel' && woodyExcelDataset ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30">
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span>USING UPLOADED EXCEL DATA (SYSTEM BYPASSED)</span>
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-blue-500 text-white shadow-sm shadow-blue-500/30">
-                  <Building2 className="w-3.5 h-3.5" />
-                  <span>USING SYSTEM DATABASE</span>
-                </span>
-              )}
+      <div className="rounded-3xl p-5 sm:p-6 border bg-slate-900 border-slate-800 text-white shadow-xl space-y-4">
+        {/* Header Bar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
+              <Layers className="w-4 h-4" />
             </div>
-
-            <div className="text-sm font-bold text-white flex flex-wrap items-center gap-2">
-              {woodyQuoteSource === 'excel' && woodyExcelDataset ? (
-                <>
-                  <span className="text-emerald-300 font-extrabold flex items-center gap-1.5">
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{woodyExcelDataset.fileName}</span>
-                  </span>
-                  <span className="text-slate-400">•</span>
-                  <span className="text-emerald-100/90 text-xs">
-                    {woodyExcelDataset.quotes.length} quotations loaded • {woodyExcelDataset.itemsCatalog.length} catalog items • {woodyExcelDataset.clientsCatalog.length} clients
-                  </span>
-                  <span className="text-slate-400 text-xs hidden md:inline">
-                    (Quotes & products shown below are sourced directly from your uploaded Excel sheet)
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="text-blue-200">
-                    Internal System Database ({zohoQuotations.length} records).
-                  </span>
-                  {woodyExcelDataset ? (
-                    <span className="text-xs text-slate-300 bg-white/10 px-2.5 py-0.5 rounded-lg border border-white/10">
-                      Excel file ready: {woodyExcelDataset.fileName} ({woodyExcelDataset.quotes.length} quotes)
-                    </span>
-                  ) : (
-                    <span className="text-xs text-slate-400">
-                      Upload an Excel spreadsheet to switch Woody-Quote to run entirely from Excel data.
-                    </span>
-                  )}
-                </>
-              )}
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-black tracking-wide text-white uppercase">
+                  Woody-Quote Data Engine & Uploaded Sources
+                </h3>
+                <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
+                  woodyUploadedFiles.length >= 5
+                    ? 'bg-amber-500/20 border-amber-400/40 text-amber-300'
+                    : 'bg-emerald-500/20 border-emerald-400/30 text-emerald-300'
+                }`}>
+                  {woodyUploadedFiles.length} / 5 Files Uploaded
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 hidden sm:inline">
+                  Permanent Storage
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Uploaded files persist permanently and will not automatically delete unless deleted by an admin. Supports up to 5 Excel (.xlsx, .xls, .csv) or PDF (.pdf) files.
+              </p>
             </div>
           </div>
 
-          {/* Quick Source Toggle & Action Buttons */}
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            {/* Edit Excel Data In-App Button (Available whenever Excel dataset is loaded) */}
+            {/* System DB vs Uploaded File Toggle */}
+            {woodyQuoteSource === 'excel' ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setWoodyQuoteSource('system');
+                  showToast('Switched to System DB', `Woody-Quote is now displaying system database quotations (${zohoQuotations.length} records).`);
+                }}
+                className="bg-white/10 hover:bg-white/20 text-slate-200 border border-white/20 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Switch back to system database quotations"
+              >
+                <Building2 className="w-3.5 h-3.5 text-blue-300" />
+                <span>Switch to System DB</span>
+              </button>
+            ) : woodyUploadedFiles.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const targetId = activeWoodyFileId || woodyUploadedFiles[0]?.id;
+                  if (targetId) setActiveWoodyFile(targetId);
+                  showToast('Switched to Uploaded Data', 'Woody-Quote is now using your uploaded file data.');
+                }}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/30 transition-all cursor-pointer"
+                title="Switch Woody-Quote to run from uploaded file data"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                <span>Use Uploaded File</span>
+              </button>
+            ) : null}
+
+            {/* In-App Editor Button */}
             {woodyExcelDataset && (
               <button
                 type="button"
@@ -1042,129 +1121,201 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
                   setExcelEditorTab('catalog');
                   setIsExcelEditorModalOpen(true);
                 }}
-                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/25 transition-all cursor-pointer"
-                title="Edit Excel catalog items, pricing, clients directory, and quotations directly inside Woody-Quote"
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/25 transition-all cursor-pointer"
+                title="Edit catalog items, exact pricing, clients directory, and quotations directly in Woody-Quote"
               >
                 <Edit3 className="w-3.5 h-3.5" />
-                <span>Edit Excel Data</span>
+                <span>Edit Data In-App</span>
               </button>
             )}
 
-            {/* Export Current Excel File Button */}
+            {/* Export Current File */}
             {woodyExcelDataset && (
               <button
                 type="button"
                 onClick={() => {
                   exportWoodyDatasetToExcel(woodyExcelDataset);
-                  showToast('Excel Exported', `Downloaded updated workbook "${woodyExcelDataset.fileName}"`);
+                  showToast('File Exported', `Downloaded "${woodyExcelDataset.fileName}"`);
                 }}
-                className="bg-emerald-700/80 hover:bg-emerald-600 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm border border-emerald-500/40 transition-colors cursor-pointer"
-                title="Download the updated Excel file with all your in-app edits and new quotes preserved"
+                className="bg-slate-800 hover:bg-slate-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 border border-slate-700 transition-colors cursor-pointer"
+                title="Download active file"
               >
-                <Download className="w-3.5 h-3.5" />
-                <span>Export Excel</span>
+                <Download className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Export</span>
               </button>
             )}
 
-            {/* If no Excel file uploaded yet, offer 1-click Official Template Loader */}
-            {!woodyExcelDataset && (
-              <button
-                type="button"
-                onClick={() => {
-                  loadInitialWoodynatExcelDataset();
-                }}
-                className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-500/30 transition-all cursor-pointer"
-                title="Immediately activate Woody-Quote with Woodynat's official commercial products & clients Excel dataset"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Load Woodynat Excel Template</span>
-              </button>
-            )}
-
-            {/* Toggle to Excel if dataset loaded but currently on system */}
-            {woodyQuoteSource === 'system' && woodyExcelDataset && (
-              <button
-                type="button"
-                onClick={() => {
-                  setWoodyQuoteSource('excel');
-                  showToast('Excel Data Active', `Woody-Quote is now using data from ${woodyExcelDataset.fileName}.`);
-                }}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/30 transition-all cursor-pointer"
-                title="Switch Woody-Quote to use data from the loaded Excel spreadsheet"
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5" />
-                <span>Switch to Excel Data ({woodyExcelDataset.quotes.length} quotes)</span>
-              </button>
-            )}
-
-            {/* Toggle to System if currently on Excel */}
-            {woodyQuoteSource === 'excel' && (
-              <button
-                type="button"
-                onClick={() => {
-                  setWoodyQuoteSource('system');
-                  showToast('System Data Active', `Woody-Quote is now using the system database (${zohoQuotations.length} quotes).`);
-                }}
-                className="bg-white/15 hover:bg-white/25 text-white border border-white/25 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-                title="Switch Woody-Quote back to system internal database"
-              >
-                <Building2 className="w-3.5 h-3.5 text-blue-300" />
-                <span>Switch to System Data ({zohoQuotations.length})</span>
-              </button>
-            )}
-
-            {/* Upload / Replace Excel Button */}
+            {/* Upload File Button */}
             <button
               type="button"
+              disabled={isParsingExcel || woodyUploadedFiles.length >= 5}
               onClick={() => {
-                if (excelFileInputRef.current) {
-                  excelFileInputRef.current.click();
-                } else {
-                  setIsExcelModalOpen(true);
+                if (woodyUploadedFiles.length >= 5) {
+                  showToast('Maximum Reached', '5 files maximum reached. Please delete an existing file first.', 'warning');
+                  return;
                 }
+                excelFileInputRef.current?.click();
               }}
-              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-500/25 transition-all cursor-pointer"
-              title="Upload new or updated Excel file"
+              className="bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 disabled:text-slate-500 disabled:border-slate-700 text-slate-950 font-black px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
+              title="Upload Excel or PDF file (max 5)"
             >
               <Upload className="w-3.5 h-3.5" />
-              <span>{woodyExcelDataset ? 'Upload New Excel' : 'Upload Excel File'}</span>
+              <span>
+                {woodyUploadedFiles.length >= 5
+                  ? 'Max 5 Files Reached'
+                  : `+ Upload File (${5 - woodyUploadedFiles.length} Slots Free)`}
+              </span>
             </button>
-
-            {/* Sync Excel to System Button (if on Excel mode) */}
-            {woodyQuoteSource === 'excel' && woodyExcelDataset && woodyExcelDataset.quotes.length > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (window.confirm(`Copy and sync all ${woodyExcelDataset.quotes.length} quotations from "${woodyExcelDataset.fileName}" into the permanent system database?`)) {
-                    syncExcelQuotesToSystem();
-                  }
-                }}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
-                title="Save all Excel quotations into system database for persistence"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Sync to System DB</span>
-              </button>
-            )}
-
-            {/* Disconnect Excel Dataset Button */}
-            {woodyExcelDataset && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (window.confirm('Disconnect and clear the uploaded Excel dataset from memory? Woody-Quote will return to using the system database.')) {
-                    clearWoodyQuoteExcelDataset();
-                  }
-                }}
-                className="bg-red-500/20 hover:bg-red-500/30 text-red-200 border border-red-400/30 font-bold px-2.5 py-2 rounded-xl text-xs flex items-center gap-1 transition-colors cursor-pointer"
-                title="Clear uploaded Excel data"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Disconnect Excel</span>
-              </button>
-            )}
           </div>
         </div>
+
+        {/* Uploaded Files Grid (Up to 5) */}
+        {woodyUploadedFiles.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {woodyUploadedFiles.map((file, idx) => {
+              const isActive = (woodyQuoteSource === 'excel' && (activeWoodyFileId === file.id || (!activeWoodyFileId && idx === 0)));
+              const isPdf = file.fileType === 'pdf' || file.fileName.toLowerCase().endsWith('.pdf');
+
+              return (
+                <div
+                  key={file.id}
+                  className={`rounded-2xl p-4 border transition-all flex flex-col justify-between ${
+                    isActive
+                      ? 'bg-gradient-to-b from-emerald-950/80 to-slate-900 border-emerald-500 ring-2 ring-emerald-500/30 shadow-lg shadow-emerald-950/40'
+                      : 'bg-slate-800/60 border-slate-700/80 hover:border-slate-600 hover:bg-slate-800'
+                  }`}
+                >
+                  <div className="space-y-2.5">
+                    {/* Top row: Icon, Type Badge, and Active Pill */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                          isPdf 
+                            ? 'bg-rose-500/20 text-rose-400 border border-rose-400/30' 
+                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-400/30'
+                        }`}>
+                          {isPdf ? <FileText className="w-4 h-4" /> : <FileSpreadsheet className="w-4 h-4" />}
+                        </div>
+                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${
+                          isPdf
+                            ? 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+                            : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                        }`}>
+                          {isPdf ? 'PDF Quotation' : 'Excel Sheet'}
+                        </span>
+                      </div>
+
+                      {isActive ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-slate-950 shadow-xs">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-950 animate-ping"></span>
+                          <span>ACTIVE SOURCE</span>
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-slate-400 bg-slate-900/60 px-2 py-0.5 rounded-full border border-slate-700/50">
+                          Slot #{idx + 1}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* File Name & Date */}
+                    <div>
+                      <h4 className="text-xs font-black text-white truncate" title={file.fileName}>
+                        {file.fileName}
+                      </h4>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Uploaded {new Date(file.uploadedAt).toLocaleDateString()} at {new Date(file.uploadedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+
+                    {/* Stats pills */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-[10px] font-bold bg-slate-900/90 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700">
+                        {file.totalQuotes} Quotes
+                      </span>
+                      <span className="text-[10px] font-bold bg-slate-900/90 text-emerald-300 px-2 py-0.5 rounded-md border border-emerald-900/60">
+                        {file.totalItems} Catalog Items
+                      </span>
+                      {file.detectedPriceNames && file.detectedPriceNames.length > 0 && (
+                        <span className="text-[10px] font-bold bg-slate-900/90 text-blue-300 px-2 py-0.5 rounded-md border border-blue-900/60 truncate max-w-[130px]" title={`Exact Price: ${file.detectedPriceNames.join(', ')}`}>
+                          @{file.detectedPriceNames[0]}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions row */}
+                  <div className="pt-3 mt-3 border-t border-slate-700/60 flex items-center justify-between gap-2">
+                    {!isActive ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveWoodyFile(file.id);
+                          showToast('Active File Updated', `Woody-Quote is now operating with data from "${file.fileName}".`);
+                        }}
+                        className="bg-emerald-600/90 hover:bg-emerald-500 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer flex-1 justify-center"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Set as Active</span>
+                      </button>
+                    ) : (
+                      <div className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Currently In Use</span>
+                      </div>
+                    )}
+
+                    {/* Admin Explicit Delete Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(`ADMIN CONFIRMATION:\n\nAre you sure you want to permanently delete "${file.fileName}" from Woody-Quote?\n\nThis file is permanently stored and will only be deleted because you are explicitly requesting this action as an administrator.`)) {
+                          deleteWoodyUploadedFile(file.id);
+                          showToast('File Deleted by Admin', `"${file.fileName}" was removed from storage.`);
+                        }
+                      }}
+                      className="bg-red-500/10 hover:bg-red-500/25 text-red-300 hover:text-red-100 border border-red-500/30 font-bold px-2.5 py-1.5 rounded-xl text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                      title="Permanently delete this file (Admin Only)"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                      <span className="text-[11px]">Delete</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* Empty files state */
+          <div className="bg-slate-800/40 border border-dashed border-slate-700 rounded-2xl p-6 text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
+              <FileSpreadsheet className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-sm font-black text-white">No External Files Uploaded Yet</h4>
+              <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
+                Upload up to 5 Excel (.xlsx, .xls, .csv) or PDF (.pdf) files. Once uploaded, files remain permanently saved in Woody-Quote until explicitly deleted by an admin.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => excelFileInputRef.current?.click()}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-4 py-2 rounded-xl text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer"
+              >
+                <Upload className="w-4 h-4" />
+                <span>Upload Excel or PDF File</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => loadInitialWoodynatExcelDataset()}
+                className="bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Load Woodynat Template</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ========================================================================= */}
@@ -3026,13 +3177,16 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold flex items-center gap-2">
-                    <span>Woody-Quote Excel Data Importer</span>
+                    <span>Woody-Quote Excel & PDF Data Importer</span>
                     <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                      .XLSX / .CSV
+                      .XLSX / .CSV / .PDF
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                      {woodyUploadedFiles.length} / 5 Slots Used
                     </span>
                   </h3>
                   <p className="text-xs text-slate-300">
-                    Upload and synchronize quotations, line items, client details, and pricing in bulk
+                    Upload and synchronize quotations, line items, and product catalog with exact verbatim names and pricing
                   </p>
                 </div>
               </div>
@@ -3090,10 +3244,13 @@ export const AdminWoodyQuoteStudio: React.FC = () => {
                     )}
                   </div>
                   <h4 className="text-base sm:text-lg font-black text-slate-800">
-                    {isParsingExcel ? 'Reading & Parsing Spreadsheet...' : 'Drop your Woody-Quote Excel file here'}
+                    {isParsingExcel ? 'Reading & Parsing Document...' : 'Drop your Woody-Quote Excel or PDF file here'}
                   </h4>
                   <p className="text-xs sm:text-sm text-slate-500 max-w-md mt-1.5">
-                    Drag and drop your <span className="font-bold text-slate-700">.xlsx, .xls, or .csv</span> file, or click anywhere to select from your computer.
+                    Drag and drop your <span className="font-bold text-slate-700">.xlsx, .xls, .csv, or .pdf</span> document, or click anywhere to select from your computer.
+                  </p>
+                  <p className="text-[11px] font-semibold text-emerald-700 mt-1">
+                    Extracts verbatim product titles and exact prices (e.g. from @, Rate, or Unit Price columns). Stored permanently until deleted by an admin.
                   </p>
 
                   <div className="flex flex-wrap items-center justify-center gap-3 mt-6">

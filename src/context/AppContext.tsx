@@ -26,9 +26,10 @@ import {
   WoodyQuoteDataSource,
   WoodyExcelDataset,
   WoodyExcelCatalogItem,
-  WoodyExcelClientItem
+  WoodyExcelClientItem,
+  WoodyUploadedSourceFile
 } from '../types';
-import { extractCatalogAndClientsFromQuotes, getInitialWoodynatExcelDataset } from '../utils/woodyQuoteExcelHandler';
+import { extractCatalogAndClientsFromQuotes, getInitialWoodynatExcelDataset, parseWoodyQuoteFile } from '../utils/woodyQuoteExcelHandler';
 import { 
   INITIAL_PRODUCTS, 
   INITIAL_REVIEWS, 
@@ -72,6 +73,8 @@ import {
   saveCategoriesToFirestore,
   subscribeWoodyExcelDataset,
   saveWoodyExcelDatasetToFirestore,
+  subscribeWoodyUploadedFiles,
+  saveWoodyUploadedFilesToFirestore,
   setAdminCustomProductImage,
   getAdminCustomProductImages,
 } from '../services/firestoreService';
@@ -241,9 +244,14 @@ interface AppContextType {
   syncQuoteToZoho: (quoteId: string) => Promise<boolean>;
   importZohoQuotations: (quotesList: ZohoQuotation[], mode?: 'append' | 'replace') => { added: number; updated: number; total: number };
   
-  // WoodyQuote Excel Data Engine (Enables running Woody-Quote from uploaded Excel instead of system)
+  // WoodyQuote Excel/PDF Data Engine (Enables running Woody-Quote from uploaded files instead of system)
   woodyQuoteSource: WoodyQuoteDataSource;
   woodyExcelDataset: WoodyExcelDataset | null;
+  woodyUploadedFiles: WoodyUploadedSourceFile[];
+  activeWoodyFileId: string | null;
+  uploadWoodySourceFiles: (files: File[]) => Promise<{ addedCount: number; errors: string[] }>;
+  deleteWoodyUploadedFile: (fileId: string) => Promise<boolean>;
+  setActiveWoodyFile: (fileId: string | null) => void;
   setWoodyQuoteSource: (source: WoodyQuoteDataSource) => void;
   loadWoodyQuoteExcelDataset: (dataset: WoodyExcelDataset, setActive?: boolean) => void;
   clearWoodyQuoteExcelDataset: () => void;
@@ -402,9 +410,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }));
   });
 
-  // WoodyQuote Data Source & Uploaded Excel Dataset State
+  // WoodyQuote Data Source & Uploaded Excel/PDF Dataset State
   const [woodyQuoteSource, setWoodyQuoteSourceState] = useState<WoodyQuoteDataSource>(() => {
     return safeGetLocalStorage<WoodyQuoteDataSource>('pixelprint_woody_data_source', 'system');
+  });
+
+  const [woodyUploadedFiles, setWoodyUploadedFiles] = useState<WoodyUploadedSourceFile[]>(() => {
+    return safeGetLocalStorage<WoodyUploadedSourceFile[]>('pixelprint_woody_uploaded_files', []);
+  });
+
+  const [activeWoodyFileId, setActiveWoodyFileId] = useState<string | null>(() => {
+    return safeGetLocalStorage<string | null>('pixelprint_woody_active_file_id', null);
   });
 
   const [woodyExcelDataset, setWoodyExcelDataset] = useState<WoodyExcelDataset | null>(() => {
@@ -549,8 +565,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
   }, []);
 
-  // Woody-Quote Excel Dataset subscription from Firestore for permanent cross-session storage
+  // Woody-Quote Uploaded Files subscription from Firestore (Max 5 files, permanent storage)
   useEffect(() => {
+    const unsubFiles = subscribeWoodyUploadedFiles((files) => {
+      if (files && files.length > 0) {
+        setWoodyUploadedFiles(files);
+        safeSetLocalStorage('pixelprint_woody_uploaded_files', files);
+
+        // Synchronize active dataset
+        const storedActiveId = safeGetLocalStorage<string | null>('pixelprint_woody_active_file_id', null);
+        const matched = files.find((f) => f.id === storedActiveId) || files[0];
+        if (matched) {
+          setActiveWoodyFileId(matched.id);
+          safeSetLocalStorage('pixelprint_woody_active_file_id', matched.id);
+          setWoodyExcelDataset(matched.dataset);
+          safeSetLocalStorage('pixelprint_woody_excel_dataset', matched.dataset);
+          setWoodyQuoteSourceState('excel');
+          safeSetLocalStorage('pixelprint_woody_data_source', 'excel');
+        }
+      }
+    });
+
     const unsubExcel = subscribeWoodyExcelDataset((fetchedDataset) => {
       if (fetchedDataset) {
         setWoodyExcelDataset(fetchedDataset);
@@ -560,6 +595,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
 
     return () => {
+      unsubFiles();
       unsubExcel();
     };
   }, []);
@@ -2221,6 +2257,151 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     showToast('Quotation Deleted', 'Zoho quotation record was removed.', 'info');
   };
 
+  const setActiveWoodyFile = (fileId: string | null) => {
+    if (!fileId) {
+      setActiveWoodyFileId(null);
+      safeSetLocalStorage('pixelprint_woody_active_file_id', null);
+      setWoodyQuoteSourceState('system');
+      safeSetLocalStorage('pixelprint_woody_data_source', 'system');
+      showToast('System Database Active', 'Woody-Quote switched to the system database.');
+      return;
+    }
+    const targetFile = woodyUploadedFiles.find((f) => f.id === fileId);
+    if (targetFile) {
+      setActiveWoodyFileId(targetFile.id);
+      safeSetLocalStorage('pixelprint_woody_active_file_id', targetFile.id);
+      setWoodyExcelDataset(targetFile.dataset);
+      safeSetLocalStorage('pixelprint_woody_excel_dataset', targetFile.dataset);
+      saveWoodyExcelDatasetToFirestore(targetFile.dataset);
+      setWoodyQuoteSourceState('excel');
+      safeSetLocalStorage('pixelprint_woody_data_source', 'excel');
+      showToast('Active Source File Changed', `Woody-Quote is now using data from "${targetFile.fileName}".`);
+    }
+  };
+
+  const uploadWoodySourceFiles = async (files: File[]): Promise<{ addedCount: number; errors: string[] }> => {
+    if (!files || files.length === 0) return { addedCount: 0, errors: [] };
+
+    const currentFiles = [...(woodyUploadedFiles || [])];
+    const errors: string[] = [];
+
+    // Check maximum 5 files constraint
+    const maxFiles = 5;
+    const availableSlots = maxFiles - currentFiles.length;
+    if (availableSlots <= 0) {
+      const msg = `Maximum ${maxFiles} files allowed in Woody-Quote. Please delete an existing file before uploading a new one.`;
+      showToast('Upload Limit Reached', msg, 'warning');
+      return { addedCount: 0, errors: [msg] };
+    }
+
+    const filesToProcess = files.slice(0, availableSlots);
+    if (files.length > availableSlots) {
+      showToast(
+        'Upload Limit Notice',
+        `Only ${availableSlots} file(s) processed. Woody-Quote supports up to ${maxFiles} uploaded files total.`,
+        'info'
+      );
+    }
+
+    const newlyAddedFiles: WoodyUploadedSourceFile[] = [];
+
+    for (const file of filesToProcess) {
+      try {
+        const ext = file.name.split('.').pop()?.toLowerCase();
+        const fileType: 'excel' | 'pdf' = ext === 'pdf' ? 'pdf' : 'excel';
+
+        const parsed = await parseWoodyQuoteFile(file, zohoSettings, zohoSettings.defaultQuotePrefix);
+
+        if (parsed.errors.length > 0 && parsed.quotes.length === 0 && parsed.itemsCatalog.length === 0) {
+          errors.push(`${file.name}: ${parsed.errors.join('; ')}`);
+          continue;
+        }
+
+        const newSourceFile: WoodyUploadedSourceFile = {
+          id: `woody-file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          fileName: file.name,
+          fileType,
+          fileSize: file.size,
+          uploadedAt: new Date().toISOString(),
+          uploadedBy: currentUser?.name || 'Woodynat Admin',
+          totalItems: parsed.itemsCatalog.length,
+          totalQuotes: parsed.quotes.length,
+          detectedPriceNames: parsed.detectedPriceNames,
+          dataset: {
+            fileName: file.name,
+            fileType,
+            uploadedAt: new Date().toISOString(),
+            quotes: parsed.quotes,
+            itemsCatalog: parsed.itemsCatalog,
+            clientsCatalog: parsed.clientsCatalog,
+            totalRows: parsed.totalRows,
+            detectedSheets: parsed.detectedSheets,
+            detectedPriceNames: parsed.detectedPriceNames,
+          }
+        };
+
+        newlyAddedFiles.push(newSourceFile);
+      } catch (err: any) {
+        errors.push(`${file.name}: ${err?.message || 'Processing failed'}`);
+      }
+    }
+
+    if (newlyAddedFiles.length > 0) {
+      const updatedFilesList = [...currentFiles, ...newlyAddedFiles].slice(0, maxFiles);
+      setWoodyUploadedFiles(updatedFilesList);
+      safeSetLocalStorage('pixelprint_woody_uploaded_files', updatedFilesList);
+      await saveWoodyUploadedFilesToFirestore(updatedFilesList);
+
+      // Make the most recently uploaded file active
+      const latestFile = newlyAddedFiles[newlyAddedFiles.length - 1];
+      setActiveWoodyFileId(latestFile.id);
+      safeSetLocalStorage('pixelprint_woody_active_file_id', latestFile.id);
+      setWoodyExcelDataset(latestFile.dataset);
+      safeSetLocalStorage('pixelprint_woody_excel_dataset', latestFile.dataset);
+      await saveWoodyExcelDatasetToFirestore(latestFile.dataset);
+      setWoodyQuoteSourceState('excel');
+      safeSetLocalStorage('pixelprint_woody_data_source', 'excel');
+
+      showToast(
+        'Files Uploaded Successfully',
+        `Added ${newlyAddedFiles.length} file(s). Woody-Quote is now using "${latestFile.fileName}" (${latestFile.totalItems} items, ${latestFile.totalQuotes} quotes). Permanently saved until deleted by admin.`
+      );
+    }
+
+    return { addedCount: newlyAddedFiles.length, errors };
+  };
+
+  const deleteWoodyUploadedFile = async (fileId: string): Promise<boolean> => {
+    const updatedFiles = woodyUploadedFiles.filter((f) => f.id !== fileId);
+    setWoodyUploadedFiles(updatedFiles);
+    safeSetLocalStorage('pixelprint_woody_uploaded_files', updatedFiles);
+    await saveWoodyUploadedFilesToFirestore(updatedFiles);
+
+    if (activeWoodyFileId === fileId) {
+      const nextFile = updatedFiles[0] || null;
+      if (nextFile) {
+        setActiveWoodyFileId(nextFile.id);
+        safeSetLocalStorage('pixelprint_woody_active_file_id', nextFile.id);
+        setWoodyExcelDataset(nextFile.dataset);
+        safeSetLocalStorage('pixelprint_woody_excel_dataset', nextFile.dataset);
+        await saveWoodyExcelDatasetToFirestore(nextFile.dataset);
+        setWoodyQuoteSourceState('excel');
+        safeSetLocalStorage('pixelprint_woody_data_source', 'excel');
+      } else {
+        setActiveWoodyFileId(null);
+        safeSetLocalStorage('pixelprint_woody_active_file_id', null);
+        setWoodyExcelDataset(null);
+        safeSetLocalStorage('pixelprint_woody_excel_dataset', null);
+        await saveWoodyExcelDatasetToFirestore(null);
+        setWoodyQuoteSourceState('system');
+        safeSetLocalStorage('pixelprint_woody_data_source', 'system');
+      }
+    }
+
+    showToast('File Removed', 'Source file permanently deleted by admin.', 'info');
+    return true;
+  };
+
   const setWoodyQuoteSource = (source: WoodyQuoteDataSource) => {
     setWoodyQuoteSourceState(source);
     safeSetLocalStorage('pixelprint_woody_data_source', source);
@@ -2779,6 +2960,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         importZohoQuotations,
         woodyQuoteSource,
         woodyExcelDataset,
+        woodyUploadedFiles,
+        activeWoodyFileId,
+        uploadWoodySourceFiles,
+        deleteWoodyUploadedFile,
+        setActiveWoodyFile,
         setWoodyQuoteSource,
         loadWoodyQuoteExcelDataset,
         clearWoodyQuoteExcelDataset,

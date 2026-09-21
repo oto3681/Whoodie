@@ -370,6 +370,11 @@ export interface AdminNotification {
   actionTakenNotes?: string;
 }
 
+export interface WoodyItemPriceTier {
+  name: string; // The detected price column header name from the uploaded Excel file (e.g. "Wholesale Price", "Retail Price (KSh)", "Unit Price")
+  price: number;
+}
+
 export interface WoodyQuoteItem {
   id: string;
   productId?: string;
@@ -379,6 +384,8 @@ export interface WoodyQuoteItem {
   quantity: number;
   unit: string; // pcs, sets, rolls, books, etc.
   unitPrice: number; // KSh
+  priceName?: string; // The detected name of the price from the uploaded Excel file
+  priceTiers?: WoodyItemPriceTier[]; // All price tiers detected for this item
   discountPercent: number; // 0 - 100
   taxPercent?: number;
   taxAmount?: number;
@@ -460,6 +467,8 @@ export interface WoodyQuoteSettings {
   defaultDeliveryTimeline: string;
   defaultNotes: string;
   defaultTerms: string;
+  defaultPaybillNumber?: string;
+  defaultPaybillAccount?: string;
   companyKraPin?: string;
   includeEtrQrCode?: boolean;
   // Default Letterhead & Watermark Branding
@@ -488,6 +497,8 @@ export interface WoodyExcelCatalogItem {
   description: string;
   unitPrice: number;
   unit: string;
+  priceName?: string; // The detected price column header name from the uploaded Excel file (e.g. "Wholesale Price", "Retail Price (KSh)", "Unit Price")
+  priceTiers?: WoodyItemPriceTier[]; // Multiple price tiers detected in the Excel sheet
   selectedSize?: string;
   selectedFinish?: string;
   artworkNotes?: string;
@@ -505,11 +516,27 @@ export interface WoodyExcelClientItem {
 
 export interface WoodyExcelDataset {
   fileName: string;
+  fileType?: 'excel' | 'pdf';
+  fileId?: string;
   uploadedAt: string;
   quotes: WoodyQuotation[];
   itemsCatalog: WoodyExcelCatalogItem[];
   clientsCatalog: WoodyExcelClientItem[];
   totalRows: number;
   detectedSheets: string[];
+  detectedPriceNames?: string[]; // All detected price column names found across the uploaded Excel/PDF file
+}
+
+export interface WoodyUploadedSourceFile {
+  id: string;
+  fileName: string;
+  fileType: 'excel' | 'pdf';
+  fileSize: number;
+  uploadedAt: string;
+  uploadedBy?: string;
+  dataset: WoodyExcelDataset;
+  totalItems: number;
+  totalQuotes: number;
+  detectedPriceNames?: string[];
 }
 

@@ -2293,6 +2293,73 @@ app.post('/api/quote/send-email', async (req, res) => {
   }
 });
 
+// PDF Parsing Endpoint for Woody-Quote (extracts exact product names, categories, price headers & prices)
+app.post('/api/parse-pdf', express.json({ limit: '50mb' }), async (req, res) => {
+  try {
+    const { base64Data, fileName } = req.body;
+    if (!base64Data) {
+      return res.status(400).json({ success: false, error: 'No base64 data provided' });
+    }
+
+    const pdfBuffer = Buffer.from(base64Data, 'base64');
+    const mod = await import('pdfjs-dist/legacy/build/pdf.js');
+    const pdfjs = (mod as any).default || mod;
+
+    const loadingTask = pdfjs.getDocument({
+      data: new Uint8Array(pdfBuffer),
+      useSystemFonts: true,
+      disableFontFace: true,
+      isEvalSupported: false,
+    });
+
+    const doc = await loadingTask.promise;
+    const allLines: string[] = [];
+    const pagesText: string[][] = [];
+
+    for (let p = 1; p <= doc.numPages; p++) {
+      const page = await doc.getPage(p);
+      const textContent = await page.getTextContent();
+      const items = (textContent.items || []) as Array<{ str: string; transform: number[] }>;
+
+      // Group text items by y coordinate to form lines
+      const lineMap = new Map<number, Array<{ x: number; str: string }>>();
+      for (const it of items) {
+        if (!it.str || !it.str.trim()) continue;
+        const x = it.transform ? it.transform[4] : 0;
+        const y = it.transform ? Math.round(it.transform[5] / 4) * 4 : 0;
+        if (!lineMap.has(y)) lineMap.set(y, []);
+        lineMap.get(y)!.push({ x, str: it.str.trim() });
+      }
+
+      // Sort by y descending (top of page first)
+      const sortedYs = Array.from(lineMap.keys()).sort((a, b) => b - a);
+      const pageLines: string[] = [];
+
+      for (const y of sortedYs) {
+        const rowItems = lineMap.get(y)!.sort((a, b) => a.x - b.x);
+        const lineStr = rowItems.map(i => i.str).join(' ');
+        if (lineStr.trim()) {
+          pageLines.push(lineStr.trim());
+          allLines.push(lineStr.trim());
+        }
+      }
+      pagesText.push(pageLines);
+    }
+
+    return res.status(200).json({
+      success: true,
+      fileName: fileName || 'uploaded_document.pdf',
+      numPages: doc.numPages,
+      lines: allLines,
+      pages: pagesText,
+    });
+  } catch (err: any) {
+    console.error('Error in /api/parse-pdf:', err);
+    return res.status(500).json({ success: false, error: err.message || 'Failed to parse PDF document' });
+  }
+});
+
+
 async function startServer() {
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {

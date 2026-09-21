@@ -7,7 +7,7 @@ import {
   Unsubscribe 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Product, Order, CustomerReview, WordPressSettings, ProductCategory, RegisteredMember, WoodyExcelDataset } from '../types';
+import { Product, Order, CustomerReview, WordPressSettings, ProductCategory, RegisteredMember, WoodyExcelDataset, WoodyUploadedSourceFile } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_REVIEWS, MOCK_ORDERS, DEFAULT_WORDPRESS_SETTINGS, INITIAL_REGISTERED_MEMBERS, getProductFallbackImage } from '../data/initialData';
 
 const PRODUCTS_COL = 'products';
@@ -543,5 +543,66 @@ export const saveWoodyExcelDatasetToFirestore = async (dataset: WoodyExcelDatase
     console.debug('Failed to save woodyExcelDataset to Firestore (persisted locally):', err);
   }
 };
+
+// Permanent storage for up to 5 uploaded Excel / PDF files in Woody-Quote (persists until admin explicitly deletes)
+export const subscribeWoodyUploadedFiles = (onUpdate: (files: WoodyUploadedSourceFile[]) => void): Unsubscribe => {
+  try {
+    const docRef = doc(db, SETTINGS_COL, 'woodyUploadedSources');
+    return onSnapshot(
+      docRef,
+      (docSnap) => {
+        try {
+          if (!docSnap.exists()) {
+            const cached = safeGetLocalStorage<WoodyUploadedSourceFile[]>('pixelprint_woody_uploaded_files', []);
+            onUpdate(cached || []);
+          } else {
+            const data = docSnap.data();
+            if (data && Array.isArray(data.files)) {
+              safeSetLocalStorage('pixelprint_woody_uploaded_files', data.files);
+              onUpdate(data.files as WoodyUploadedSourceFile[]);
+            } else {
+              const cached = safeGetLocalStorage<WoodyUploadedSourceFile[]>('pixelprint_woody_uploaded_files', []);
+              onUpdate(cached || []);
+            }
+          }
+        } catch (err) {
+          console.debug('Firestore woodyUploadedSources snapshot caught:', err);
+          const cached = safeGetLocalStorage<WoodyUploadedSourceFile[]>('pixelprint_woody_uploaded_files', []);
+          onUpdate(cached || []);
+        }
+      },
+      (error) => {
+        console.debug('Firestore woodyUploadedSources snapshot notice:', error);
+        const cached = safeGetLocalStorage<WoodyUploadedSourceFile[]>('pixelprint_woody_uploaded_files', []);
+        onUpdate(cached || []);
+      }
+    );
+  } catch (err) {
+    console.debug('Firestore subscribeWoodyUploadedFiles error:', err);
+    const cached = safeGetLocalStorage<WoodyUploadedSourceFile[]>('pixelprint_woody_uploaded_files', []);
+    onUpdate(cached || []);
+    return () => {};
+  }
+};
+
+export const saveWoodyUploadedFilesToFirestore = async (files: WoodyUploadedSourceFile[]): Promise<void> => {
+  try {
+    // Keep max 5 files
+    const capped = files.slice(0, 5);
+    safeSetLocalStorage('pixelprint_woody_uploaded_files', capped);
+    const docRef = doc(db, SETTINGS_COL, 'woodyUploadedSources');
+    if (capped.length === 0) {
+      await deleteDoc(docRef);
+    } else {
+      await setDoc(docRef, {
+        files: capped,
+        updatedAt: new Date().toISOString()
+      });
+    }
+  } catch (err) {
+    console.debug('Failed to save woodyUploadedSources to Firestore (persisted locally):', err);
+  }
+};
+
 
 

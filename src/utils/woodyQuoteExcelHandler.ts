@@ -6,7 +6,8 @@ import {
   ZohoQuoteStatus as WoodyQuoteStatus,
   WoodyExcelCatalogItem,
   WoodyExcelClientItem,
-  WoodyExcelDataset
+  WoodyExcelDataset,
+  WoodyItemPriceTier
 } from '../types';
 
 export interface ParsedExcelQuoteResult {
@@ -16,9 +17,217 @@ export interface ParsedExcelQuoteResult {
   detectedSheets: string[];
   itemsCatalog: WoodyExcelCatalogItem[];
   clientsCatalog: WoodyExcelClientItem[];
+  detectedPriceNames: string[];
   warnings: string[];
   errors: string[];
 }
+
+/**
+ * Normalizes a header string for case-insensitive and flexible key matching,
+ * preserving '@' which is the standard commercial rate symbol in Woodynat price cards.
+ */
+export const cleanHeaderKey = (header: string): string => {
+  const str = String(header || '').trim();
+  if (str === '@') return '@';
+  return str.toLowerCase().replace(/[^a-z0-9@]/g, '');
+};
+
+/**
+ * Determines whether a column header from the uploaded Excel/PDF file represents a price.
+ * Distinguishes between price columns (e.g. "@", "Wholesale Price", "Retail Price (KSh)", "Unit Price", "Rate", "Corporate Cost")
+ * and non-price columns like quantity, subtotal, discount, grand total, tax, phone, etc.
+ */
+export const isPriceColumnHeader = (header: string): boolean => {
+  if (!header || typeof header !== 'string') return false;
+  const trimmed = header.trim();
+  const lower = trimmed.toLowerCase();
+  const clean = cleanHeaderKey(trimmed);
+
+  // Exact or common price symbol matches
+  if (trimmed === '@' || clean === '@' || lower === '@' || lower.startsWith('@') || lower.includes(' @ ') || lower.endsWith(' @')) {
+    return true;
+  }
+
+  // Exclude non-price columns
+  const excludedKeywords = [
+    'total', 'subtotal', 'grandtotal', 'linetotal', 'nettotal',
+    'discount', 'disc', 'tax', 'vat', 'shipping', 'freight',
+    'balance', 'paid', 'deposit', 'phone', 'mobile', 'tel',
+    'qty', 'quantity', 'count', 'number', 'no', 'num', 'id',
+    'date', 'time', 'timeline', 'status', 'prepared', 'note',
+    'address', 'location', 'email', 'name', 'client', 'customer',
+    'company', 'desc', 'description', 'detail', 'size', 'finish',
+    'artwork', 'unit', 'uom'
+  ];
+
+  for (const ex of excludedKeywords) {
+    if (clean === ex) return false;
+  }
+
+  // If header contains total or discount or tax or shipping or phone, exclude
+  if (
+    clean.includes('total') ||
+    clean.includes('subtotal') ||
+    clean.includes('discount') ||
+    clean.includes('tax') ||
+    clean.includes('vat') ||
+    clean.includes('shipping') ||
+    clean.includes('freight') ||
+    clean.includes('phone') ||
+    clean.includes('mobile') ||
+    clean.includes('qty') ||
+    clean.includes('quantity')
+  ) {
+    return false;
+  }
+
+  // Positive matches for price columns
+  if (
+    clean.includes('price') ||
+    clean.includes('unitprice') ||
+    clean.includes('rate') ||
+    clean.includes('cost') ||
+    clean.includes('tariff') ||
+    clean.includes('fee') ||
+    clean.includes('wholesale') ||
+    clean.includes('retail') ||
+    clean.includes('selling') ||
+    clean.includes('reseller') ||
+    clean.includes('distributor') ||
+    clean.includes('commercial') ||
+    clean.includes('corporate') ||
+    lower.includes('ksh') ||
+    lower.includes('kes') ||
+    lower.includes('shs') ||
+    clean === 'rate' ||
+    clean === 'price' ||
+    clean === 'cost' ||
+    clean === '@'
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+/**
+ * Extracts the exact verbatim product/particulars name from a row
+ */
+export const getItemNameFromRow = (
+  rowMap: Map<string, any>,
+  rawRow?: Record<string, any>,
+  fallback: string = ''
+): string => {
+  const candidates = [
+    rowMap.get('particulars'),
+    rowMap.get('particular'),
+    rowMap.get('itemname'),
+    rowMap.get('product'),
+    rowMap.get('productname'),
+    rowMap.get('item'),
+    rowMap.get('items'),
+    rowMap.get('service'),
+    rowMap.get('itemdescription'),
+    rowMap.get('description'),
+    rowMap.get('title'),
+    rowMap.get('details'),
+    rowMap.get('name')
+  ];
+
+  for (const c of candidates) {
+    if (c !== undefined && c !== null) {
+      const str = String(c).trim();
+      if (str && !/^\d+$/.test(str) && !isPriceColumnHeader(str)) {
+        return str;
+      }
+    }
+  }
+
+  if (rawRow) {
+    for (const key of Object.keys(rawRow)) {
+      const ck = cleanHeaderKey(key);
+      if (['particulars', 'particular', 'itemname', 'product', 'item'].includes(ck)) {
+        const val = String(rawRow[key] || '').trim();
+        if (val) return val;
+      }
+    }
+  }
+
+  return fallback;
+};
+
+
+export interface DetectedPriceInfo {
+  primaryPriceName: string;
+  primaryPrice: number;
+  tiers: WoodyItemPriceTier[];
+}
+
+/**
+ * Scans a row object for all columns matching price headers and extracts
+ * their exact original names as written in the uploaded Excel file.
+ */
+export const extractPricesFromRow = (
+  row: Record<string, any>,
+  fallbackUnitPrice?: number
+): DetectedPriceInfo => {
+  const tiers: WoodyItemPriceTier[] = [];
+  const rawKeys = Object.keys(row || {});
+
+  for (const key of rawKeys) {
+    if (isPriceColumnHeader(key)) {
+      const rawVal = row[key];
+      if (rawVal !== undefined && rawVal !== null && rawVal !== '') {
+        const num = typeof rawVal === 'number'
+          ? rawVal
+          : parseFloat(String(rawVal).replace(/[^0-9.-]/g, ''));
+        if (!isNaN(num) && num >= 0) {
+          tiers.push({
+            name: key.trim(), // The exact name from the uploaded Excel file!
+            price: num,
+          });
+        }
+      }
+    }
+  }
+
+  // If no price headers matched via original key search, fallback to checking clean keys
+  if (tiers.length === 0) {
+    const rowMap = new Map<string, any>();
+    rawKeys.forEach((k) => rowMap.set(cleanHeaderKey(k), row[k]));
+
+    const fallbackVal = parseFloat(
+      rowMap.get('unitprice') ||
+      rowMap.get('price') ||
+      rowMap.get('rate') ||
+      rowMap.get('cost') ||
+      rowMap.get('unitcost') ||
+      String(fallbackUnitPrice ?? '0')
+    ) || (fallbackUnitPrice ?? 0);
+
+    // Find original key that gave this value if any
+    let matchedOriginalKey = 'Unit Price (KSh)';
+    for (const k of rawKeys) {
+      const ck = cleanHeaderKey(k);
+      if (['unitprice', 'price', 'rate', 'cost', 'unitcost'].includes(ck)) {
+        matchedOriginalKey = k.trim();
+        break;
+      }
+    }
+
+    return {
+      primaryPriceName: matchedOriginalKey,
+      primaryPrice: Math.max(0, fallbackVal),
+      tiers: [{ name: matchedOriginalKey, price: Math.max(0, fallbackVal) }],
+    };
+  }
+
+  return {
+    primaryPriceName: tiers[0].name,
+    primaryPrice: tiers[0].price,
+    tiers,
+  };
+};
 
 /**
  * Extracts unique product catalog items and unique clients from parsed quotations
@@ -56,6 +265,8 @@ export const extractCatalogAndClientsFromQuotes = (quotes: WoodyQuotation[]): {
           description: item.description?.trim() || '',
           unitPrice: item.unitPrice || 0,
           unit: item.unit || 'pcs',
+          priceName: item.priceName || undefined,
+          priceTiers: item.priceTiers || undefined,
           selectedSize: item.selectedSize || undefined,
           selectedFinish: item.selectedFinish || undefined,
           artworkNotes: item.artworkNotes || undefined,
@@ -68,15 +279,6 @@ export const extractCatalogAndClientsFromQuotes = (quotes: WoodyQuotation[]): {
     itemsCatalog: Array.from(itemsMap.values()),
     clientsCatalog: Array.from(clientsMap.values()),
   };
-};
-
-/**
- * Normalizes a header string for case-insensitive and flexible key matching
- */
-const cleanHeaderKey = (header: string): string => {
-  return String(header || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '');
 };
 
 /**
@@ -148,6 +350,7 @@ export const parseWoodyQuoteExcel = (
     detectedSheets: [],
     itemsCatalog: [],
     clientsCatalog: [],
+    detectedPriceNames: [],
     warnings: [],
     errors: [],
   };
@@ -164,6 +367,7 @@ export const parseWoodyQuoteExcel = (
     const defaultPrefix = defaultSettings?.defaultQuotePrefix || 'WNAT-2026';
     const nowIso = new Date().toISOString();
     const today = nowIso.split('T')[0];
+    const allDetectedPriceNames = new Set<string>();
 
     // Check if multi-sheet structure exists: 'Quotations' and 'Items'
     const quoteSheetName = workbook.SheetNames.find((s) => /quote|quotation/i.test(s));
@@ -199,15 +403,7 @@ export const parseWoodyQuoteExcel = (
 
         if (!quoteRef) return;
 
-        const itemName = String(
-          rowMap.get('itemname') ||
-          rowMap.get('name') ||
-          rowMap.get('product') ||
-          rowMap.get('productname') ||
-          rowMap.get('item') ||
-          rowMap.get('description') ||
-          `Custom Item ${idx + 1}`
-        ).trim();
+        const itemName = getItemNameFromRow(rowMap, row, `Custom Item ${idx + 1}`);
 
         const itemDesc = String(
           rowMap.get('itemdescription') ||
@@ -218,7 +414,18 @@ export const parseWoodyQuoteExcel = (
         ).trim();
 
         const qty = Math.max(1, parseFloat(rowMap.get('quantity') || rowMap.get('qty') || '1') || 1);
-        const unitPrice = Math.max(0, parseFloat(rowMap.get('unitprice') || rowMap.get('price') || rowMap.get('rate') || '0') || 0);
+        
+        // Detect price column name exactly as in uploaded file (e.g. Wholesale Price, Retail Price, Unit Price (KSh), @)
+        const priceInfo = extractPricesFromRow(
+          row,
+          parseFloat(rowMap.get('unitprice') || rowMap.get('price') || rowMap.get('rate') || '0') || 0
+        );
+        priceInfo.tiers.forEach((t) => allDetectedPriceNames.add(t.name));
+
+        const unitPrice = priceInfo.primaryPrice;
+        const priceName = priceInfo.primaryPriceName;
+        const priceTiers = priceInfo.tiers;
+
         const discountPercent = Math.min(100, Math.max(0, parseFloat(rowMap.get('discountpercent') || rowMap.get('discount') || '0') || 0));
         const unit = String(rowMap.get('unit') || rowMap.get('uom') || 'pcs').trim() || 'pcs';
         const selectedSize = String(rowMap.get('selectedsize') || rowMap.get('size') || '').trim() || undefined;
@@ -236,6 +443,8 @@ export const parseWoodyQuoteExcel = (
           quantity: qty,
           unit,
           unitPrice,
+          priceName,
+          priceTiers,
           discountPercent,
           total,
           selectedSize,
@@ -247,6 +456,25 @@ export const parseWoodyQuoteExcel = (
         existing.push(item);
         itemsByQuoteNumber.set(quoteRef, existing);
         result.totalItems++;
+
+        // Also add directly to itemsCatalog so it is instantly available in product pickers
+        const existingInCatalog = result.itemsCatalog.find(
+          (it) => it.name.toLowerCase() === itemName.toLowerCase()
+        );
+        if (!existingInCatalog) {
+          result.itemsCatalog.push({
+            id: `excel-item-${result.itemsCatalog.length + 1}`,
+            name: itemName,
+            category,
+            description: itemDesc,
+            unitPrice,
+            unit,
+            priceName,
+            priceTiers,
+            selectedSize,
+            selectedFinish,
+          });
+        }
       });
 
       // Build Quotations
@@ -394,10 +622,12 @@ export const parseWoodyQuoteExcel = (
       // Group rows by Quote Number
       const quoteGroups: Array<{
         metadata: Record<string, any>;
+        rawMetadata: Record<string, any>;
         itemRows: Record<string, any>[];
+        rawItemRows: Record<string, any>[];
       }> = [];
 
-      let currentGroup: { metadata: Record<string, any>; itemRows: Record<string, any>[] } | null = null;
+      let currentGroup: { metadata: Record<string, any>; rawMetadata: Record<string, any>; itemRows: Record<string, any>[]; rawItemRows: Record<string, any>[] } | null = null;
       let lastKnownQuoteNumber = '';
 
       rawRows.forEach((row, rowIdx) => {
@@ -418,24 +648,25 @@ export const parseWoodyQuoteExcel = (
 
         // If this row has a new quote number, or has new customer info and no quote number, start a new quote group
         if (rawQuoteNum && rawQuoteNum !== lastKnownQuoteNumber) {
-          currentGroup = { metadata: Object.fromEntries(rowMap), itemRows: [Object.fromEntries(rowMap)] };
+          currentGroup = { metadata: Object.fromEntries(rowMap), rawMetadata: row, itemRows: [Object.fromEntries(rowMap)], rawItemRows: [row] };
           quoteGroups.push(currentGroup);
           lastKnownQuoteNumber = rawQuoteNum;
         } else if (!rawQuoteNum && hasCustomerInfo) {
           // New quote without explicit number
           const generatedNum = `${defaultPrefix}-${String(quoteGroups.length + 1).padStart(4, '0')}`;
           rowMap.set('quotenumber', generatedNum);
-          currentGroup = { metadata: Object.fromEntries(rowMap), itemRows: [Object.fromEntries(rowMap)] };
+          currentGroup = { metadata: Object.fromEntries(rowMap), rawMetadata: row, itemRows: [Object.fromEntries(rowMap)], rawItemRows: [row] };
           quoteGroups.push(currentGroup);
           lastKnownQuoteNumber = generatedNum;
         } else if (currentGroup) {
           // Continues the existing quote (additional line item)
           currentGroup.itemRows.push(Object.fromEntries(rowMap));
+          currentGroup.rawItemRows.push(row);
         } else {
           // First row without quote number
           const generatedNum = `${defaultPrefix}-${String(quoteGroups.length + 1).padStart(4, '0')}`;
           rowMap.set('quotenumber', generatedNum);
-          currentGroup = { metadata: Object.fromEntries(rowMap), itemRows: [Object.fromEntries(rowMap)] };
+          currentGroup = { metadata: Object.fromEntries(rowMap), rawMetadata: row, itemRows: [Object.fromEntries(rowMap)], rawItemRows: [row] };
           quoteGroups.push(currentGroup);
           lastKnownQuoteNumber = generatedNum;
         }
@@ -503,15 +734,13 @@ export const parseWoodyQuoteExcel = (
         // Process line items in this quote group
         const items: WoodyQuoteItem[] = [];
         group.itemRows.forEach((itemRow, itemIdx) => {
-          const itemName = String(
-            itemRow.itemname ||
-            itemRow.product ||
-            itemRow.productname ||
-            itemRow.item ||
-            itemRow.service ||
-            (itemRow.name && itemRow.name !== customerName ? itemRow.name : '') ||
-            (group.itemRows.length === 1 ? 'Branding & Commercial Production Order' : `Item ${itemIdx + 1}`)
-          ).trim();
+          const rawRow = group.rawItemRows?.[itemIdx] || itemRow;
+          const itemRowMap = new Map<string, any>(Object.entries(itemRow));
+          const itemName = getItemNameFromRow(
+            itemRowMap,
+            rawRow,
+            group.itemRows.length === 1 ? 'Branding & Commercial Production Order' : `Item ${itemIdx + 1}`
+          );
 
           const itemDesc = String(
             itemRow.itemdescription ||
@@ -522,10 +751,16 @@ export const parseWoodyQuoteExcel = (
           ).trim();
 
           const qty = Math.max(1, parseFloat(itemRow.quantity || itemRow.qty || '1') || 1);
-          const unitPrice = Math.max(
-            0,
+          const priceInfo = extractPricesFromRow(
+            rawRow,
             parseFloat(itemRow.unitprice || itemRow.price || itemRow.rate || itemRow.cost || '0') || 0
           );
+          priceInfo.tiers.forEach((t) => allDetectedPriceNames.add(t.name));
+
+          const priceName = priceInfo.primaryPriceName;
+          const priceTiers = priceInfo.tiers;
+          let resolvedUnitPrice = priceInfo.primaryPrice;
+
           const discountPercent = Math.min(100, Math.max(0, parseFloat(itemRow.discountpercent || itemRow.discount || '0') || 0));
           const unit = String(itemRow.unit || itemRow.uom || 'pcs').trim() || 'pcs';
           const selectedSize = String(itemRow.selectedsize || itemRow.size || '').trim() || undefined;
@@ -533,7 +768,6 @@ export const parseWoodyQuoteExcel = (
           const artworkNotes = String(itemRow.artworknotes || itemRow.artwork || '').trim() || undefined;
 
           // If the row is totally blank for item fields and unit price is 0, check if metadata total exists
-          let resolvedUnitPrice = unitPrice;
           if (resolvedUnitPrice === 0 && group.itemRows.length === 1) {
             const rawSubtotal = parseFloat(meta.subtotal || meta.total || meta.grandtotal || '0') || 0;
             if (rawSubtotal > 0) {
@@ -552,12 +786,33 @@ export const parseWoodyQuoteExcel = (
             quantity: qty,
             unit,
             unitPrice: resolvedUnitPrice,
+            priceName,
+            priceTiers,
             discountPercent,
             total,
             selectedSize,
             selectedFinish,
             artworkNotes,
           });
+
+          // Also add to itemsCatalog so it is selectable in product selector
+          const existingInCatalog = result.itemsCatalog.find(
+            (it) => it.name.toLowerCase() === itemName.toLowerCase()
+          );
+          if (!existingInCatalog) {
+            result.itemsCatalog.push({
+              id: `excel-item-${result.itemsCatalog.length + 1}`,
+              name: itemName,
+              category,
+              description: itemDesc,
+              unitPrice: resolvedUnitPrice,
+              unit,
+              priceName,
+              priceTiers,
+              selectedSize,
+              selectedFinish,
+            });
+          }
 
           result.totalItems++;
         });
@@ -618,22 +873,29 @@ export const parseWoodyQuoteExcel = (
           const rowMap = new Map<string, any>();
           Object.keys(row).forEach((k) => rowMap.set(cleanHeaderKey(k), row[k]));
 
-          const itemName = String(
-            rowMap.get('itemname') || rowMap.get('name') || rowMap.get('product') || rowMap.get('productname') || rowMap.get('item') || ''
-          ).trim();
+          const itemName = getItemNameFromRow(rowMap, row, '');
           if (!itemName) return;
 
-          const unitPrice = Math.max(0, parseFloat(rowMap.get('unitprice') || rowMap.get('price') || rowMap.get('rate') || rowMap.get('unitcost') || '0') || 0);
+          const priceInfo = extractPricesFromRow(
+            row,
+            parseFloat(rowMap.get('unitprice') || rowMap.get('price') || rowMap.get('rate') || rowMap.get('unitcost') || '0') || 0
+          );
+          priceInfo.tiers.forEach((t) => allDetectedPriceNames.add(t.name));
+
+          const unitPrice = priceInfo.primaryPrice;
+          const priceName = priceInfo.primaryPriceName;
+          const priceTiers = priceInfo.tiers;
+
           const category = String(rowMap.get('category') || rowMap.get('productcategory') || 'Branding & Commercial Printing').trim() || 'Branding & Commercial Printing';
           const unit = String(rowMap.get('unit') || rowMap.get('uom') || 'pcs').trim() || 'pcs';
           const description = String(rowMap.get('itemdescription') || rowMap.get('description') || rowMap.get('details') || '').trim();
           const selectedSize = String(rowMap.get('selectedsize') || rowMap.get('size') || '').trim() || undefined;
           const selectedFinish = String(rowMap.get('selectedfinish') || rowMap.get('finish') || '').trim() || undefined;
 
-          const exists = result.itemsCatalog.some(
+          const existing = result.itemsCatalog.find(
             (it) => it.name.toLowerCase() === itemName.toLowerCase()
           );
-          if (!exists) {
+          if (!existing) {
             result.itemsCatalog.push({
               id: `excel-item-${result.itemsCatalog.length + 1}`,
               name: itemName,
@@ -641,9 +903,18 @@ export const parseWoodyQuoteExcel = (
               description,
               unitPrice,
               unit,
+              priceName,
+              priceTiers,
               selectedSize,
               selectedFinish,
             });
+          } else {
+            if (!existing.priceName && priceName) {
+              existing.priceName = priceName;
+            }
+            if ((!existing.priceTiers || existing.priceTiers.length === 0) && priceTiers.length > 0) {
+              existing.priceTiers = priceTiers;
+            }
           }
         });
       }
@@ -694,12 +965,334 @@ export const parseWoodyQuoteExcel = (
       }
     }
 
+    // Set detected price names from all sheets and rows
+    result.detectedPriceNames = Array.from(allDetectedPriceNames);
+
   } catch (err: any) {
     result.errors.push(`Excel parsing failed: ${err?.message || 'Unsupported or corrupted spreadsheet file.'}`);
   }
 
   return result;
 };
+
+/**
+ * Parses an uploaded PDF file (e.g. Woodynat Official Rate Card / Price Catalog / Commercial Quotes PDF)
+ * Extracts all lines, categories, exact item names, quantities, price headers (e.g. '@'), price tiers,
+ * and builds ready-to-use WoodyQuotation quotes and itemsCatalog.
+ */
+export const parseWoodyQuotePdfFile = async (
+  file: File,
+  defaultSettings?: WoodyQuoteSettings,
+  defaultPrefix: string = 'WNAT-2026'
+): Promise<ParsedExcelQuoteResult> => {
+  const result: ParsedExcelQuoteResult = {
+    quotes: [],
+    totalRows: 0,
+    totalItems: 0,
+    detectedSheets: [],
+    itemsCatalog: [],
+    clientsCatalog: [],
+    detectedPriceNames: [],
+    warnings: [],
+    errors: [],
+  };
+
+  try {
+    // 1. Convert file to base64
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    const base64 = btoa(binary);
+
+    // 2. Fetch lines from backend /api/parse-pdf endpoint
+    let lines: string[] = [];
+    try {
+      const resp = await fetch('/api/parse-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base64Data: base64, fileName: file.name }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.lines && Array.isArray(data.lines)) {
+          lines = data.lines;
+        }
+      }
+    } catch (apiErr) {
+      console.warn('Backend /api/parse-pdf call failed, will try browser fallback:', apiErr);
+    }
+
+    // 3. Fallback to client-side pdfjs-dist if backend was unreachable
+    if (lines.length === 0) {
+      try {
+        const mod = await import('pdfjs-dist/legacy/build/pdf.js');
+        const pdfjs = (mod as any).default || mod;
+        const loadingTask = pdfjs.getDocument({
+          data: new Uint8Array(buffer),
+          useSystemFonts: true,
+          disableFontFace: true,
+          isEvalSupported: false,
+        });
+        const doc = await loadingTask.promise;
+        for (let p = 1; p <= doc.numPages; p++) {
+          const page = await doc.getPage(p);
+          const textContent = await page.getTextContent();
+          const items = (textContent.items || []) as Array<{ str: string; transform: number[] }>;
+          const lineMap = new Map<number, Array<{ x: number; str: string }>>();
+          for (const it of items) {
+            if (!it.str || !it.str.trim()) continue;
+            const x = it.transform ? it.transform[4] : 0;
+            const y = it.transform ? Math.round(it.transform[5] / 4) * 4 : 0;
+            if (!lineMap.has(y)) lineMap.set(y, []);
+            lineMap.get(y)!.push({ x, str: it.str.trim() });
+          }
+          const sortedYs = Array.from(lineMap.keys()).sort((a, b) => b - a);
+          for (const y of sortedYs) {
+            const rowItems = lineMap.get(y)!.sort((a, b) => a.x - b.x);
+            const lineStr = rowItems.map((i) => i.str).join(' ');
+            if (lineStr.trim()) lines.push(lineStr.trim());
+          }
+        }
+      } catch (browserErr) {
+        console.warn('Client-side pdf extraction notice:', browserErr);
+      }
+    }
+
+    if (lines.length === 0) {
+      result.errors.push('Could not extract readable text from this PDF file. Please ensure it contains selectable text.');
+      return result;
+    }
+
+    result.totalRows = lines.length;
+
+    // 4. Parse document lines into items, categories, and price tiers
+    let currentCategory = 'POSTERS/FLYERS/BROCHURES';
+    let currentPriceHeader = '@';
+    const detectedCategories = new Set<string>();
+    const detectedPrices = new Set<string>();
+
+    interface RawExtractedItem {
+      qty: number;
+      name: string;
+      price: number;
+      category: string;
+      priceName: string;
+    }
+
+    const rawItems: RawExtractedItem[] = [];
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+
+      // Category detection
+      if (
+        /^(POSTERS|FLYERS|BROCHURES|CALENDARS|CALENDAR|BRANDING|SIGNAGE|APPAREL|PROMOTIONAL|STATIONERY|BANNER)/i.test(line) &&
+        !/\d+/.test(line.replace(/a[2-6]|10\*20|wire-o-wire/i, ''))
+      ) {
+        currentCategory = line;
+        detectedCategories.add(currentCategory);
+        continue;
+      }
+
+      // Header row detection
+      if (/qty.*particulars/i.test(line) || /qty.*description/i.test(line) || /qty.*item/i.test(line)) {
+        const match = line.match(/(price|unit\s*price|rate|@|ksh|cost)/i);
+        if (match) {
+          currentPriceHeader = match[0].trim();
+          detectedPrices.add(currentPriceHeader);
+        }
+        continue;
+      }
+
+      // Match [Qty] [Name] [Price]
+      const m = line.match(/^([\d,]+)\s+(.+?)\s+([\d,]+(?:\.\d+)?)$/);
+      if (m) {
+        const qty = parseFloat(m[1].replace(/,/g, ''));
+        const name = m[2].trim();
+        const price = parseFloat(m[3].replace(/,/g, ''));
+        if (name && !isNaN(price) && price > 0) {
+          rawItems.push({
+            qty: !isNaN(qty) && qty > 0 ? qty : 1,
+            name,
+            price,
+            category: currentCategory,
+            priceName: currentPriceHeader,
+          });
+          detectedPrices.add(currentPriceHeader);
+          continue;
+        }
+      }
+
+      // Match [Name] [Price]
+      const m2 = line.match(/^([A-Za-z0-9\s()*,.-]+?)\s+([\d,]+(?:\.\d+)?)$/);
+      if (m2) {
+        const name = m2[1].trim();
+        const price = parseFloat(m2[2].replace(/,/g, ''));
+        if (name.length > 2 && !/^(page|total|date|tel|phone|p\.o)/i.test(name) && !isNaN(price) && price > 0) {
+          rawItems.push({
+            qty: 1,
+            name,
+            price,
+            category: currentCategory,
+            priceName: currentPriceHeader,
+          });
+          detectedPrices.add(currentPriceHeader);
+        }
+      }
+    }
+
+    if (rawItems.length === 0) {
+      result.errors.push('No product or pricing rows were found in the uploaded PDF. Please verify the document format.');
+      return result;
+    }
+
+    // 5. Group by base product name to establish price tiers, and also add base items to itemsCatalog
+    const baseItemsMap = new Map<string, {
+      name: string;
+      category: string;
+      priceName: string;
+      tiers: WoodyItemPriceTier[];
+      minPrice: number;
+    }>();
+
+    for (const it of rawItems) {
+      const baseKey = it.name.toLowerCase().trim();
+      if (!baseItemsMap.has(baseKey)) {
+        baseItemsMap.set(baseKey, {
+          name: it.name,
+          category: it.category,
+          priceName: it.priceName,
+          tiers: [],
+          minPrice: it.price,
+        });
+      }
+      const entry = baseItemsMap.get(baseKey)!;
+      entry.tiers.push({
+        name: `${it.qty.toLocaleString()} pcs @ KSh ${it.price.toLocaleString()}`,
+        price: it.price,
+      });
+      if (it.price < entry.minPrice) entry.minPrice = it.price;
+    }
+
+    const itemsCatalog: WoodyExcelCatalogItem[] = [];
+    let itCount = 1;
+    baseItemsMap.forEach((val) => {
+      itemsCatalog.push({
+        id: `pdf-item-${itCount++}`,
+        name: val.name,
+        category: val.category,
+        description: `Woodynat commercial grade production: ${val.name}`,
+        unitPrice: val.minPrice,
+        unit: 'pcs',
+        priceName: val.priceName,
+        priceTiers: val.tiers,
+      });
+    });
+
+    result.itemsCatalog = itemsCatalog;
+    result.totalItems = rawItems.length;
+    result.detectedSheets = Array.from(detectedCategories.size > 0 ? detectedCategories : [currentCategory]);
+    result.detectedPriceNames = Array.from(detectedPrices.size > 0 ? detectedPrices : ['@']);
+
+    // 6. Build default starter quotes organized by category
+    const quotesByCategory = new Map<string, RawExtractedItem[]>();
+    for (const it of rawItems) {
+      const cat = it.category || 'General Commercial Printing';
+      if (!quotesByCategory.has(cat)) quotesByCategory.set(cat, []);
+      quotesByCategory.get(cat)!.push(it);
+    }
+
+    const nowIso = new Date().toISOString();
+    const today = nowIso.split('T')[0];
+    const expiry = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0];
+    let qCount = 1;
+
+    quotesByCategory.forEach((catItems, catName) => {
+      const qNum = `${defaultPrefix}-${String(qCount).padStart(4, '0')}`;
+      const quoteItems: WoodyQuoteItem[] = catItems.slice(0, 10).map((it, idx) => {
+        const qty = it.qty;
+        const unitPrice = it.price;
+        const total = qty * unitPrice;
+        return {
+          id: `item-${qNum}-${idx + 1}`,
+          name: it.name,
+          category: it.category,
+          description: `Commercial grade ${it.name}`,
+          quantity: qty,
+          unit: 'pcs',
+          unitPrice,
+          priceName: it.priceName,
+          discountPercent: 0,
+          total,
+        };
+      });
+
+      const subtotal = quoteItems.reduce((acc, cur) => acc + cur.total, 0);
+      result.quotes.push({
+        id: `woody-pdf-${qCount}`,
+        quoteNumber: qNum,
+        customerName: `${catName} Commercial Package`,
+        customerPhone: '0797939199',
+        customerEmail: 'woodynatdesigners12@gmail.com',
+        companyName: 'Woodynat Corporate Client',
+        billingAddress: 'Nairobi, Kenya',
+        deliveryLocation: 'Temple Road Gatkim complex building fourth floor wing B Room 4B1',
+        deliveryType: 'CBD Workshop Pickup',
+        quoteDate: today,
+        expiryDate: expiry,
+        validityDays: 14,
+        paymentTerms: defaultSettings?.defaultPaymentTerms || '50% Deposit, 50% on Delivery',
+        deliveryTimeline: defaultSettings?.defaultDeliveryTimeline || '24-48 Hours Express Delivery',
+        currency: 'KSh',
+        items: quoteItems,
+        subtotal,
+        discountTotal: 0,
+        taxRate: 0,
+        taxTotal: 0,
+        shippingCost: 0,
+        grandTotal: subtotal,
+        isTaxInclusive: false,
+        notes: `Official Commercial Rate Card items extracted directly from ${file.name}.`,
+        termsAndConditions: defaultSettings?.defaultTerms || '1. Validity: 14 days from quote date.\n2. Payment: 50% deposit before production, 50% upon delivery sign-off.',
+        paybillNumber: defaultSettings?.defaultPaybillNumber || '247247',
+        paybillAccount: defaultSettings?.defaultPaybillAccount || '0797939199',
+        status: 'Draft',
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        preparedBy: 'Woodynat Commercial Desk',
+      });
+      qCount++;
+    });
+
+  } catch (err: any) {
+    result.errors.push(`PDF parsing failed: ${err?.message || 'Unsupported or encrypted PDF document.'}`);
+  }
+
+  return result;
+};
+
+/**
+ * Universal file parser for Woody-Quote (supports Excel .xlsx, .xls, .csv and PDF .pdf)
+ */
+export const parseWoodyQuoteFile = async (
+  file: File,
+  defaultSettings?: WoodyQuoteSettings,
+  defaultPrefix: string = 'WNAT-2026'
+): Promise<ParsedExcelQuoteResult> => {
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  if (ext === 'pdf') {
+    return parseWoodyQuotePdfFile(file, defaultSettings, defaultPrefix);
+  } else {
+    const buffer = await file.arrayBuffer();
+    return parseWoodyQuoteExcel(buffer, defaultSettings);
+  }
+};
+
 
 /**
  * Generates and downloads a clean, beautifully formatted sample Excel template
@@ -1318,6 +1911,7 @@ export const exportWoodyDatasetToExcel = (dataset: WoodyExcelDataset) => {
     'Item ID': item.id || `ITEM-${idx + 1}`,
     'Item Name': item.name,
     'Category': item.category,
+    'Price Name / Tier': item.priceName || 'Unit Price',
     'Unit Price (KSh)': item.unitPrice,
     'Unit': item.unit,
     'Selected Size': item.selectedSize || '',
@@ -1328,7 +1922,7 @@ export const exportWoodyDatasetToExcel = (dataset: WoodyExcelDataset) => {
 
   const catalogWs = XLSX.utils.json_to_sheet(catalogRows);
   catalogWs['!cols'] = [
-    { wch: 16 }, { wch: 35 }, { wch: 28 }, { wch: 16 },
+    { wch: 16 }, { wch: 35 }, { wch: 28 }, { wch: 20 }, { wch: 16 },
     { wch: 12 }, { wch: 20 }, { wch: 28 }, { wch: 45 }, { wch: 25 }
   ];
   XLSX.utils.book_append_sheet(wb, catalogWs, 'Items Catalog & Pricing');
@@ -1360,6 +1954,7 @@ export const exportWoodyDatasetToExcel = (dataset: WoodyExcelDataset) => {
         'Customer Name': q.customerName,
         'Item #': idx + 1,
         'Item Name': it.name,
+        'Price Name / Tier': it.priceName || 'Unit Price',
         'Description': it.description,
         'Quantity': it.quantity,
         'Unit': it.unit,
@@ -1377,7 +1972,7 @@ export const exportWoodyDatasetToExcel = (dataset: WoodyExcelDataset) => {
   if (lineItemRows.length > 0) {
     const lineItemWs = XLSX.utils.json_to_sheet(lineItemRows);
     lineItemWs['!cols'] = [
-      { wch: 18 }, { wch: 20 }, { wch: 8 }, { wch: 30 },
+      { wch: 18 }, { wch: 20 }, { wch: 8 }, { wch: 30 }, { wch: 20 },
       { wch: 45 }, { wch: 10 }, { wch: 12 }, { wch: 15 },
       { wch: 12 }, { wch: 15 }, { wch: 18 }, { wch: 22 },
       { wch: 25 }, { wch: 14 }
